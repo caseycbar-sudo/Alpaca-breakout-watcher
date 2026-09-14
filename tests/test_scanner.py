@@ -28,9 +28,23 @@ def test_second_bar_hold():
         bar(now, 10.0, 9.8, 9.9),
         bar(now, 10.1, 9.9, 10.0),
         bar(now, 10.2, 10.0, 10.1),
-        bar(now, 10.4, 10.2, 10.3),
+        bar(now, 10.4, 10.25, 10.3),
         bar(now, 10.5, 10.25, 10.4),
     ]
-    level, confirmation = opening_breakout(rows)
+    level, confirmation = opening_breakout(rows, 10.15)
     assert level == 10.2
-    assert confirmation == "second-bar hold"
+    assert confirmation == "A — catalyst ORB second-bar hold"
+
+
+def test_vwap_level_retest_takes_priority():
+    now = datetime.now(timezone.utc)
+    rows = [
+        bar(now, 10.0, 9.8, 9.9),
+        bar(now, 10.1, 9.9, 10.0),
+        bar(now, 10.2, 10.0, 10.1),
+        bar(now, 10.6, 10.25, 10.5),
+        bar(now, 10.45, 10.19, 10.35),
+    ]
+    level, confirmation = opening_breakout(rows, 10.2)
+    assert level == 10.2
+    assert confirmation == "B — first VWAP/level retest"
