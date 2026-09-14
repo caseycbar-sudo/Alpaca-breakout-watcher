@@ -3,7 +3,7 @@ name: Alpaca breakout watcher
 on:
   workflow_dispatch:
   schedule:
-    # Every five minutes across U.S. market hours; the Alpaca clock gates holidays/closures.
+    # Every five minutes across possible U.S. market hours; Alpaca's clock gates closures.
     - cron: "*/5 13-21 * * 1-5"
   push:
     branches: [main]
@@ -33,6 +33,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pytest -q
       - name: Run read-only scan and paper lab
+        if: github.event_name != 'push'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -42,6 +43,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python -m src.main
       - name: Preserve paper ledger
+        if: github.event_name != 'push'
         run: |
           if git diff --quiet -- data/paper_ledger.csv; then
             exit 0
