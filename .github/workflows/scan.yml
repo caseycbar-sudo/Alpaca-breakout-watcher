@@ -3,8 +3,9 @@ name: Alpaca breakout watcher
 on:
   workflow_dispatch:
   schedule:
-    # Every five minutes across possible U.S. market hours; Alpaca's clock gates closures.
-    - cron: "*/5 13-21 * * 1-5"
+    # Every five minutes from 4 a.m. through 6 p.m. Eastern across DST changes.
+    # The code and Alpaca market clock gate weekends, holidays, premarket, and regular hours.
+    - cron: "*/5 8-22 * * 1-5"
   push:
     branches: [main]
     paths:
@@ -44,14 +45,14 @@ jobs:
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python -m src.main
-      - name: Preserve paper ledger
+      - name: Preserve paper ledger and alert state
         if: github.event_name != 'push'
         run: |
-          if git diff --quiet -- data/paper_ledger.csv; then
+          if git diff --quiet -- data/paper_ledger.csv data/premarket_state.json; then
             exit 0
           fi
           git config user.name "alpaca-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/paper_ledger.csv
-          git commit -m "[skip ci] update paper ledger"
+          git add data/paper_ledger.csv data/premarket_state.json
+          git commit -m "[skip ci] update paper lab and alert state"
           git push
