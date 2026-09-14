@@ -24,6 +24,19 @@ def vwap(bars: list[dict]) -> float | None:
     return value / volume
 
 
+def atr(bars: list[dict], period: int = 14) -> float | None:
+    if len(bars) < period + 1:
+        return None
+    ranges = []
+    for previous, current in zip(bars, bars[1:]):
+        high = float(current["h"])
+        low = float(current["l"])
+        prior_close = float(previous["c"])
+        ranges.append(max(high - low, abs(high - prior_close), abs(low - prior_close)))
+    sample = ranges[-period:]
+    return sum(sample) / period if sample else None
+
+
 def spread_pct(bid: float, ask: float) -> float | None:
     if bid <= 0 or ask <= 0 or ask < bid:
         return None
