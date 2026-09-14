@@ -30,9 +30,14 @@ jobs:
           from email.message import EmailMessage
           import smtplib
 
-          sender = os.environ["ALERT_EMAIL_FROM"]
-          recipient = os.environ["ALERT_EMAIL_TO"]
-          password = os.environ["GMAIL_APP_PASSWORD"]
+          sender = os.environ["ALERT_EMAIL_FROM"].strip()
+          recipient = os.environ["ALERT_EMAIL_TO"].strip()
+          password = "".join(os.environ["GMAIL_APP_PASSWORD"].split())
+
+          if sender.lower() != "caseycbar@gmail.com":
+              raise RuntimeError("ALERT_EMAIL_FROM must be caseycbar@gmail.com")
+          if len(password) != 16:
+              raise RuntimeError("GMAIL_APP_PASSWORD must be Google's 16-character App Password")
 
           message = EmailMessage()
           message["From"] = sender
