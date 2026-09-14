@@ -1,0 +1,1 @@
+trade_id,timestamp,symbol,setup,entry,size,quantity,stop,target,exit_timestamp,exit,reason,gross_pl,modeled_spread_slippage,net_pl,account_balance,status
