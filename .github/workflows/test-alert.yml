@@ -34,8 +34,8 @@ jobs:
           recipient = os.environ["ALERT_EMAIL_TO"].strip()
           password = "".join(os.environ["GMAIL_APP_PASSWORD"].split())
 
-          if sender.lower() != "caseycbar@gmail.com":
-              raise RuntimeError("ALERT_EMAIL_FROM must be caseycbar@gmail.com")
+          if sender.lower() != "caseycbarai@gmail.com":
+              raise RuntimeError("ALERT_EMAIL_FROM must be caseycbarai@gmail.com")
           if len(password) != 16:
               raise RuntimeError("GMAIL_APP_PASSWORD must be Google's 16-character App Password")
 
