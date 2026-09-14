@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 from .config import Settings
 from .emailer import send_email
 from .paper_lab import ET, PaperLab
-from .premarket import is_premarket_session, roster_event, scan_premarket
+from .premarket import (
+    is_premarket_session,
+    roster_event,
+    scan_premarket,
+    todays_roster_symbols,
+)
 from .scanner import AlpacaClient, scan
 
 
@@ -47,6 +52,11 @@ def main() -> None:
         events.extend(lab.process_exits(client.snapshots(open_symbols), now))
 
     candidates = scan(settings, client, now)
+    premarket_symbols = todays_roster_symbols(now)
+    for candidate in candidates:
+        if candidate["symbol"] in premarket_symbols:
+            candidate["setup"] = "C — premarket leader confirmed after open"
+
     if now.astimezone(ET).hour < 15 or (
         now.astimezone(ET).hour == 15 and now.astimezone(ET).minute < 30
     ):
