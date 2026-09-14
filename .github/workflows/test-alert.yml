@@ -1,0 +1,51 @@
+name: Test alert delivery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-alert.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Send harmless test email
+        env:
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import os
+          from email.message import EmailMessage
+          import smtplib
+
+          sender = os.environ["ALERT_EMAIL_FROM"]
+          recipient = os.environ["ALERT_EMAIL_TO"]
+          password = os.environ["GMAIL_APP_PASSWORD"]
+
+          message = EmailMessage()
+          message["From"] = sender
+          message["To"] = recipient
+          message["Subject"] = "ALPACA WATCHER TEST — NO TRADE"
+          message.set_content(
+              "The Alpaca breakout watcher's email-alert connection is working.\n\n"
+              "TEST ONLY — NO REAL ORDER — NO PAPER TRADE."
+          )
+
+          with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as smtp:
+              smtp.login(sender, password)
+              smtp.send_message(message)
+
+          print("Test alert sent successfully.")
+          PY
