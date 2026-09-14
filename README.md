@@ -2,28 +2,24 @@
 
 A read-only premarket and regular-session scanner plus a strict **PAPER—NO REAL ORDER** laboratory.
 
-The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans calculate five-minute momentum, session VWAP, RSI, time-adjusted relative volume, executable spread, and opening-range confirmation. A simulated entry can occur only after the opening bell and after a second-bar hold or successful retest.
+The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation.
 
 ## Safety design
 
 - Use **Alpaca paper-account keys only**.
 - The code has no create, replace, cancel, or submit-order method.
 - Premarket alerts are watchlist-only; they cannot create paper entries.
-- Maximum simulated position: $10.
-- Starting virtual balance: $50.
+- Maximum simulated position: $10 from a $50 virtual balance.
 - Maximum three new simulations per market day.
 - No new simulations after two losses that day.
 - Entries use ask plus 0.05% slippage; exits use bid minus 0.05% slippage.
-- Every target is at least 2:1 reward-to-risk.
+- Stops are technical and ATR-aware; targets are at least 2:1 reward-to-risk.
 - Open simulations exit at stop, target, or 3:55 p.m. Eastern.
 - Losing results remain in `data/paper_ledger.csv`.
-- The strategy is never promoted before 30 completed trades and positive unseen validation.
+- Setups A, B and C are measured separately.
+- No strategy promotion before at least 100 completed trades per setup and positive unseen validation.
 
-## One-time setup
-
-1. In Alpaca, create or open a **Paper Trading** account and generate paper API keys.
-2. In this GitHub repository open **Settings → Secrets and variables → Actions**.
-3. Add these exact repository secrets:
+## Repository secrets
 
 | Secret | Value |
 |---|---|
@@ -35,32 +31,29 @@ The watcher scans Alpaca's active/mover universe every five minutes. Premarket s
 
 For Gmail, enable 2-Step Verification and create an App Password. Never use a normal Gmail or Alpaca password.
 
-## Premarket workflow
+## Strategy families
 
-- Runs from 4:00–9:30 a.m. Eastern on valid trading days.
-- Uses completed five-minute extended-hours bars.
-- Requires a 2%–8% move, same-time premarket RVOL of at least 1.5x, at least 100,000 cumulative premarket shares, at least 10,000 shares in the latest completed bar, RSI 55–72, price above premarket VWAP, spread no wider than 0.40%, active/tradable status, and fresh news.
-- Rejects headlines containing obvious offering, dilution, reverse-split, or delisting warnings.
-- Saves no more than three symbols in `data/premarket_state.json`.
-- Sends an email only when the day's roster or a symbol's trigger stage materially changes.
-- Establishes one provisional breakout level per symbol.
-- Never opens a paper trade before regular-session hold/retest confirmation.
+- **A — Catalyst ORB second-bar hold:** a fresh-catalyst stock breaks its first 15-minute range and holds above it for a second completed bar.
+- **B — First VWAP/level retest:** a breakout pulls back toward VWAP or the opening-range level, then closes back above the anchor.
+- **C — Premarket leader confirmed after open:** a symbol from the saved premarket roster later satisfies the regular-session confirmation rules.
 
-## Regular-session paper-entry requirements
+## Core candidate filters
 
 - price $0.50–$100;
-- session move 2%–8%;
-- latest completed five-minute bar move 2%–8%;
-- time-adjusted relative volume at least 1.5x;
-- at least 50,000 shares in the completed five-minute bar;
-- five-minute RSI 55–72;
-- price above session VWAP;
+- daily or premarket move 2%–8%;
+- latest completed five-minute acceleration normally 0.40%–2.00% (0.15% minimum on a controlled retest);
+- relative volume at least 1.5x;
+- at least $250,000 of dollar volume in the confirmation bar;
+- five-minute RSI allowed from 52–78, with 55–72 ranked higher;
+- price above VWAP and no more than one five-minute ATR above it;
 - executable bid/ask spread no wider than 0.40%;
 - active and tradable Alpaca symbol;
-- fresh news within 72 hours;
-- opening-range breakout with a second-bar hold or successful retest.
+- catalyst no older than 24 hours;
+- automatic rejection of obvious offering, dilution, reverse-split, or delisting headlines;
+- broad-market filter rejects new longs when both SPY and QQQ are below VWAP and weakening;
+- technical stop below the retest/VWAP/opening-range structure, with no more than one ATR of entry risk.
 
-No email is sent when nothing meets the relevant confirmation rules.
+Premarket candidates remain watchlist-only. Regular-session paper entries require a confirmed hold or retest. No email is sent when nothing meets the relevant rules.
 
 ## Data caveat
 
