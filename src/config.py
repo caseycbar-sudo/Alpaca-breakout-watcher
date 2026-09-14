@@ -16,11 +16,17 @@ class Settings:
     max_price: float = 100.00
     min_day_move_pct: float = 2.0
     max_day_move_pct: float = 8.0
+    min_five_minute_move_pct: float = 0.40
+    max_five_minute_move_pct: float = 2.00
     min_relative_volume: float = 1.5
-    min_latest_bar_volume: int = 50_000
-    min_rsi: float = 55.0
-    max_rsi: float = 72.0
+    min_five_minute_dollar_volume: float = 250_000
+    min_rsi: float = 52.0
+    preferred_min_rsi: float = 55.0
+    preferred_max_rsi: float = 72.0
+    max_rsi: float = 78.0
     max_spread_pct: float = float(os.getenv("MAX_SPREAD_PCT", "0.40"))
+    max_vwap_distance_atr: float = 1.0
+    catalyst_max_age_hours: int = 24
 
     def validate(self) -> None:
         if not self.api_key or not self.secret_key:
