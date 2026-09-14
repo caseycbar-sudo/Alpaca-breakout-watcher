@@ -7,23 +7,16 @@ from pathlib import Path
 import requests
 
 from .config import Settings
-from .indicators import five_minute_move_pct, rsi, spread_pct, vwap
+from .indicators import atr, five_minute_move_pct, rsi, spread_pct, vwap
 from .scanner import (
     ET,
+    RISK_WORDS,
     AlpacaClient,
     _timestamp,
     average_daily_volume,
     completed_five_minute_bars,
 )
 
-RISK_WORDS = (
-    "offering",
-    "registered direct",
-    "at-the-market",
-    "dilution",
-    "reverse split",
-    "delisting",
-)
 STATE_PATH = Path("data/premarket_state.json")
 
 
@@ -101,30 +94,47 @@ def scan_premarket(
 
         indicator_rsi = rsi([float(row["c"]) for row in session])
         session_vwap = vwap(session)
+        indicator_atr = atr(session)
         bar_move = five_minute_move_pct(session)
         rel_volume = premarket_relative_volume(complete, now)
         cumulative_volume = sum(float(row.get("v", 0)) for row in session)
         trigger = max(float(row["h"]) for row in session[:-1])
         avg_volume = average_daily_volume(daily.get(symbol, []))
+        latest_volume = float(session[-1].get("v", 0))
+        dollar_volume = latest_volume * float(session[-1]["c"])
 
-        values = (day_move, spread, indicator_rsi, session_vwap, bar_move, rel_volume)
+        values = (
+            day_move,
+            spread,
+            indicator_rsi,
+            session_vwap,
+            indicator_atr,
+            bar_move,
+            rel_volume,
+        )
         if any(value is None for value in values):
             continue
         if not (settings.min_price <= price <= settings.max_price):
             continue
         if not (settings.min_day_move_pct <= day_move <= settings.max_day_move_pct):
             continue
-        if not (2.0 <= bar_move <= 8.0):
+        if not (
+            settings.min_five_minute_move_pct
+            <= bar_move
+            <= settings.max_five_minute_move_pct
+        ):
             continue
         if rel_volume < settings.min_relative_volume:
             continue
         if cumulative_volume < 100_000:
             continue
-        if float(session[-1].get("v", 0)) < 10_000:
+        if dollar_volume < settings.min_five_minute_dollar_volume:
             continue
         if not (settings.min_rsi <= indicator_rsi <= settings.max_rsi):
             continue
         if spread > settings.max_spread_pct or price <= session_vwap:
+            continue
+        if price - session_vwap > indicator_atr * settings.max_vwap_distance_atr:
             continue
 
         try:
@@ -140,7 +150,14 @@ def scan_premarket(
         if any(word in headline.lower() for word in RISK_WORDS):
             continue
 
+        preferred_rsi = settings.preferred_min_rsi <= indicator_rsi <= settings.preferred_max_rsi
         stage = "above provisional trigger" if price > trigger else "watching below trigger"
+        score = (
+            rel_volume
+            + (1.0 if preferred_rsi else 0.0)
+            + (0.5 if stage == "above provisional trigger" else 0.0)
+            - spread
+        )
         matches.append(
             {
                 "symbol": symbol,
@@ -150,29 +167,25 @@ def scan_premarket(
                 "spread_pct": spread,
                 "day_move_pct": day_move,
                 "five_minute_move_pct": bar_move,
-                "five_minute_volume": int(session[-1].get("v", 0)),
+                "five_minute_volume": int(latest_volume),
+                "five_minute_dollar_volume": dollar_volume,
                 "premarket_volume": int(cumulative_volume),
                 "relative_volume": rel_volume,
                 "average_daily_volume": avg_volume,
                 "vwap": session_vwap,
+                "atr": indicator_atr,
                 "rsi": indicator_rsi,
+                "preferred_rsi": preferred_rsi,
                 "breakout_level": trigger,
                 "stage": stage,
                 "news_headline": headline,
                 "news_time": news.get("created_at", ""),
                 "news_url": news.get("url", ""),
+                "score": score,
             }
         )
 
-    return sorted(
-        matches,
-        key=lambda row: (
-            row["stage"] == "above provisional trigger",
-            row["relative_volume"],
-            row["premarket_volume"],
-        ),
-        reverse=True,
-    )[:3]
+    return sorted(matches, key=lambda row: row["score"], reverse=True)[:3]
 
 
 def _load_state(path: Path = STATE_PATH) -> dict:
@@ -182,6 +195,14 @@ def _load_state(path: Path = STATE_PATH) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
+
+
+def todays_roster_symbols(now: datetime, path: Path = STATE_PATH) -> set[str]:
+    state = _load_state(path)
+    day = now.astimezone(ET).date().isoformat()
+    if state.get("date") != day:
+        return set()
+    return {row["symbol"] for row in state.get("roster", []) if row.get("symbol")}
 
 
 def roster_event(candidates: list[dict], now: datetime, path: Path = STATE_PATH) -> str | None:
@@ -215,12 +236,13 @@ def roster_event(candidates: list[dict], now: datetime, path: Path = STATE_PATH)
             f"{rank}. {row['symbol']} | {row['price']:.4f} ({row['day_move_pct']:+.2f}%)\n"
             f"Bid/ask {row['bid']:.4f}/{row['ask']:.4f} | spread {row['spread_pct']:.3f}%\n"
             f"Premarket volume {row['premarket_volume']:,} | same-time RVOL "
-            f"{row['relative_volume']:.2f}x | latest 5m volume {row['five_minute_volume']:,}\n"
-            f"Premarket VWAP {row['vwap']:.4f} | RSI {row['rsi']:.1f} | "
-            f"5m move {row['five_minute_move_pct']:+.2f}%\n"
+            f"{row['relative_volume']:.2f}x | latest 5m dollar volume "
+            f"{row['five_minute_dollar_volume']:,.0f}\n"
+            f"Premarket VWAP {row['vwap']:.4f} | ATR {row['atr']:.4f} | "
+            f"RSI {row['rsi']:.1f} | 5m move {row['five_minute_move_pct']:+.2f}%\n"
             f"Provisional breakout alert {row['breakout_level']:.4f} | stage: {row['stage']}\n"
             f"Catalyst ({row['news_time']}): {row['news_headline']}\n{row['news_url']}\n"
-            "Could work: catalyst, liquidity, RVOL, VWAP and momentum align.\n"
+            "Could work: fresh catalyst, dollar liquidity, RVOL, VWAP and momentum align.\n"
             "Could fail: premarket liquidity can disappear; IEX is not the full SIP feed; "
             "filings and the primary source still require verification."
         )
