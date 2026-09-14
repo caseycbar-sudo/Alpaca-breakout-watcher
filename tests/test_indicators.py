@@ -1,6 +1,7 @@
 import pytest
 
 from src.indicators import (
+    atr,
     five_minute_move_pct,
     relative_volume,
     rsi,
@@ -19,6 +20,15 @@ def test_vwap():
         {"h": 11, "l": 10, "c": 10.5, "v": 100},
     ]
     assert vwap(bars) == pytest.approx(10.0)
+
+
+def test_atr_uses_true_range():
+    bars = [{"h": 10, "l": 9, "c": 9.5, "v": 100}]
+    bars.extend(
+        {"h": 10.5, "l": 9.5, "c": 10.0, "v": 100}
+        for _ in range(14)
+    )
+    assert atr(bars) == pytest.approx(1.0)
 
 
 def test_rsi_rising_is_overbought():
