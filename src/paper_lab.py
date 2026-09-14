@@ -86,7 +86,7 @@ class PaperLab:
             events.append(
                 f"PAPER TRADE RESULT — PAPER—NO REAL ORDER\n"
                 f"{row['symbol']} exit {executable:.4f} | {reason} | net P/L {net:+.2f}\n"
-                f"Account balance: {self.balance():.2f}"
+                f"Setup: {row['setup']} | Account balance: {self.balance():.2f}"
             )
         if events:
             self._save()
@@ -114,9 +114,9 @@ class PaperLab:
                 continue
             ask, bid = float(candidate["ask"]), float(candidate["bid"])
             entry = ask * (1 + SLIPPAGE_RATE)
-            stop = float(candidate["breakout_level"]) * 0.995
+            stop = float(candidate["technical_stop"])
             risk = entry - stop
-            if risk <= 0:
+            if risk <= 0 or risk > float(candidate["atr"]):
                 continue
             target = entry + (2 * risk)
             size = min(MAX_POSITION, available)
@@ -127,7 +127,7 @@ class PaperLab:
                 "trade_id": trade_id,
                 "timestamp": now.astimezone(ET).isoformat(),
                 "symbol": symbol,
-                "setup": candidate["confirmation"],
+                "setup": candidate["setup"],
                 "entry": f"{entry:.6f}",
                 "size": f"{size:.4f}",
                 "quantity": f"{quantity:.8f}",
@@ -150,16 +150,20 @@ class PaperLab:
                 "BREAKOUT PAPER TRADE — PAPER—NO REAL ORDER\n"
                 f"{symbol} {candidate['price']:.4f} ({candidate['day_move_pct']:+.2f}%) | "
                 f"RVOL {candidate['relative_volume']:.2f}x | spread {candidate['spread_pct']:.3f}%\n"
-                f"VWAP {candidate['vwap']:.4f} | 5m RSI {candidate['rsi']:.1f} | "
-                f"5m move {candidate['five_minute_move_pct']:+.2f}%\n"
+                f"VWAP {candidate['vwap']:.4f} | ATR {candidate['atr']:.4f} | "
+                f"5m RSI {candidate['rsi']:.1f} | 5m move {candidate['five_minute_move_pct']:+.2f}%\n"
+                f"5m dollar volume {candidate['five_minute_dollar_volume']:,.0f} | "
+                f"Market: {candidate['market_context']}\n"
                 f"Entry {entry:.4f} | size {size:.2f} dollars | target {target:.4f} | "
                 f"invalidation {stop:.4f}\n"
-                f"Stage: {candidate['confirmation']} above {candidate['breakout_level']:.4f}\n"
+                f"Setup: {candidate['setup']} | confirmation: {candidate['confirmation']} "
+                f"above {candidate['breakout_level']:.4f}\n"
                 f"Catalyst ({candidate['news_time']}): {candidate['news_headline']}\n"
                 f"{candidate['news_url']}\n"
-                "Could work: catalyst, relative volume, VWAP and breakout confirmation align.\n"
+                "Could work: fresh catalyst, dollar liquidity, market context, VWAP and "
+                "breakout confirmation align.\n"
                 "Could fail: fast moves reverse; IEX data is not the full SIP market; "
-                "the news headline still needs primary-source confirmation."
+                "the primary source and current filings still require verification."
             )
         if events:
             self._save()
@@ -183,11 +187,24 @@ class PaperLab:
             balance += value
             peak = max(peak, balance)
             maximum_drawdown = max(maximum_drawdown, peak - balance)
+
+        setup_lines = []
+        for setup in sorted({row["setup"] for row in closed}):
+            rows = [row for row in closed if row["setup"] == setup]
+            values = [float(row["net_pl"]) for row in rows]
+            setup_wins = sum(value > 0 for value in values)
+            setup_lines.append(
+                f"{setup}: {len(rows)} trades | win rate {setup_wins/len(rows):.1%} | "
+                f"net {sum(values):+.2f} | expectancy {sum(values)/len(values):+.2f}"
+            )
+
         return (
             f"Completed trades: {len(closed)} | Win rate: {len(wins)/len(closed):.1%} | "
             f"Avg win: {sum(wins)/len(wins) if wins else 0:.2f} | "
             f"Avg loss: {sum(losses)/len(losses) if losses else 0:.2f} | "
             f"Profit factor: {profit_factor:.2f} | Expectancy: {expectancy:.2f} | "
             f"Max drawdown: {maximum_drawdown:.2f} | Balance: {self.balance():.2f}\n"
-            "Strategy not eligible for promotion until 30 completed trades plus positive unseen validation."
+            + "\n".join(setup_lines)
+            + "\nStrategy not eligible for promotion until at least 100 trades per setup "
+            "plus positive unseen validation."
         )
