@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from .config import Settings
 from .emailer import send_email
+from .hub import publish_hub
 from .paper_lab import ET, PaperLab
 from .premarket import (
     is_premarket_session,
@@ -19,32 +20,58 @@ def main() -> None:
     clock = client.clock()
     now = datetime.now(timezone.utc)
     premarket = is_premarket_session(clock, now)
-    if not clock.get("is_open") and not premarket:
-        print("Outside today's premarket and regular U.S. stock session; no scan.")
-        return
-
     lab = PaperLab()
     events: list[str] = []
     account = client.account_snapshot()
+
     if account.get("trading_blocked"):
         events.append(
             "MATERIAL PAPER-ACCOUNT RISK\n"
             "Alpaca reports that trading is blocked. No real orders are possible from this code."
         )
 
+    if not clock.get("is_open") and not premarket:
+        publish_hub(
+            now=now,
+            phase="closed",
+            clock=clock,
+            candidates=[],
+            events=events,
+            lab=lab,
+            paper_account=account,
+            note="U.S. equities are closed. The next scheduled scan will refresh the research board.",
+        )
+        print("Outside today's premarket and regular U.S. stock session; hub refreshed.")
+        return
+
     if premarket:
         candidates = scan_premarket(settings, client, now)
         event = roster_event(candidates, now)
         if event:
             events.append(event)
-        if not events:
-            print(f"No meaningful premarket roster change. Candidates: {len(candidates)}")
-            return
-        send_email(
-            settings,
-            "PREMARKET BREAKOUT WATCH — WATCHLIST ONLY",
-            "\n\n".join(events),
+        email_sent = False
+        if events:
+            email_sent = send_email(
+                settings,
+                "PREMARKET BREAKOUT WATCH — WATCHLIST ONLY",
+                "\n\n".join(events),
+            )
+        publish_hub(
+            now=now,
+            phase="premarket",
+            clock=clock,
+            candidates=candidates,
+            events=events,
+            lab=lab,
+            paper_account=account,
+            email_sent=email_sent,
+            note=(
+                "Dynamic roster updated; regular-session confirmation is still required."
+                if event
+                else "No meaningful premarket roster change."
+            ),
         )
+        print(f"Premarket hub refreshed. Candidates: {len(candidates)}")
         return
 
     open_symbols = lab.open_symbols()
@@ -62,18 +89,33 @@ def main() -> None:
     ):
         events.extend(lab.process_entries(candidates, now))
 
-    if not events:
-        print(f"No confirmed setup or account-risk change. Candidates: {len(candidates)}")
-        return
+    email_sent = False
+    if events:
+        body = "\n\n".join(events) + "\n\nPAPER LAB METRICS\n" + lab.metrics()
+        if any(event.startswith("BREAKOUT PAPER TRADE") for event in events):
+            subject = "BREAKOUT PAPER TRADE — PAPER—NO REAL ORDER"
+        elif any(event.startswith("PAPER TRADE RESULT") for event in events):
+            subject = "PAPER TRADE RESULT — PAPER—NO REAL ORDER"
+        else:
+            subject = "Alpaca watcher: material account status"
+        email_sent = send_email(settings, subject, body)
 
-    body = "\n\n".join(events) + "\n\nPAPER LAB METRICS\n" + lab.metrics()
-    if any(event.startswith("BREAKOUT PAPER TRADE") for event in events):
-        subject = "BREAKOUT PAPER TRADE — PAPER—NO REAL ORDER"
-    elif any(event.startswith("PAPER TRADE RESULT") for event in events):
-        subject = "PAPER TRADE RESULT — PAPER—NO REAL ORDER"
-    else:
-        subject = "Alpaca watcher: material account status"
-    send_email(settings, subject, body)
+    publish_hub(
+        now=now,
+        phase="regular session",
+        clock=clock,
+        candidates=candidates,
+        events=events,
+        lab=lab,
+        paper_account=account,
+        email_sent=email_sent,
+        note=(
+            "Meaningful setup or account status recorded."
+            if events
+            else "No confirmed setup or account-risk change."
+        ),
+    )
+    print(f"Regular-session hub refreshed. Candidates: {len(candidates)}")
 
 
 if __name__ == "__main__":

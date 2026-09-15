@@ -1,0 +1,43 @@
+name: Publish command center
+
+on:
+  workflow_run:
+    workflows: ["Alpaca breakout watcher"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        if: github.event_name == 'workflow_dispatch'
+      - name: Download the watcher dashboard
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v5
+        with:
+          name: command-center
+          path: docs
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+      - name: Deploy command center
+        id: deployment
+        uses: actions/deploy-pages@v4
