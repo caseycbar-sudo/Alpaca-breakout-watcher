@@ -80,6 +80,8 @@ class AlpacaClient:
         # secondary: every symbol must still clear all Alpaca, news, SEC, and halt gates.
         social_symbols = self.stocktwits.trending_symbols(limit=30)
         self.stocktwits_status = self.stocktwits.status
+        if hasattr(self, "risk_source_status"):
+            self.risk_source_status["stocktwits"] = self.stocktwits_status
         return list(dict.fromkeys(social_symbols + symbols))[: self.settings.max_symbols]
 
     def snapshots(self, symbols: list[str]) -> dict:
