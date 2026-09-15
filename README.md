@@ -2,7 +2,23 @@
 
 A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
-The watcher scans Alpaca's active/mover universe every five minutes and supplements discovery with Stocktwits trending symbols. Stocktwits is an untrusted secondary attention layer only: it can expand discovery and modestly influence ranking, but it never supplies executable prices, proves a catalyst, or bypasses a safety gate. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation. Every technically qualified name must also clear the official Nasdaq Trader halt feed and SEC EDGAR filing checks before it can reach the roster.
+The watcher has two layers. An always-on Alpaca WebSocket service listens to live trades and quotes and emits conservative **EARLY HEADS-UP** messages within seconds. The existing five-minute scanner remains the confirmation layer: it evaluates catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, SEC filings, Nasdaq halts, and opening-range hold/retest confirmation. Stocktwits supplements discovery as an untrusted attention signal only; it never supplies executable prices or bypasses a gate. Early messages never create paper entries.
+
+## Why the stream service matters
+
+GitHub Actions remains a useful fallback and dashboard publisher, but its scheduler cannot be the fast path. The deployable `src.stream_watcher` process stays connected between events, refreshes the Alpaca mover universe every minute, watches rolling 15-second acceleration and 60-second dollar volume, and wakes the email/verification bridge without waiting for the next five-minute job.
+
+The streaming alert is deliberately preliminary. It requires a 2%–8% session move, a tight live spread, at least $100,000 of rolling 60-second dollar volume, price above rolling VWAP, and at least 0.25% acceleration over 15 seconds. A roster symbol must also be near its stored trigger. Thirty-day RVOL, five-minute RSI/VWAP, catalyst, filings, halts, and second-bar hold/retest remain mandatory in the downstream verification layer.
+
+### Always-on deployment
+
+1. Deploy this repository as a Docker web service using `render.yaml` (or the same `Dockerfile` on Railway, Fly.io, or another host that permits persistent WebSockets).
+2. Add the existing Alpaca paper keys and Gmail secrets to the host. Do not paste secrets into the repository.
+3. Use an always-on plan; a service that sleeps cannot provide seconds-level alerts.
+4. Confirm `/healthz` reports `connected: true`, a recent `last_message_at`, and `orders_enabled: false`.
+5. Keep `.github/workflows/scan.yml` enabled as the slower confirmation/dashboard fallback.
+
+Optional `ALERT_WEBHOOK_URL` and `ALERT_WEBHOOK_TOKEN` variables send the same early signal directly to a private HTTPS endpoint in parallel with email. This is the fastest path to a phone/watch push provider.
 
 ## Trading Command Center
 
@@ -26,7 +42,7 @@ Only public market research and paper simulations are published. Credentials, co
 - A confirmed Nasdaq halt is a hard block.
 - A recent SEC registration/prospectus or filing with offering, dilution, reverse-split, or listing-risk language is a hard block.
 - If either official risk source cannot be verified, the candidate is suppressed instead of assumed safe.
-- Stocktwits outages fall back to Alpaca-only discovery; social posts can never qualify a trade by themselves.
+- Stocktwits outages fall back to Alpaca-only discovery; social activity never qualifies a setup by itself.
 - Premarket alerts are watchlist-only; they cannot create paper entries.
 - Maximum simulated position: $10 from a $50 virtual balance.
 - Maximum three new simulations per market day.
@@ -48,6 +64,10 @@ Only public market research and paper simulations are published. Credentials, co
 | `ALERT_EMAIL_TO` | Address receiving alerts |
 | `GMAIL_APP_PASSWORD` | 16-character Google App Password |
 | `SEC_USER_AGENT` | Optional SEC-compliant app/contact string; falls back to `DriftlineWatcher/1.0` plus the sender address |
+| `ALERT_WEBHOOK_URL` | Optional private HTTPS endpoint for immediate push delivery |
+| `ALERT_WEBHOOK_TOKEN` | Optional bearer token for that endpoint |
+
+Streaming tuning variables are documented in `src/config.py`. Conservative defaults are already supplied; the important defaults are 120 symbols, a 60-second universe refresh, a 10-minute duplicate cooldown, 0.25% minimum 15-second acceleration, and $100,000 minimum rolling dollar volume.
 
 For Gmail, enable 2-Step Verification and create an App Password. Never use a normal Gmail or Alpaca password.
 
@@ -79,7 +99,7 @@ Premarket candidates remain watchlist-only. Regular-session paper entries requir
 
 ## Data caveat
 
-The free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Stocktwits metrics are crowd-attention context, not verified facts, investment advice, or market data. Treat alerts as research and paper simulations, never certainty or financial advice.
+The free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Stocktwits metrics are crowd-attention context, not verified facts or market data. Treat alerts as research and paper simulations, never certainty or financial advice.
 
 ## Local test
 
@@ -87,6 +107,7 @@ The free `iex` feed is not the complete consolidated SIP market. Volume, spread,
 python -m pip install -r requirements.txt
 pytest -q
 python -m src.main
+python -m src.stream_watcher
 ```
 
 Never commit credentials.
