@@ -6,6 +6,14 @@ on:
     # Every five minutes from 4 a.m. through 6 p.m. Eastern across DST changes.
     # The code and Alpaca market clock gate weekends, holidays, premarket, and regular hours.
     - cron: "*/5 8-22 * * 1-5"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "docs/**"
+      - "requirements.txt"
+      - ".github/workflows/scan.yml"
+      - ".github/workflows/pages.yml"
   push:
     branches: [main]
     paths:
@@ -38,6 +46,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
       - name: Run read-only scan and paper lab
+        if: github.event_name != 'pull_request'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -48,7 +57,7 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python -m src.main
       - name: Preserve paper ledger and alert state
-        if: github.event_name != 'push'
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           if git diff --quiet -- data/paper_ledger.csv data/premarket_state.json; then
             exit 0
