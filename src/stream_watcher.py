@@ -36,7 +36,8 @@ from .scanner import AlpacaClient, ET
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
-BUILD_ID = "2026.09.15.5-intelligence-drilldowns"
+CRYPTO_STREAM_ROOT = "wss://stream.data.alpaca.markets/v1beta3/crypto"
+BUILD_ID = "2026.09.15.6-expanded-stocks-crypto"
 
 
 def _utc_now() -> datetime:
@@ -70,6 +71,7 @@ class Tick:
 @dataclass
 class LiveSymbol:
     symbol: str
+    asset_class: str = "stock"
     previous_close: float = 0.0
     bid: float = 0.0
     ask: float = 0.0
@@ -108,8 +110,12 @@ class EarlyWarningEngine:
         trigger: float | None = None,
         previous_volume: float = 0.0,
         session_volume: float = 0.0,
+        asset_class: str = "stock",
     ) -> None:
-        state = self.symbols.setdefault(symbol, LiveSymbol(symbol=symbol))
+        state = self.symbols.setdefault(
+            symbol, LiveSymbol(symbol=symbol, asset_class=asset_class)
+        )
+        state.asset_class = asset_class
         state.previous_close = previous_close or state.previous_close
         state.bid = bid or state.bid
         state.ask = ask or state.ask
@@ -136,26 +142,51 @@ class EarlyWarningEngine:
         fifteen_seconds = state.window(15, now)
         if len(one_minute) < self.settings.stream_min_trade_count or len(fifteen_seconds) < 2:
             return None
-        if not (self.settings.min_price <= state.last_price <= self.settings.max_price):
+        is_crypto = state.asset_class == "crypto"
+        if not is_crypto and not (
+            self.settings.min_price <= state.last_price <= self.settings.max_price
+        ):
             return None
 
         day_move = _pct_change(state.last_price, state.previous_close)
-        if not (self.settings.min_day_move_pct <= day_move <= self.settings.max_day_move_pct):
+        min_day_move = (
+            self.settings.crypto_min_day_move_pct if is_crypto
+            else self.settings.min_day_move_pct
+        )
+        max_day_move = (
+            self.settings.crypto_max_day_move_pct if is_crypto
+            else self.settings.max_day_move_pct
+        )
+        if not (min_day_move <= abs(day_move) <= max_day_move):
             return None
         acceleration = _pct_change(fifteen_seconds[-1].price, fifteen_seconds[0].price)
+        min_acceleration = (
+            self.settings.crypto_min_15s_move_pct if is_crypto
+            else self.settings.stream_min_15s_move_pct
+        )
+        max_acceleration = (
+            self.settings.crypto_max_15s_move_pct if is_crypto
+            else self.settings.stream_max_15s_move_pct
+        )
         if not (
-            self.settings.stream_min_15s_move_pct
-            <= acceleration
-            <= self.settings.stream_max_15s_move_pct
+            min_acceleration <= acceleration <= max_acceleration
         ):
             return None
         spread = _spread_pct(state.bid, state.ask)
-        if spread > self.settings.max_spread_pct:
+        max_spread = (
+            self.settings.crypto_max_spread_pct if is_crypto
+            else self.settings.max_spread_pct
+        )
+        if spread > max_spread:
             return None
 
         volume = sum(tick.size for tick in one_minute)
         dollar_volume = sum(tick.price * tick.size for tick in one_minute)
-        if dollar_volume < self.settings.stream_min_rolling_dollar_volume:
+        min_dollar_volume = (
+            self.settings.crypto_min_rolling_dollar_volume if is_crypto
+            else self.settings.stream_min_rolling_dollar_volume
+        )
+        if dollar_volume < min_dollar_volume:
             return None
         total_volume = sum(tick.size for tick in one_minute)
         rolling_vwap = (
@@ -186,6 +217,7 @@ class EarlyWarningEngine:
         self.last_alert[state.symbol] = now
         return {
             "symbol": state.symbol,
+            "asset_class": state.asset_class,
             "stage": stage,
             "price": state.last_price,
             "bid": state.bid,
@@ -209,11 +241,14 @@ class StreamWatcher:
         self.engine = EarlyWarningEngine(settings)
         self.data_lock = threading.RLock()
         self.subscribed: set[str] = set()
+        self.crypto_subscribed: set[str] = set()
         self.started_at = _utc_now()
         self.last_message_at: datetime | None = None
         self.last_alert_at: datetime | None = None
         self.connected = False
+        self.crypto_connected = False
         self.reconnects = 0
+        self.crypto_reconnects = 0
         self.message_count = 0
         self.trade_count = 0
         self.quote_count = 0
@@ -241,12 +276,15 @@ class StreamWatcher:
             "build": BUILD_ID,
             "mode": "READ ONLY — PAPER TRAINING",
             "connected": self.connected,
+            "crypto_connected": self.crypto_connected,
             "feed": self.settings.feed,
             "symbols": len(self.subscribed),
+            "crypto_symbols": len(self.crypto_subscribed),
             "started_at": self.started_at.isoformat(),
             "last_message_at": self.last_message_at.isoformat() if self.last_message_at else None,
             "last_alert_at": self.last_alert_at.isoformat() if self.last_alert_at else None,
             "reconnects": self.reconnects,
+            "crypto_reconnects": self.crypto_reconnects,
             "message_count": self.message_count,
             "trade_count": self.trade_count,
             "quote_count": self.quote_count,
@@ -285,7 +323,14 @@ class StreamWatcher:
         trigger_distance = (
             _pct_change(state.last_price, state.trigger) if state.trigger else None
         )
-        fraction = self._session_fraction(now)
+        is_crypto = state.asset_class == "crypto"
+        fraction = (
+            max(
+                (now.hour * 3600 + now.minute * 60 + now.second) / 86400.0,
+                1 / 1440.0,
+            )
+            if is_crypto else self._session_fraction(now)
+        )
         estimated_rvol = (
             state.session_volume / (state.previous_volume * fraction)
             if fraction and state.previous_volume > 0 and state.session_volume > 0
@@ -295,37 +340,63 @@ class StreamWatcher:
         reasons: list[str] = []
         status = "SCANNING — BUILDING DATA"
         kind = "scanning"
-        if not (self.settings.min_price <= state.last_price <= self.settings.max_price):
+        min_day_move = (
+            self.settings.crypto_min_day_move_pct if is_crypto
+            else self.settings.min_day_move_pct
+        )
+        max_day_move = (
+            self.settings.crypto_max_day_move_pct if is_crypto
+            else self.settings.max_day_move_pct
+        )
+        min_acceleration = (
+            self.settings.crypto_min_15s_move_pct if is_crypto
+            else self.settings.stream_min_15s_move_pct
+        )
+        max_acceleration = (
+            self.settings.crypto_max_15s_move_pct if is_crypto
+            else self.settings.stream_max_15s_move_pct
+        )
+        min_dollar_volume = (
+            self.settings.crypto_min_rolling_dollar_volume if is_crypto
+            else self.settings.stream_min_rolling_dollar_volume
+        )
+        max_spread = (
+            self.settings.crypto_max_spread_pct if is_crypto
+            else self.settings.max_spread_pct
+        )
+        if not is_crypto and not (
+            self.settings.min_price <= state.last_price <= self.settings.max_price
+        ):
             status, kind = "BLOCKED — PRICE RANGE", "blocked"
             reasons.append("Outside the $0.50–$100 range")
-        elif spread > self.settings.max_spread_pct:
+        elif spread > max_spread:
             status, kind = "BLOCKED — WIDE SPREAD", "blocked"
             reasons.append(
                 "No reliable executable spread" if spread >= 999
-                else f"{spread:.2f}% spread exceeds {self.settings.max_spread_pct:.2f}%"
+                else f"{spread:.2f}% spread exceeds {max_spread:.2f}%"
             )
-        elif day_move > self.settings.max_day_move_pct:
+        elif abs(day_move) > max_day_move:
             status, kind = "BLOCKED — OVEREXTENDED", "blocked"
             reasons.append(f"{day_move:+.2f}% session move exceeds the chase limit")
-        elif day_move < self.settings.min_day_move_pct:
+        elif abs(day_move) < min_day_move:
             status = "SCANNING — BELOW MOVE GATE"
-            reasons.append(f"Needs a {self.settings.min_day_move_pct:.0f}% session move")
+            reasons.append(f"Needs a {min_day_move:.1f}% session move")
         elif len(recent) < self.settings.stream_min_trade_count:
             status = "SCANNING — BUILDING DATA"
             reasons.append(
                 f"{len(recent)}/{self.settings.stream_min_trade_count} recent trades"
             )
-        elif dollar_volume < self.settings.stream_min_rolling_dollar_volume:
+        elif dollar_volume < min_dollar_volume:
             status, kind = "BLOCKED — LOW DOLLAR VOLUME", "blocked"
             reasons.append(
-                f"${dollar_volume:,.0f}/${self.settings.stream_min_rolling_dollar_volume:,.0f} rolling target"
+                f"${dollar_volume:,.0f}/${min_dollar_volume:,.0f} rolling target"
             )
-        elif acceleration < self.settings.stream_min_15s_move_pct:
+        elif acceleration < min_acceleration:
             status = "SCANNING — NO ACCELERATION"
             reasons.append(
-                f"15-second move below {self.settings.stream_min_15s_move_pct:.2f}%"
+                f"15-second move below {min_acceleration:.2f}%"
             )
-        elif acceleration > self.settings.stream_max_15s_move_pct:
+        elif acceleration > max_acceleration:
             status, kind = "BLOCKED — SPIKE RISK", "blocked"
             reasons.append("15-second move exceeds the safe acceleration range")
         elif rolling_vwap <= 0 or state.last_price < rolling_vwap:
@@ -349,9 +420,9 @@ class StreamWatcher:
 
         score = 0.0
         score += min(max((day_move - 1.0) / 5.0, 0.0), 1.0) * 20
-        score += min(max(acceleration / self.settings.stream_min_15s_move_pct, 0.0), 1.0) * 20
-        score += min(dollar_volume / self.settings.stream_min_rolling_dollar_volume, 1.0) * 20
-        score += max(0.0, 1.0 - spread / max(self.settings.max_spread_pct, 0.01)) * 15
+        score += min(max(acceleration / min_acceleration, 0.0), 1.0) * 20
+        score += min(dollar_volume / min_dollar_volume, 1.0) * 20
+        score += max(0.0, 1.0 - spread / max(max_spread, 0.01)) * 15
         score += (15 if rolling_vwap and state.last_price >= rolling_vwap else 0)
         score += min(max((estimated_rvol or 0) / 1.5, 0.0), 1.0) * 10
         if kind == "blocked":
@@ -361,6 +432,7 @@ class StreamWatcher:
 
         return {
             "symbol": state.symbol,
+            "asset_class": state.asset_class,
             "last": state.last_price,
             "bid": state.bid,
             "ask": state.ask,
@@ -391,6 +463,8 @@ class StreamWatcher:
             rows.sort(
                 key=lambda row: (row["score"], row["last_trade_at"]), reverse=True
             )
+            stock_rows = [row for row in rows if row["asset_class"] == "stock"]
+            crypto_rows = [row for row in rows if row["asset_class"] == "crypto"]
             universe = []
             for symbol in sorted(self.subscribed):
                 state = self.engine.symbols.get(symbol)
@@ -402,10 +476,22 @@ class StreamWatcher:
                     "ask": state.ask if state else 0,
                     "previous_close": state.previous_close if state else 0,
                 })
+            crypto_universe = []
+            for symbol in sorted(self.crypto_subscribed):
+                state = self.engine.symbols.get(symbol)
+                crypto_universe.append({
+                    "symbol": symbol,
+                    "last": state.last_price if state else 0,
+                    "bid": state.bid if state else 0,
+                    "ask": state.ask if state else 0,
+                    "previous_close": state.previous_close if state else 0,
+                })
             return {
                 "health": self.health(),
-                "symbols": rows[:30],
+                "symbols": stock_rows[:30],
+                "crypto": crypto_rows[:20],
                 "universe": universe,
+                "crypto_universe": crypto_universe,
                 "messages": list(self.recent_messages),
                 "trades": list(self.recent_trades),
                 "events": list(self.recent_events),
@@ -414,6 +500,13 @@ class StreamWatcher:
                         "name": "Alpaca stream",
                         "state": "live" if self.connected else "reconnecting",
                         "detail": f"{self.settings.feed.upper()} feed",
+                    },
+                    {
+                        "name": "Alpaca crypto",
+                        "state": "live" if self.crypto_connected else (
+                            "disabled" if not self.settings.crypto_enabled else "reconnecting"
+                        ),
+                        "detail": f"{len(self.crypto_subscribed)} pairs · {self.settings.crypto_location}",
                     },
                     {
                         "name": "Market coverage",
@@ -561,12 +654,64 @@ class StreamWatcher:
             self.record_event("Universe updated", detail + ".")
             self._save_cooldowns()
 
+    async def refresh_crypto_universe(self, websocket: Any) -> None:
+        configured = [
+            symbol.strip().upper()
+            for symbol in self.settings.crypto_symbols.split(",")
+            if symbol.strip()
+        ]
+        snapshots = await asyncio.to_thread(self.client.crypto_snapshots, configured)
+        selected = [symbol for symbol in configured if snapshots.get(symbol)]
+        if not selected:
+            raise RuntimeError("No configured crypto pairs returned a current snapshot")
+        with self.data_lock:
+            for symbol in selected:
+                snapshot = snapshots.get(symbol, {})
+                quote = snapshot.get("latestQuote") or {}
+                previous = snapshot.get("prevDailyBar") or {}
+                current = snapshot.get("dailyBar") or {}
+                self.engine.prime(
+                    symbol,
+                    float(previous.get("c") or 0),
+                    float(quote.get("bp") or 0),
+                    float(quote.get("ap") or 0),
+                    previous_volume=float(previous.get("v") or 0),
+                    session_volume=float(current.get("v") or 0),
+                    asset_class="crypto",
+                )
+        await websocket.send(json.dumps({
+            "action": "subscribe",
+            "trades": selected,
+            "quotes": selected,
+            "bars": selected,
+        }))
+        response = json.loads(await websocket.recv())
+        errors = [row for row in response if row.get("T") == "error"]
+        if errors:
+            raise RuntimeError(f"Crypto subscription failed: {errors}")
+        self.crypto_subscribed = set(selected)
+        self.record_event(
+            "Crypto scanner connected",
+            f"Watching {len(selected)} liquid USD pairs around the clock.",
+        )
+        self._save_cooldowns()
+
     def _alert_body(self, signal: dict[str, Any]) -> str:
+        is_crypto = signal.get("asset_class") == "crypto"
         trigger = (
             f"{signal['trigger']:.4f}" if signal.get("trigger") else "dynamic momentum"
         )
+        unit = "units" if is_crypto else "shares"
+        verification = (
+            "Robinhood executable crypto pricing, tested support or a breakout retest, "
+            "five-minute RSI/VWAP, and spread checks are still required."
+            if is_crypto else
+            "Robinhood executable pricing, 30-day RVOL, five-minute RSI/VWAP, "
+            "catalyst, SEC/dilution, halt, and hold/retest checks are still required."
+        )
         return (
             "ALPACA WATCHER EARLY HEADS-UP — PAPER—NO REAL ORDER\n\n"
+            f"Market: {'CRYPTO' if is_crypto else 'STOCK'}\n"
             f"Symbol: {signal['symbol']}\n"
             f"Stage: {signal['stage']}\n"
             f"Trigger: {trigger}\n"
@@ -575,13 +720,12 @@ class StreamWatcher:
             f"Spread: {signal['spread_pct']:.3f}%\n"
             f"Session move: {signal['day_move_pct']:+.2f}%\n"
             f"15-second acceleration: {signal['fifteen_second_move_pct']:+.2f}%\n"
-            f"Rolling 60-second volume: {signal['rolling_volume']:,.0f} shares\n"
+            f"Rolling 60-second volume: {signal['rolling_volume']:,.4f} {unit}\n"
             f"Rolling 60-second dollar volume: ${signal['rolling_dollar_volume']:,.0f}\n"
             f"Rolling 60-second VWAP: {signal['rolling_vwap']:.4f}\n"
             f"Timestamp: {signal['timestamp']}\n\n"
             "This is a preliminary wake-up signal, not a confirmed breakout. "
-            "Robinhood executable pricing, 30-day RVOL, five-minute RSI/VWAP, "
-            "catalyst, SEC/dilution, halt, and hold/retest checks are still required.\n\n"
+            f"{verification}\n\n"
             "PAPER—NO REAL ORDER. No real or paper order was created."
         )
 
@@ -621,7 +765,9 @@ class StreamWatcher:
         )
         self._save_cooldowns()
 
-    async def handle(self, message: dict[str, Any]) -> None:
+    async def handle(
+        self, message: dict[str, Any], asset_class: str = "stock"
+    ) -> None:
         kind = message.get("T")
         symbol = str(message.get("S") or "").upper()
         if not symbol:
@@ -633,8 +779,13 @@ class StreamWatcher:
             self.recent_messages.appendleft({
                 "type": {"q": "Quote", "t": "Trade", "b": "Bar", "s": "Status"}.get(kind, str(kind)),
                 "symbol": symbol,
+                "asset_class": asset_class,
                 "timestamp": timestamp.isoformat(),
             })
+            state = self.engine.symbols.setdefault(
+                symbol, LiveSymbol(symbol=symbol, asset_class=asset_class)
+            )
+            state.asset_class = asset_class
             if kind == "q":
                 self.quote_count += 1
                 self.engine.quote(
@@ -646,6 +797,7 @@ class StreamWatcher:
                 size = float(message.get("s") or 0)
                 self.recent_trades.appendleft({
                     "symbol": symbol,
+                    "asset_class": asset_class,
                     "price": price,
                     "size": size,
                     "notional": price * size,
@@ -696,7 +848,42 @@ class StreamWatcher:
                     await self.refresh_universe(websocket)
                     next_refresh = time.monotonic() + self.settings.stream_refresh_seconds
 
-    async def run(self) -> None:
+    async def connect_crypto_once(self) -> None:
+        url = f"{CRYPTO_STREAM_ROOT}/{self.settings.crypto_location}"
+        ssl_context = ssl.create_default_context()
+        async with websockets.connect(
+            url,
+            ssl=ssl_context,
+            ping_interval=20,
+            ping_timeout=20,
+        ) as websocket:
+            connected = json.loads(await websocket.recv())
+            if not any(
+                row.get("T") == "success" and row.get("msg") == "connected"
+                for row in connected
+            ):
+                raise RuntimeError(f"Alpaca crypto connection failed: {connected}")
+            await websocket.send(json.dumps({
+                "action": "auth",
+                "key": self.settings.api_key,
+                "secret": self.settings.secret_key,
+            }))
+            response = json.loads(await websocket.recv())
+            if not any(
+                row.get("T") == "success" and row.get("msg") == "authenticated"
+                for row in response
+            ):
+                raise RuntimeError(f"Alpaca crypto authentication failed: {response}")
+            await self.refresh_crypto_universe(websocket)
+            self.crypto_connected = True
+            while True:
+                raw = await websocket.recv()
+                for message in json.loads(raw):
+                    if message.get("T") not in {"success", "subscription"}:
+                        self.last_message_at = _utc_now()
+                    await self.handle(message, asset_class="crypto")
+
+    async def run_stocks(self) -> None:
         delay = 1
         while True:
             try:
@@ -711,6 +898,31 @@ class StreamWatcher:
                 print(f"Stream disconnected: {exc}; retrying in {delay}s", flush=True)
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, 60)
+
+    async def run_crypto(self) -> None:
+        delay = 1
+        while True:
+            try:
+                await self.connect_crypto_once()
+                delay = 1
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                self.crypto_connected = False
+                self.crypto_reconnects += 1
+                self.record_event(
+                    "Crypto connection interrupted",
+                    f"Retrying automatically in {delay} seconds.",
+                )
+                print(f"Crypto stream disconnected: {exc}; retrying in {delay}s", flush=True)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 60)
+
+    async def run(self) -> None:
+        tasks = [self.run_stocks()]
+        if self.settings.crypto_enabled:
+            tasks.append(self.run_crypto())
+        await asyncio.gather(*tasks)
 
 
 def start_health_server(watcher: StreamWatcher) -> ThreadingHTTPServer:
