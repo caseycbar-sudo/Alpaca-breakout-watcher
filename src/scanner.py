@@ -104,6 +104,58 @@ class AlpacaClient:
         )
         return payload.get("snapshots", payload)
 
+    def option_contracts(
+        self,
+        underlying: str,
+        expiration_start: str,
+        expiration_end: str,
+        strike_min: float,
+        strike_max: float,
+        limit: int = 1000,
+    ) -> list[dict]:
+        """Return active option contracts near the underlying price.
+
+        This is reference data only. The client intentionally has no options order
+        endpoint and cannot submit, replace, or cancel an option order.
+        """
+        payload = self._get(
+            PAPER_URL,
+            "/v2/options/contracts",
+            {
+                "underlying_symbols": underlying,
+                "status": "active",
+                "expiration_date_gte": expiration_start,
+                "expiration_date_lte": expiration_end,
+                "strike_price_gte": f"{strike_min:.4f}",
+                "strike_price_lte": f"{strike_max:.4f}",
+                "limit": min(max(limit, 1), 1000),
+            },
+        )
+        return payload.get("option_contracts", payload.get("contracts", []))
+
+    def option_daily_bars(
+        self, symbols: list[str], start: datetime
+    ) -> dict[str, list[dict]]:
+        """Return the current session's read-only daily option bars in batches."""
+        output: dict[str, list[dict]] = {}
+        for offset in range(0, len(symbols), 100):
+            batch = symbols[offset : offset + 100]
+            payload = self._get(
+                DATA_URL,
+                "/v1beta1/options/bars",
+                {
+                    "symbols": ",".join(batch),
+                    "timeframe": "1Day",
+                    "start": start.astimezone(timezone.utc).isoformat(),
+                    "feed": self.settings.options_feed,
+                    "limit": 10000,
+                    "sort": "desc",
+                },
+            )
+            for symbol, rows in payload.get("bars", {}).items():
+                output.setdefault(symbol, []).extend(rows)
+        return output
+
     def bars(
         self, symbols: list[str], timeframe: str, start: datetime, limit_pages: int = 12
     ) -> dict[str, list[dict]]:

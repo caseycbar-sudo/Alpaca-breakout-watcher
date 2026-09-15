@@ -2,7 +2,7 @@
 
 A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
-The watcher has two layers. Separate always-on Alpaca WebSocket services listen to live stock and crypto trades and quotes and emit conservative **EARLY HEADS-UP** messages within seconds. The stock feed dynamically follows up to 180 active names; the independent 24/7 crypto feed follows ten liquid USD pairs. The existing five-minute scanner remains the confirmation layer: it evaluates catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, SEC filings, Nasdaq halts, and opening-range hold/retest confirmation. Stocktwits supplements discovery as an untrusted attention signal only; it never supplies executable prices or bypasses a gate. Early messages never create paper entries.
+The watcher has two layers. Separate always-on Alpaca WebSocket services listen to live stock and crypto trades and quotes and emit conservative **EARLY HEADS-UP** messages within seconds. The stock feed dynamically follows up to 180 active names; the independent 24/7 crypto feed follows ten liquid USD pairs. A bounded options-volume monitor follows near-the-money contracts on SPY, QQQ, and the highest-ranked stocks, showing call volume, put volume, put/call ratio, volume versus open interest, estimated premium, and the busiest contract. The existing five-minute scanner remains the confirmation layer: it evaluates catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, SEC filings, Nasdaq halts, and opening-range hold/retest confirmation. Stocktwits supplements discovery as an untrusted attention signal only; it never supplies executable prices or bypasses a gate. Early messages never create paper entries.
 
 ## Why the stream service matters
 
@@ -17,7 +17,7 @@ The streaming alert is deliberately preliminary. Stocks require a 2%–8% sessio
 1. On the repository page, choose **Code → Download ZIP**, then open the downloaded folder.
 2. Open the `macos` folder and double-click **Install Driftline Watcher.command**. If macOS blocks it, Control-click the file, choose **Open**, then confirm **Open**.
 3. Enter the Alpaca **paper-account** API key, paper secret key, and Gmail's 16-character App Password when asked. Secret typing is hidden. The two email addresses are already set to `caseycbarai@gmail.com` → `caseycbar@gmail.com`.
-4. The installer opens the private [live scanner dashboard](http://127.0.0.1:8765/). It shows independent stock and crypto connection health, expanded stock coverage, the 24/7 crypto rankings, message counts, latest live trades, watcher activity, and a safe bridge-test button. The technical JSON remains available at [healthz](http://127.0.0.1:8765/healthz).
+4. The installer opens the private [live scanner dashboard](http://127.0.0.1:8765/). It shows independent stock, crypto, and options health; expanded stock coverage; the 24/7 crypto rankings; call/put session volume; clickable contract details; message counts; latest live trades; watcher activity; and a safe bridge-test button. The technical JSON remains available at [healthz](http://127.0.0.1:8765/healthz).
 5. Use **Check Driftline Status.command**, **Start Driftline Watcher.command**, or **Stop Driftline Watcher.command** at any time.
 
 The Mac service starts at login, automatically restarts after a crash, and prevents idle sleep while it is running. The installer copies the working program into `~/Library/Application Support/DriftlineWatcher/app`, so the downloaded ZIP may be moved or deleted afterward. Keep the Mac powered on, logged in, connected to the internet, and leave a MacBook lid open during market hours. Credentials are stored only in `~/Library/Application Support/DriftlineWatcher/watcher.env`, protected with owner-only permissions; they are never written to the repository or dashboard. GitHub Actions remains the five-minute backup and confirmation scan.
@@ -58,6 +58,13 @@ the current session pace versus the prior session because calculating full 30-da
 RVOL for 120 symbols on every streaming tick would be both slower and misleading on
 the free IEX sample. The five-minute confirmation layer still performs the complete
 30-day RVOL, RSI, catalyst, SEC, halt, Robinhood, and hold/retest checks.
+
+Options volume is confirmation context, not a directional signal. A call trade can be
+an opening purchase, a closing sale, or one leg of a spread; the same ambiguity applies
+to puts. Driftline therefore never labels raw call volume as automatically bullish or
+raw put volume as automatically bearish. It polls only a bounded near-money chain every
+two minutes, keeps stock and crypto scanning alive if the options entitlement is absent,
+and never enables options trading.
 
 Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
 

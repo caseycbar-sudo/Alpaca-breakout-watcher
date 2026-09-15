@@ -21,6 +21,18 @@ class Settings:
         "CRYPTO_STREAM_SYMBOLS",
         "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD",
     )
+    options_enabled: bool = os.getenv("OPTIONS_VOLUME_ENABLED", "true").lower() not in {
+        "0", "false", "no", "off"
+    }
+    options_feed: str = os.getenv("OPTIONS_DATA_FEED", "indicative")
+    options_core_symbols: str = os.getenv("OPTIONS_CORE_SYMBOLS", "SPY,QQQ")
+    options_top_symbols: int = int(os.getenv("OPTIONS_TOP_SYMBOLS", "5"))
+    options_poll_seconds: int = int(os.getenv("OPTIONS_POLL_SECONDS", "120"))
+    options_expiration_days: int = int(os.getenv("OPTIONS_EXPIRATION_DAYS", "21"))
+    options_strike_band_pct: float = float(os.getenv("OPTIONS_STRIKE_BAND_PCT", "12"))
+    options_max_contracts_per_symbol: int = int(
+        os.getenv("OPTIONS_MAX_CONTRACTS_PER_SYMBOL", "250")
+    )
     stream_refresh_seconds: int = int(os.getenv("STREAM_REFRESH_SECONDS", "60"))
     stream_cooldown_seconds: int = int(os.getenv("STREAM_COOLDOWN_SECONDS", "600"))
     stream_min_trade_count: int = int(os.getenv("STREAM_MIN_TRADE_COUNT", "20"))

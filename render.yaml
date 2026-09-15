@@ -24,3 +24,13 @@ services:
         value: "60"
       - key: STREAM_COOLDOWN_SECONDS
         value: "600"
+      - key: OPTIONS_VOLUME_ENABLED
+        value: "true"
+      - key: OPTIONS_DATA_FEED
+        value: indicative
+      - key: OPTIONS_CORE_SYMBOLS
+        value: SPY,QQQ
+      - key: OPTIONS_TOP_SYMBOLS
+        value: "5"
+      - key: OPTIONS_POLL_SECONDS
+        value: "120"
