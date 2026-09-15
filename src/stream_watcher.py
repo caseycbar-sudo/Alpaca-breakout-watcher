@@ -14,13 +14,18 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
+import ssl
 import threading
 import time
 from typing import Any
 
-import certifi
+import truststore
+
+# Use the native certificate store. On macOS this means certificates trusted by
+# Apple Keychain also work for both Requests and the Alpaca WebSocket.
+truststore.inject_into_ssl()
+
 import requests
-import ssl
 import websockets
 
 from .config import Settings
@@ -30,6 +35,7 @@ from .scanner import AlpacaClient, ET
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
+BUILD_ID = "2026.09.15.3-macos-keychain"
 
 
 def _utc_now() -> datetime:
@@ -205,6 +211,7 @@ class StreamWatcher:
     def health(self) -> dict[str, Any]:
         return {
             "status": "ok" if self.connected else "starting",
+            "build": BUILD_ID,
             "mode": "READ ONLY — PAPER TRAINING",
             "connected": self.connected,
             "feed": self.settings.feed,
@@ -368,9 +375,7 @@ class StreamWatcher:
 
     async def connect_once(self) -> None:
         url = f"{STREAM_ROOT}/{self.settings.feed}"
-        # Python.org macOS installs do not always inherit the Keychain trust store.
-        # Certifi provides a current CA bundle for Alpaca's TLS certificate chain.
-        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        ssl_context = ssl.create_default_context()
         async with websockets.connect(
             url,
             ssl=ssl_context,
