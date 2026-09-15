@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from src.config import Settings
-from src.stream_watcher import EarlyWarningEngine
+from src.stream_watcher import EarlyWarningEngine, StreamWatcher
 
 
 def settings() -> Settings:
@@ -57,3 +57,20 @@ def test_wide_spread_is_rejected():
     for seconds, price in [(12, 10.05), (9, 10.06), (6, 10.07), (0, 10.10)]:
         result = engine.trade("TEST", price, 100, now - timedelta(seconds=seconds))
     assert result is None
+
+
+def test_live_snapshot_exposes_recent_scanning_activity():
+    watcher = StreamWatcher(settings())
+    watcher.subscribed = {"TEST"}
+    watcher.engine.prime("TEST", previous_close=9.80, bid=10.09, ask=10.10)
+    watcher.engine.trade("TEST", 10.10, 100, datetime.now(timezone.utc))
+    watcher.message_count = 1
+    watcher.trade_count = 1
+    watcher.record_event("Universe refreshed", "Scanning one symbol.")
+
+    snapshot = watcher.live_snapshot()
+
+    assert snapshot["health"]["orders_enabled"] is False
+    assert snapshot["health"]["message_count"] == 1
+    assert snapshot["symbols"][0]["symbol"] == "TEST"
+    assert snapshot["events"][0]["title"] == "Universe refreshed"

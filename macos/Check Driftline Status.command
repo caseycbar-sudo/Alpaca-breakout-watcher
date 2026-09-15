@@ -3,6 +3,7 @@ set -u
 
 LABEL="com.driftline.market-watcher"
 HEALTH_URL="http://127.0.0.1:8765/healthz"
+DASHBOARD_URL="http://127.0.0.1:8765/"
 LOG_DIR="$HOME/Library/Logs/DriftlineWatcher"
 
 clear
@@ -18,7 +19,7 @@ fi
 if HEALTH="$(curl --silent --fail --max-time 3 "$HEALTH_URL" 2>/dev/null)"; then
   printf "Health page: %s\n\n" "$HEALTH_URL"
   printf "%s\n" "$HEALTH"
-  open "$HEALTH_URL"
+  open "$DASHBOARD_URL"
 else
   printf "Health page: NOT RESPONDING\n"
 fi

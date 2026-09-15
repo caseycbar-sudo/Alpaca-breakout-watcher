@@ -30,12 +30,13 @@ import websockets
 
 from .config import Settings
 from .emailer import send_email
+from .live_dashboard import dashboard_page
 from .premarket import STATE_PATH as ROSTER_PATH
 from .scanner import AlpacaClient, ET
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
-BUILD_ID = "2026.09.15.3-macos-keychain"
+BUILD_ID = "2026.09.15.4-live-dashboard"
 
 
 def _utc_now() -> datetime:
@@ -206,7 +207,22 @@ class StreamWatcher:
         self.last_alert_at: datetime | None = None
         self.connected = False
         self.reconnects = 0
+        self.message_count = 0
+        self.trade_count = 0
+        self.quote_count = 0
+        self.alert_count = 0
+        self.last_universe_refresh_at: datetime | None = None
+        self.recent_events: deque[dict[str, str]] = deque(maxlen=80)
+        self.last_test_at: datetime | None = None
         self._load_cooldowns()
+
+    def record_event(self, title: str, detail: str, kind: str = "info") -> None:
+        self.recent_events.appendleft({
+            "title": title,
+            "detail": detail,
+            "kind": kind,
+            "timestamp": _utc_now().isoformat(),
+        })
 
     def health(self) -> dict[str, Any]:
         return {
@@ -220,8 +236,68 @@ class StreamWatcher:
             "last_message_at": self.last_message_at.isoformat() if self.last_message_at else None,
             "last_alert_at": self.last_alert_at.isoformat() if self.last_alert_at else None,
             "reconnects": self.reconnects,
+            "message_count": self.message_count,
+            "trade_count": self.trade_count,
+            "quote_count": self.quote_count,
+            "alert_count": self.alert_count,
+            "last_universe_refresh_at": (
+                self.last_universe_refresh_at.isoformat()
+                if self.last_universe_refresh_at else None
+            ),
             "orders_enabled": False,
         }
+
+    def live_snapshot(self) -> dict[str, Any]:
+        now = _utc_now()
+        rows: list[dict[str, Any]] = []
+        for state in self.engine.symbols.values():
+            if not state.ticks or state.last_price <= 0:
+                continue
+            recent = state.window(60, now)
+            fast = state.window(15, now)
+            acceleration = (
+                _pct_change(fast[-1].price, fast[0].price) if len(fast) > 1 else 0.0
+            )
+            rows.append({
+                "symbol": state.symbol,
+                "last": state.last_price,
+                "bid": state.bid,
+                "ask": state.ask,
+                "day_move_pct": _pct_change(state.last_price, state.previous_close),
+                "acceleration_pct": acceleration,
+                "volume_60s": sum(tick.size for tick in recent),
+                "spread_pct": _spread_pct(state.bid, state.ask),
+                "last_trade_at": state.ticks[-1].timestamp.isoformat(),
+            })
+        rows.sort(key=lambda row: row["last_trade_at"], reverse=True)
+        return {
+            "health": self.health(),
+            "symbols": rows[:30],
+            "events": list(self.recent_events),
+        }
+
+    def send_test_alert(self) -> bool:
+        now = _utc_now()
+        if self.last_test_at and (now - self.last_test_at).total_seconds() < 30:
+            return False
+        self.last_test_at = now
+        subject = "ALPACA WATCHER HEALTHCHECK — LOCAL DASHBOARD TEST"
+        body = (
+            "BRIDGE HEALTHCHECK REQUEST\n\n"
+            "The Driftline Mac watcher dashboard sent this safe test.\n"
+            f"Watcher connected: {self.connected}\n"
+            f"Symbols watched: {len(self.subscribed)}\n"
+            f"Live messages inspected: {self.message_count:,}\n"
+            f"Timestamp: {now.isoformat()}\n\n"
+            "PAPER—NO REAL ORDER. No real or paper order was created."
+        )
+        sent = send_email(self.settings, subject, body)
+        self.record_event(
+            "Safe test alert sent" if sent else "Test alert not sent",
+            "Gmail bridge test; no order was created.",
+            "alert" if sent else "info",
+        )
+        return sent
 
     def _load_cooldowns(self) -> None:
         path = Path(self.settings.stream_state_path)
@@ -299,6 +375,11 @@ class StreamWatcher:
                 "bars": batch,
             }))
         self.subscribed = set(selected)
+        self.last_universe_refresh_at = _utc_now()
+        self.record_event(
+            "Universe refreshed",
+            f"Scanning {len(self.subscribed)} live symbols for early momentum.",
+        )
 
     def _alert_body(self, signal: dict[str, Any]) -> str:
         trigger = (
@@ -352,6 +433,12 @@ class StreamWatcher:
             flush=True,
         )
         self.last_alert_at = _utc_now()
+        self.alert_count += 1
+        self.record_event(
+            f"Early heads-up: {signal['symbol']}",
+            f"{signal['stage']} at {signal['price']:.4f}; verification required.",
+            "alert",
+        )
         self._save_cooldowns()
 
     async def handle(self, message: dict[str, Any]) -> None:
@@ -359,11 +446,14 @@ class StreamWatcher:
         symbol = str(message.get("S") or "").upper()
         if not symbol:
             return
+        self.message_count += 1
         if kind == "q":
+            self.quote_count += 1
             self.engine.quote(
                 symbol, float(message.get("bp") or 0), float(message.get("ap") or 0)
             )
         elif kind == "t":
+            self.trade_count += 1
             signal = self.engine.trade(
                 symbol,
                 float(message.get("p") or 0),
@@ -397,6 +487,7 @@ class StreamWatcher:
             if not any(row.get("T") == "success" and row.get("msg") == "authenticated" for row in response):
                 raise RuntimeError(f"Alpaca stream authentication failed: {response}")
             self.connected = True
+            self.record_event("Alpaca connected", f"Authenticated to the {self.settings.feed.upper()} live feed.")
             await self.refresh_universe(websocket)
             next_refresh = time.monotonic() + self.settings.stream_refresh_seconds
             while True:
@@ -424,6 +515,7 @@ class StreamWatcher:
             except Exception as exc:
                 self.connected = False
                 self.reconnects += 1
+                self.record_event("Connection interrupted", f"Retrying automatically in {delay} seconds.")
                 print(f"Stream disconnected: {exc}; retrying in {delay}s", flush=True)
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, 60)
@@ -432,13 +524,43 @@ class StreamWatcher:
 def start_health_server(watcher: StreamWatcher) -> ThreadingHTTPServer:
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
-            if self.path not in {"/", "/healthz"}:
+            if self.path == "/":
+                body = dashboard_page()
+                content_type = "text/html; charset=utf-8"
+            elif self.path == "/healthz":
+                body = json.dumps(watcher.health()).encode("utf-8")
+                content_type = "application/json"
+            elif self.path == "/api/live":
+                body = json.dumps(watcher.live_snapshot()).encode("utf-8")
+                content_type = "application/json"
+            else:
                 self.send_response(404)
                 self.end_headers()
                 return
-            body = json.dumps(watcher.health()).encode("utf-8")
             self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self) -> None:  # noqa: N802
+            if self.path != "/api/test-alert":
+                self.send_response(404)
+                self.end_headers()
+                return
+            try:
+                sent = watcher.send_test_alert()
+                payload = {"ok": sent, "message": "Wait 30 seconds before another test." if not sent else "Test sent."}
+                status = 200 if sent else 429
+            except Exception as exc:
+                print(f"Dashboard test alert failed: {exc}", flush=True)
+                payload = {"ok": False, "message": "Gmail test failed; check the watcher log."}
+                status = 502
+            body = json.dumps(payload).encode("utf-8")
+            self.send_response(status)
             self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -446,7 +568,7 @@ def start_health_server(watcher: StreamWatcher) -> ThreadingHTTPServer:
         def log_message(self, format: str, *args: Any) -> None:
             return
 
-    server = ThreadingHTTPServer(("0.0.0.0", watcher.settings.health_port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", watcher.settings.health_port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 
