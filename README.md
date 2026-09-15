@@ -45,6 +45,20 @@ The command center shows:
 - live connection status for Stocktwits, SEC EDGAR, and the Nasdaq Trader halt feed;
 - a linked audit entry when a halt, offering, dilution, reverse split, or listing risk blocks a setup.
 
+The Mac's private live dashboard adds seconds-level transparency without publishing
+private data. It ranks the most active incoming symbols, assigns a 0–100 early-quality
+score, and shows the exact reason a symbol is still scanning, blocked, or ready for
+downstream verification. Trigger distance, rolling VWAP, 60-second dollar volume,
+estimated intraday relative-volume pace, executable spread, and source health are
+visible together. The Symbols Watched, Market Messages, and Trades Inspected counters
+open drill-down views, and meaningful activity history survives service restarts.
+
+The live score is an early-warning ranking, not trade approval. Estimated RVOL uses
+the current session pace versus the prior session because calculating full 30-day
+RVOL for 120 symbols on every streaming tick would be both slower and misleading on
+the free IEX sample. The five-minute confirmation layer still performs the complete
+30-day RVOL, RSI, catalyst, SEC, halt, Robinhood, and hold/retest checks.
+
 Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
 
 ## Safety design
