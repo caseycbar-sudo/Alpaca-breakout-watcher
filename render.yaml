@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: driftline-market-stream
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_DATA_FEED
+        value: iex
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: STREAM_MAX_SYMBOLS
+        value: "120"
+      - key: STREAM_REFRESH_SECONDS
+        value: "60"
+      - key: STREAM_COOLDOWN_SECONDS
+        value: "600"

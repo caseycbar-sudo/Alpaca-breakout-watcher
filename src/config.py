@@ -12,6 +12,26 @@ class Settings:
     gmail_app_password: str = os.getenv("GMAIL_APP_PASSWORD", "")
     sec_user_agent: str = os.getenv("SEC_USER_AGENT", "")
     max_symbols: int = int(os.getenv("MAX_SYMBOLS", "120"))
+    stream_max_symbols: int = int(os.getenv("STREAM_MAX_SYMBOLS", "120"))
+    stream_refresh_seconds: int = int(os.getenv("STREAM_REFRESH_SECONDS", "60"))
+    stream_cooldown_seconds: int = int(os.getenv("STREAM_COOLDOWN_SECONDS", "600"))
+    stream_min_trade_count: int = int(os.getenv("STREAM_MIN_TRADE_COUNT", "20"))
+    stream_min_rolling_dollar_volume: float = float(
+        os.getenv("STREAM_MIN_ROLLING_DOLLAR_VOLUME", "100000")
+    )
+    stream_min_15s_move_pct: float = float(
+        os.getenv("STREAM_MIN_15S_MOVE_PCT", "0.25")
+    )
+    stream_max_15s_move_pct: float = float(
+        os.getenv("STREAM_MAX_15S_MOVE_PCT", "2.50")
+    )
+    stream_trigger_proximity_pct: float = float(
+        os.getenv("STREAM_TRIGGER_PROXIMITY_PCT", "0.35")
+    )
+    stream_state_path: str = os.getenv("STREAM_STATE_PATH", "data/stream_state.json")
+    alert_webhook_url: str = os.getenv("ALERT_WEBHOOK_URL", "")
+    alert_webhook_token: str = os.getenv("ALERT_WEBHOOK_TOKEN", "")
+    health_port: int = int(os.getenv("PORT", "8080"))
 
     min_price: float = 0.50
     max_price: float = 100.00
