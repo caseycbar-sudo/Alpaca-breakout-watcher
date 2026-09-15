@@ -12,6 +12,7 @@ LAUNCH_DIR="$HOME/Library/LaunchAgents"
 PLIST="$LAUNCH_DIR/$LABEL.plist"
 RUNNER="$SUPPORT_DIR/run_watcher.sh"
 HEALTH_URL="http://127.0.0.1:8765/healthz"
+DASHBOARD_URL="http://127.0.0.1:8765/"
 
 pause() {
   printf "\nPress Return to close this window."
@@ -135,10 +136,10 @@ for _ in {1..20}; do
     printf "\n%s\n" "$HEALTH"
     if printf "%s" "$HEALTH" | grep -q '"connected": true'; then
       printf "\nSUCCESS: Driftline is connected and watching the market.\n"
-      printf "Status page: %s\n" "$HEALTH_URL"
+      printf "Live dashboard: %s\n" "$DASHBOARD_URL"
       printf "Logs: %s\n" "$LOG_DIR"
       printf "Keep this Mac powered on, awake, and connected during market hours.\n"
-      open "$HEALTH_URL"
+      open "$DASHBOARD_URL"
       pause
       exit 0
     fi
