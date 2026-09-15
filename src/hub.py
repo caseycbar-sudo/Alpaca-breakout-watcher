@@ -25,6 +25,8 @@ def _public_candidate(row: dict) -> dict:
         "breakout_level", "technical_stop", "stage", "confirmation", "setup",
         "market_context", "news_headline", "news_time", "news_url", "score",
         "halt_check", "sec_check", "sec_filings", "risk_sources",
+        "stocktwits_message_count_1h", "stocktwits_bullish_pct",
+        "stocktwits_bearish_pct", "stocktwits_url", "stocktwits_role",
     )
     return {key: row[key] for key in keys if key in row}
 
@@ -100,7 +102,8 @@ def publish_hub(
                 f"{row.get('setup') or row.get('stage', 'watching')} · "
                 f"RVOL {float(row.get('relative_volume', 0)):.2f}x · "
                 f"RSI {float(row.get('rsi', 0)):.1f} · "
-                f"spread {float(row.get('spread_pct', 0)):.3f}%"
+                f"spread {float(row.get('spread_pct', 0)):.3f}% · "
+                f"Stocktwits {int(row.get('stocktwits_message_count_1h', 0))} posts/1h"
             ),
             "source_url": row.get("news_url", ""),
         })
@@ -137,6 +140,7 @@ def publish_hub(
             "paper_open_orders": len(account.get("open_orders") or []),
             "sec_edgar": sources.get("sec_edgar", "not checked"),
             "nasdaq_halts": sources.get("nasdaq_halts", "not checked"),
+            "stocktwits": sources.get("stocktwits", "not checked"),
             "note": note,
         },
         "candidates": roster,
@@ -151,6 +155,7 @@ def publish_hub(
             {"label": "Spread", "rule": "0.40% maximum"},
             {"label": "VWAP", "rule": "above; within one ATR"},
             {"label": "Catalyst", "rule": "verified news within 24 hours"},
+            {"label": "Stocktwits", "rule": "attention/ranking only; never confirmation"},
             {"label": "SEC filing", "rule": "no fresh offering, dilution or listing risk"},
             {"label": "Trading halt", "rule": "clear on Nasdaq Trader's official feed"},
             {"label": "Confirmation", "rule": "second-bar hold or first retest"},
@@ -159,6 +164,7 @@ def publish_hub(
             "public_data": "Market research and paper simulations only",
             "private_data": "Robinhood verification remains inside ChatGPT",
             "orders": "No real-order code exists in this repository",
+            "social_data": "Stocktwits is untrusted attention data, never a catalyst or quote",
         },
     }
     HUB_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
