@@ -93,6 +93,17 @@ class AlpacaClient:
             {"symbols": ",".join(symbols), "feed": self.settings.feed},
         )
 
+    def crypto_snapshots(self, symbols: list[str]) -> dict:
+        """Return read-only crypto snapshots from Alpaca's US venue."""
+        if not symbols:
+            return {}
+        payload = self._get(
+            DATA_URL,
+            f"/v1beta3/crypto/{self.settings.crypto_location}/snapshots",
+            {"symbols": ",".join(symbols)},
+        )
+        return payload.get("snapshots", payload)
+
     def bars(
         self, symbols: list[str], timeframe: str, start: datetime, limit_pages: int = 12
     ) -> dict[str, list[dict]]:

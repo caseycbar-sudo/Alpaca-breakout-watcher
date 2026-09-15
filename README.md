@@ -2,13 +2,13 @@
 
 A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
-The watcher has two layers. An always-on Alpaca WebSocket service listens to live trades and quotes and emits conservative **EARLY HEADS-UP** messages within seconds. The existing five-minute scanner remains the confirmation layer: it evaluates catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, SEC filings, Nasdaq halts, and opening-range hold/retest confirmation. Stocktwits supplements discovery as an untrusted attention signal only; it never supplies executable prices or bypasses a gate. Early messages never create paper entries.
+The watcher has two layers. Separate always-on Alpaca WebSocket services listen to live stock and crypto trades and quotes and emit conservative **EARLY HEADS-UP** messages within seconds. The stock feed dynamically follows up to 180 active names; the independent 24/7 crypto feed follows ten liquid USD pairs. The existing five-minute scanner remains the confirmation layer: it evaluates catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, SEC filings, Nasdaq halts, and opening-range hold/retest confirmation. Stocktwits supplements discovery as an untrusted attention signal only; it never supplies executable prices or bypasses a gate. Early messages never create paper entries.
 
 ## Why the stream service matters
 
 GitHub Actions remains a useful fallback and dashboard publisher, but its scheduler cannot be the fast path. The deployable `src.stream_watcher` process stays connected between events, refreshes the Alpaca mover universe every minute, watches rolling 15-second acceleration and 60-second dollar volume, and wakes the email/verification bridge without waiting for the next five-minute job.
 
-The streaming alert is deliberately preliminary. It requires a 2%–8% session move, a tight live spread, at least $100,000 of rolling 60-second dollar volume, price above rolling VWAP, and at least 0.25% acceleration over 15 seconds. A roster symbol must also be near its stored trigger. Thirty-day RVOL, five-minute RSI/VWAP, catalyst, filings, halts, and second-bar hold/retest remain mandatory in the downstream verification layer.
+The streaming alert is deliberately preliminary. Stocks require a 2%–8% session move, a tight live spread, at least $100,000 of rolling 60-second dollar volume, price above rolling VWAP, and at least 0.25% acceleration over 15 seconds. A roster symbol must also be near its stored trigger. The crypto scanner uses crypto-specific thresholds, but still refuses wide spreads and low-dollar-volume spikes; its alert must be verified against Robinhood pricing and a tested-support or breakout-retest pattern. Thirty-day stock RVOL, five-minute RSI/VWAP, catalyst, filings, halts, and second-bar hold/retest remain mandatory in the downstream verification layer.
 
 ### Always-on deployment
 
@@ -17,7 +17,7 @@ The streaming alert is deliberately preliminary. It requires a 2%–8% session m
 1. On the repository page, choose **Code → Download ZIP**, then open the downloaded folder.
 2. Open the `macos` folder and double-click **Install Driftline Watcher.command**. If macOS blocks it, Control-click the file, choose **Open**, then confirm **Open**.
 3. Enter the Alpaca **paper-account** API key, paper secret key, and Gmail's 16-character App Password when asked. Secret typing is hidden. The two email addresses are already set to `caseycbarai@gmail.com` → `caseycbar@gmail.com`.
-4. The installer opens the private [live scanner dashboard](http://127.0.0.1:8765/). It shows the connection, symbols, message counts, latest live trades, watcher activity, and a safe bridge-test button. The technical JSON remains available at [healthz](http://127.0.0.1:8765/healthz).
+4. The installer opens the private [live scanner dashboard](http://127.0.0.1:8765/). It shows independent stock and crypto connection health, expanded stock coverage, the 24/7 crypto rankings, message counts, latest live trades, watcher activity, and a safe bridge-test button. The technical JSON remains available at [healthz](http://127.0.0.1:8765/healthz).
 5. Use **Check Driftline Status.command**, **Start Driftline Watcher.command**, or **Stop Driftline Watcher.command** at any time.
 
 The Mac service starts at login, automatically restarts after a crash, and prevents idle sleep while it is running. The installer copies the working program into `~/Library/Application Support/DriftlineWatcher/app`, so the downloaded ZIP may be moved or deleted afterward. Keep the Mac powered on, logged in, connected to the internet, and leave a MacBook lid open during market hours. Credentials are stored only in `~/Library/Application Support/DriftlineWatcher/watcher.env`, protected with owner-only permissions; they are never written to the repository or dashboard. GitHub Actions remains the five-minute backup and confirmation scan.
@@ -93,7 +93,7 @@ Only public market research and paper simulations are published. Credentials, co
 | `ALERT_WEBHOOK_URL` | Optional private HTTPS endpoint for immediate push delivery |
 | `ALERT_WEBHOOK_TOKEN` | Optional bearer token for that endpoint |
 
-Streaming tuning variables are documented in `src/config.py`. Conservative defaults are already supplied; the important defaults are 120 symbols, a 60-second universe refresh, a 10-minute duplicate cooldown, 0.25% minimum 15-second acceleration, and $100,000 minimum rolling dollar volume.
+Streaming tuning variables are documented in `src/config.py`. Conservative defaults are already supplied; the important defaults are up to 180 stocks, ten liquid crypto/USD pairs, a 60-second stock-universe refresh, a 10-minute duplicate cooldown, 0.25% minimum stock acceleration, and $100,000 minimum rolling stock dollar volume. Crypto runs around the clock on its separate Alpaca `v1beta3` stream with lower but still liquidity-gated early-warning thresholds.
 
 For Gmail, enable 2-Step Verification and create an App Password. Never use a normal Gmail or Alpaca password.
 

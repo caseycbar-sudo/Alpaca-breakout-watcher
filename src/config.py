@@ -11,8 +11,16 @@ class Settings:
     email_to: str = os.getenv("ALERT_EMAIL_TO", "")
     gmail_app_password: str = os.getenv("GMAIL_APP_PASSWORD", "")
     sec_user_agent: str = os.getenv("SEC_USER_AGENT", "")
-    max_symbols: int = int(os.getenv("MAX_SYMBOLS", "120"))
-    stream_max_symbols: int = int(os.getenv("STREAM_MAX_SYMBOLS", "120"))
+    max_symbols: int = int(os.getenv("MAX_SYMBOLS", "180"))
+    stream_max_symbols: int = int(os.getenv("STREAM_MAX_SYMBOLS", "180"))
+    crypto_enabled: bool = os.getenv("CRYPTO_STREAM_ENABLED", "true").lower() not in {
+        "0", "false", "no", "off"
+    }
+    crypto_location: str = os.getenv("CRYPTO_DATA_LOCATION", "us")
+    crypto_symbols: str = os.getenv(
+        "CRYPTO_STREAM_SYMBOLS",
+        "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD",
+    )
     stream_refresh_seconds: int = int(os.getenv("STREAM_REFRESH_SECONDS", "60"))
     stream_cooldown_seconds: int = int(os.getenv("STREAM_COOLDOWN_SECONDS", "600"))
     stream_min_trade_count: int = int(os.getenv("STREAM_MIN_TRADE_COUNT", "20"))
@@ -28,6 +36,14 @@ class Settings:
     stream_trigger_proximity_pct: float = float(
         os.getenv("STREAM_TRIGGER_PROXIMITY_PCT", "0.35")
     )
+    crypto_min_day_move_pct: float = float(os.getenv("CRYPTO_MIN_DAY_MOVE_PCT", "1.0"))
+    crypto_max_day_move_pct: float = float(os.getenv("CRYPTO_MAX_DAY_MOVE_PCT", "10.0"))
+    crypto_min_15s_move_pct: float = float(os.getenv("CRYPTO_MIN_15S_MOVE_PCT", "0.15"))
+    crypto_max_15s_move_pct: float = float(os.getenv("CRYPTO_MAX_15S_MOVE_PCT", "2.0"))
+    crypto_min_rolling_dollar_volume: float = float(
+        os.getenv("CRYPTO_MIN_ROLLING_DOLLAR_VOLUME", "50000")
+    )
+    crypto_max_spread_pct: float = float(os.getenv("CRYPTO_MAX_SPREAD_PCT", "0.50"))
     stream_state_path: str = os.getenv("STREAM_STATE_PATH", "data/stream_state.json")
     alert_webhook_url: str = os.getenv("ALERT_WEBHOOK_URL", "")
     alert_webhook_token: str = os.getenv("ALERT_WEBHOOK_TOKEN", "")

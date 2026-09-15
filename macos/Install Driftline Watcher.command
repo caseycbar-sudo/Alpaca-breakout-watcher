@@ -81,6 +81,16 @@ fi
 
 if [[ "$REUSE_SETTINGS" == "true" ]]; then
   printf "Existing private settings will be reused.\n"
+  # Migrate older installations to the expanded universe and new 24/7 crypto
+  # feed without asking for or exposing the saved credentials again.
+  if grep -q '^STREAM_MAX_SYMBOLS=' "$CONFIG_FILE"; then
+    sed -i '' "s/^STREAM_MAX_SYMBOLS=.*/STREAM_MAX_SYMBOLS='180'/" "$CONFIG_FILE"
+  else
+    save_setting "STREAM_MAX_SYMBOLS" "180"
+  fi
+  grep -q '^CRYPTO_STREAM_ENABLED=' "$CONFIG_FILE" || save_setting "CRYPTO_STREAM_ENABLED" "true"
+  grep -q '^CRYPTO_DATA_LOCATION=' "$CONFIG_FILE" || save_setting "CRYPTO_DATA_LOCATION" "us"
+  grep -q '^CRYPTO_STREAM_SYMBOLS=' "$CONFIG_FILE" || save_setting "CRYPTO_STREAM_SYMBOLS" "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD"
 else
   printf "Enter the same PAPER Alpaca keys and Gmail App Password used by the watcher.\n"
   printf "Typing is hidden for secret values. Nothing is uploaded to GitHub.\n\n"
@@ -103,7 +113,10 @@ else
   save_setting "ALERT_EMAIL_TO" "caseycbar@gmail.com"
   save_setting "ALPACA_DATA_FEED" "iex"
   save_setting "PORT" "8765"
-  save_setting "STREAM_MAX_SYMBOLS" "120"
+  save_setting "STREAM_MAX_SYMBOLS" "180"
+  save_setting "CRYPTO_STREAM_ENABLED" "true"
+  save_setting "CRYPTO_DATA_LOCATION" "us"
+  save_setting "CRYPTO_STREAM_SYMBOLS" "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD"
   save_setting "STREAM_REFRESH_SECONDS" "60"
   save_setting "STREAM_COOLDOWN_SECONDS" "600"
 fi
