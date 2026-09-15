@@ -86,6 +86,16 @@ class RiskSourceTests(unittest.TestCase):
         self.assertTrue(result.complete)
         self.assertEqual(result.sec_check, "clear")
 
+    def test_refresh_sources_reports_both_connections(self):
+        session = FakeSession([
+            FakeResponse(text="<rss><channel /></rss>"),
+            FakeResponse(payload={"0": {"ticker": "SAFE", "cik_str": 123456}}),
+        ])
+        client = OfficialRiskClient(session=session)
+        client.refresh_sources()
+        self.assertEqual(client.status["nasdaq_halts"], "online · 0 active")
+        self.assertEqual(client.status["sec_edgar"], "online")
+
     def test_recent_prospectus_blocks_symbol(self):
         session = FakeSession([
             FakeResponse(text="<rss><channel /></rss>"),

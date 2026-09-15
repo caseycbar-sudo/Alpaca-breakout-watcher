@@ -142,6 +142,15 @@ class OfficialRiskClient:
             self.halts = {}
             self.status["nasdaq_halts"] = "unavailable"
 
+    def refresh_sources(self) -> None:
+        """Verify both official sources even when no symbol reaches the final gate."""
+        self.refresh_halts()
+        try:
+            self._load_ticker_map()
+        except (requests.RequestException, ValueError, TypeError):
+            self.ticker_map = None
+            self.status["sec_edgar"] = "unavailable"
+
     def _load_ticker_map(self) -> None:
         if self.ticker_map is not None:
             return

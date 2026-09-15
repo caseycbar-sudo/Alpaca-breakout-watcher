@@ -10,7 +10,7 @@ from .premarket import (
     scan_premarket,
     todays_roster_symbols,
 )
-from .scanner import AlpacaClient, scan
+from .scanner import AlpacaClient, prepare_risk_checks, scan
 
 
 def main() -> None:
@@ -31,6 +31,7 @@ def main() -> None:
         )
 
     if not clock.get("is_open") and not premarket:
+        prepare_risk_checks(settings, client)
         publish_hub(
             now=now,
             phase="closed",
@@ -39,8 +40,8 @@ def main() -> None:
             events=events,
             lab=lab,
             paper_account=account,
-            risk_events=[],
-            source_status={"sec_edgar": "not checked", "nasdaq_halts": "not checked"},
+            risk_events=getattr(client, "risk_events", []),
+            source_status=getattr(client, "risk_source_status", {}),
             note="U.S. equities are closed. The next scheduled scan will refresh the research board.",
         )
         print("Outside today's premarket and regular U.S. stock session; hub refreshed.")
