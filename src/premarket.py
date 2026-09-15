@@ -162,10 +162,19 @@ def scan_premarket(
 
         preferred_rsi = settings.preferred_min_rsi <= indicator_rsi <= settings.preferred_max_rsi
         stage = "above provisional trigger" if price > trigger else "watching below trigger"
+        stocktwits = None
+        social_client = getattr(client, "stocktwits", None)
+        if social_client is not None:
+            stocktwits = social_client.symbol_pulse(symbol, now)
+        social_attention = min(
+            float((stocktwits or {}).get("stocktwits_message_count_1h", 0)) / 40.0,
+            0.5,
+        )
         score = (
             rel_volume
             + (1.0 if preferred_rsi else 0.0)
             + (0.5 if stage == "above provisional trigger" else 0.0)
+            + social_attention
             - spread
         )
         matches.append(
@@ -192,6 +201,7 @@ def scan_premarket(
                 "news_time": news.get("created_at", ""),
                 "news_url": news.get("url", ""),
                 "score": score,
+                **(stocktwits or {}),
                 **risk_result,
             }
         )
