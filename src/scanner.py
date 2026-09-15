@@ -219,7 +219,7 @@ def prepare_risk_checks(
     if not user_agent and settings.email_from:
         user_agent = f"DriftlineWatcher/1.0 {settings.email_from}"
     checker = risk_client or OfficialRiskClient(user_agent)
-    checker.refresh_halts()
+    checker.refresh_sources()
     client.risk_events = []
     client.risk_source_status = dict(checker.status)
     return checker
