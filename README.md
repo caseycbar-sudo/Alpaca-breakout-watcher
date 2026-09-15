@@ -2,7 +2,7 @@
 
 A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
-The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation. Every technically qualified name must also clear the official Nasdaq Trader halt feed and SEC EDGAR filing checks before it can reach the roster.
+The watcher scans Alpaca's active/mover universe every five minutes and supplements discovery with Stocktwits trending symbols. Stocktwits is an untrusted secondary attention layer only: it can expand discovery and modestly influence ranking, but it never supplies executable prices, proves a catalyst, or bypasses a safety gate. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation. Every technically qualified name must also clear the official Nasdaq Trader halt feed and SEC EDGAR filing checks before it can reach the roster.
 
 ## Trading Command Center
 
@@ -14,7 +14,7 @@ The command center shows:
 - the exact screening gates and why an empty roster is intentional;
 - the paper ledger, virtual balance, win rate, expectancy, profit factor, and drawdown;
 - the Alpaca → technical gate → Gmail → private Robinhood-verification bridge.
-- live connection status for SEC EDGAR and the Nasdaq Trader halt feed;
+- live connection status for Stocktwits, SEC EDGAR, and the Nasdaq Trader halt feed;
 - a linked audit entry when a halt, offering, dilution, reverse split, or listing risk blocks a setup.
 
 Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
@@ -26,6 +26,7 @@ Only public market research and paper simulations are published. Credentials, co
 - A confirmed Nasdaq halt is a hard block.
 - A recent SEC registration/prospectus or filing with offering, dilution, reverse-split, or listing-risk language is a hard block.
 - If either official risk source cannot be verified, the candidate is suppressed instead of assumed safe.
+- Stocktwits outages fall back to Alpaca-only discovery; social posts can never qualify a trade by themselves.
 - Premarket alerts are watchlist-only; they cannot create paper entries.
 - Maximum simulated position: $10 from a $50 virtual balance.
 - Maximum three new simulations per market day.
@@ -78,7 +79,7 @@ Premarket candidates remain watchlist-only. Regular-session paper entries requir
 
 ## Data caveat
 
-The free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Treat alerts as research and paper simulations, never certainty or financial advice.
+The free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Stocktwits metrics are crowd-attention context, not verified facts, investment advice, or market data. Treat alerts as research and paper simulations, never certainty or financial advice.
 
 ## Local test
 
