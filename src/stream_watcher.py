@@ -31,13 +31,14 @@ import websockets
 from .config import Settings
 from .emailer import send_email
 from .live_dashboard import dashboard_page
+from .options_flow import OptionsVolumeMonitor
 from .premarket import STATE_PATH as ROSTER_PATH
 from .scanner import AlpacaClient, ET
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
 CRYPTO_STREAM_ROOT = "wss://stream.data.alpaca.markets/v1beta3/crypto"
-BUILD_ID = "2026.09.15.6-expanded-stocks-crypto"
+BUILD_ID = "2026.09.15.7-options-volume"
 
 
 def _utc_now() -> datetime:
@@ -239,6 +240,7 @@ class StreamWatcher:
         self.settings = settings
         self.client = AlpacaClient(settings)
         self.engine = EarlyWarningEngine(settings)
+        self.options_monitor = OptionsVolumeMonitor(settings, self.client)
         self.data_lock = threading.RLock()
         self.subscribed: set[str] = set()
         self.crypto_subscribed: set[str] = set()
@@ -280,6 +282,13 @@ class StreamWatcher:
             "feed": self.settings.feed,
             "symbols": len(self.subscribed),
             "crypto_symbols": len(self.crypto_subscribed),
+            "options_status": self.options_monitor.status,
+            "options_underlyings": len(self.options_monitor.rows),
+            "options_contracts": self.options_monitor.contracts_observed,
+            "options_last_refresh_at": (
+                self.options_monitor.last_refresh_at.isoformat()
+                if self.options_monitor.last_refresh_at else None
+            ),
             "started_at": self.started_at.isoformat(),
             "last_message_at": self.last_message_at.isoformat() if self.last_message_at else None,
             "last_alert_at": self.last_alert_at.isoformat() if self.last_alert_at else None,
@@ -490,6 +499,7 @@ class StreamWatcher:
                 "health": self.health(),
                 "symbols": stock_rows[:30],
                 "crypto": crypto_rows[:20],
+                "options": list(self.options_monitor.rows),
                 "universe": universe,
                 "crypto_universe": crypto_universe,
                 "messages": list(self.recent_messages),
@@ -507,6 +517,15 @@ class StreamWatcher:
                             "disabled" if not self.settings.crypto_enabled else "reconnecting"
                         ),
                         "detail": f"{len(self.crypto_subscribed)} pairs · {self.settings.crypto_location}",
+                    },
+                    {
+                        "name": "Alpaca options volume",
+                        "state": self.options_monitor.status if self.settings.options_enabled else "disabled",
+                        "detail": (
+                            f"{self.options_monitor.contracts_observed} near-money contracts · "
+                            f"{self.settings.options_feed.upper()}"
+                            if self.settings.options_enabled else "turned off"
+                        ),
                     },
                     {
                         "name": "Market coverage",
@@ -605,7 +624,14 @@ class StreamWatcher:
     async def refresh_universe(self, websocket: Any) -> None:
         symbols = await asyncio.to_thread(self.client.universe)
         roster = self._roster_levels()
-        selected = list(dict.fromkeys(list(roster) + symbols))[: self.settings.stream_max_symbols]
+        options_core = [
+            symbol.strip().upper()
+            for symbol in self.settings.options_core_symbols.split(",")
+            if symbol.strip()
+        ] if self.settings.options_enabled else []
+        selected = list(dict.fromkeys(list(roster) + options_core + symbols))[
+            : self.settings.stream_max_symbols
+        ]
         if not selected:
             selected = ["SPY", "QQQ"]
         snapshots = await asyncio.to_thread(self.client.snapshots, selected)
@@ -918,10 +944,59 @@ class StreamWatcher:
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, 60)
 
+    def _option_target_prices(self) -> dict[str, float]:
+        """Pick core indexes plus the strongest live stock candidates."""
+        with self.data_lock:
+            now = _utc_now()
+            rows = [
+                self._score_symbol(state, now)
+                for state in self.engine.symbols.values()
+                if state.asset_class == "stock" and state.last_price > 0
+            ]
+            rows.sort(key=lambda row: row["score"], reverse=True)
+            core = [
+                symbol.strip().upper()
+                for symbol in self.settings.options_core_symbols.split(",")
+                if symbol.strip()
+            ]
+            ordered = list(dict.fromkeys(core + [row["symbol"] for row in rows]))
+            selected = ordered[: max(1, self.settings.options_top_symbols)]
+            return {
+                symbol: self.engine.symbols[symbol].last_price
+                for symbol in selected
+                if symbol in self.engine.symbols
+                and self.engine.symbols[symbol].last_price > 0
+            }
+
+    async def run_options(self) -> None:
+        """Poll bounded near-money option volume without blocking live streams."""
+        await asyncio.sleep(8)
+        last_status = self.options_monitor.status
+        while True:
+            prices = self._option_target_prices()
+            if prices:
+                await asyncio.to_thread(self.options_monitor.refresh, prices)
+                current = self.options_monitor.status
+                if current == "live" and last_status != "live":
+                    self.record_event(
+                        "Options volume connected",
+                        f"Tracking {self.options_monitor.contracts_observed} near-money contracts "
+                        f"across {len(self.options_monitor.rows)} underlyings.",
+                    )
+                elif current == "unavailable" and last_status != "unavailable":
+                    self.record_event(
+                        "Options volume unavailable",
+                        "Stock and crypto scanning continue; the options feed will retry automatically.",
+                    )
+                last_status = current
+            await asyncio.sleep(max(30, self.settings.options_poll_seconds))
+
     async def run(self) -> None:
         tasks = [self.run_stocks()]
         if self.settings.crypto_enabled:
             tasks.append(self.run_crypto())
+        if self.settings.options_enabled:
+            tasks.append(self.run_options())
         await asyncio.gather(*tasks)
 
 

@@ -184,6 +184,27 @@ def test_dashboard_includes_clickable_crypto_drilldown_and_scanner():
     assert "24/7 crypto intelligence scanner" in PAGE
 
 
+def test_dashboard_includes_clickable_options_volume_intelligence():
+    from src.live_dashboard import PAGE
+
+    assert 'data-view="options"' in PAGE
+    assert 'id="optionRows"' in PAGE
+    assert "Options volume intelligence" in PAGE
+
+
+def test_live_snapshot_exposes_options_health_and_rows():
+    watcher = StreamWatcher(settings())
+    watcher.options_monitor.status = "live"
+    watcher.options_monitor.contracts_observed = 2
+    watcher.options_monitor.rows = [{"symbol": "SPY", "total_volume": 1234}]
+
+    snapshot = watcher.live_snapshot()
+
+    assert snapshot["health"]["options_status"] == "live"
+    assert snapshot["health"]["options_contracts"] == 2
+    assert snapshot["options"][0]["symbol"] == "SPY"
+
+
 def test_meaningful_activity_survives_restart(tmp_path):
     path = tmp_path / "stream-state.json"
     configured = Settings(

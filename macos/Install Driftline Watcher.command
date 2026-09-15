@@ -91,6 +91,11 @@ if [[ "$REUSE_SETTINGS" == "true" ]]; then
   grep -q '^CRYPTO_STREAM_ENABLED=' "$CONFIG_FILE" || save_setting "CRYPTO_STREAM_ENABLED" "true"
   grep -q '^CRYPTO_DATA_LOCATION=' "$CONFIG_FILE" || save_setting "CRYPTO_DATA_LOCATION" "us"
   grep -q '^CRYPTO_STREAM_SYMBOLS=' "$CONFIG_FILE" || save_setting "CRYPTO_STREAM_SYMBOLS" "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD"
+  grep -q '^OPTIONS_VOLUME_ENABLED=' "$CONFIG_FILE" || save_setting "OPTIONS_VOLUME_ENABLED" "true"
+  grep -q '^OPTIONS_DATA_FEED=' "$CONFIG_FILE" || save_setting "OPTIONS_DATA_FEED" "indicative"
+  grep -q '^OPTIONS_CORE_SYMBOLS=' "$CONFIG_FILE" || save_setting "OPTIONS_CORE_SYMBOLS" "SPY,QQQ"
+  grep -q '^OPTIONS_TOP_SYMBOLS=' "$CONFIG_FILE" || save_setting "OPTIONS_TOP_SYMBOLS" "5"
+  grep -q '^OPTIONS_POLL_SECONDS=' "$CONFIG_FILE" || save_setting "OPTIONS_POLL_SECONDS" "120"
 else
   printf "Enter the same PAPER Alpaca keys and Gmail App Password used by the watcher.\n"
   printf "Typing is hidden for secret values. Nothing is uploaded to GitHub.\n\n"
@@ -117,6 +122,11 @@ else
   save_setting "CRYPTO_STREAM_ENABLED" "true"
   save_setting "CRYPTO_DATA_LOCATION" "us"
   save_setting "CRYPTO_STREAM_SYMBOLS" "BTC/USD,ETH/USD,SOL/USD,XRP/USD,DOGE/USD,AVAX/USD,LINK/USD,LTC/USD,BCH/USD,UNI/USD"
+  save_setting "OPTIONS_VOLUME_ENABLED" "true"
+  save_setting "OPTIONS_DATA_FEED" "indicative"
+  save_setting "OPTIONS_CORE_SYMBOLS" "SPY,QQQ"
+  save_setting "OPTIONS_TOP_SYMBOLS" "5"
+  save_setting "OPTIONS_POLL_SECONDS" "120"
   save_setting "STREAM_REFRESH_SECONDS" "60"
   save_setting "STREAM_COOLDOWN_SECONDS" "600"
 fi
