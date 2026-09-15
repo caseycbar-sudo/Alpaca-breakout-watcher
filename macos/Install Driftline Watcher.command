@@ -121,10 +121,13 @@ chmod 600 "$PLIST"
 plutil -lint "$PLIST" >/dev/null || fail "The Mac service file did not validate."
 
 DOMAIN="gui/$(id -u)"
-launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true
-launchctl bootstrap "$DOMAIN" "$PLIST" || fail "macOS could not install the background service."
+if launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1; then
+  printf "Updating the existing background service...\n"
+else
+  launchctl bootstrap "$DOMAIN" "$PLIST" || fail "macOS could not install the background service."
+fi
 launchctl enable "$DOMAIN/$LABEL"
-launchctl kickstart -k "$DOMAIN/$LABEL"
+launchctl kickstart -k "$DOMAIN/$LABEL" || fail "macOS could not start the background service."
 
 printf "\nWaiting for the live market connection...\n"
 for _ in {1..20}; do
