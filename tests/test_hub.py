@@ -37,6 +37,10 @@ class HubTests(unittest.TestCase):
                         "open_orders": [],
                         "trading_blocked": False,
                     },
+                    source_status={
+                        "sec_edgar": "online",
+                        "nasdaq_halts": "online · 0 active",
+                    },
                 )
                 raw = hub.HUB_DATA_PATH.read_text(encoding="utf-8")
                 payload = json.loads(raw)
@@ -44,6 +48,9 @@ class HubTests(unittest.TestCase):
                 self.assertNotIn("99999", raw)
                 self.assertEqual(payload["system"]["paper_account"], "healthy")
                 self.assertEqual(payload["paper_lab"]["balance"], 50.0)
+                self.assertEqual(payload["system"]["sec_edgar"], "online")
+                self.assertEqual(payload["system"]["nasdaq_halts"], "online · 0 active")
+                self.assertTrue(any(gate["label"] == "SEC filing" for gate in payload["gates"]))
             finally:
                 hub.HUB_DATA_PATH = original
 

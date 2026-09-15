@@ -10,6 +10,7 @@ class Settings:
     email_from: str = os.getenv("ALERT_EMAIL_FROM", "")
     email_to: str = os.getenv("ALERT_EMAIL_TO", "")
     gmail_app_password: str = os.getenv("GMAIL_APP_PASSWORD", "")
+    sec_user_agent: str = os.getenv("SEC_USER_AGENT", "")
     max_symbols: int = int(os.getenv("MAX_SYMBOLS", "120"))
 
     min_price: float = 0.50

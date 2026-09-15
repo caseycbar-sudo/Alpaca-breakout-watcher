@@ -15,7 +15,10 @@ from .scanner import (
     _timestamp,
     average_daily_volume,
     completed_five_minute_bars,
+    prepare_risk_checks,
+    record_risk_result,
 )
+from .risk_sources import OfficialRiskClient
 
 STATE_PATH = Path("data/premarket_state.json")
 
@@ -66,9 +69,13 @@ def premarket_relative_volume(rows: list[dict], now: datetime) -> float | None:
 
 
 def scan_premarket(
-    settings: Settings, client: AlpacaClient, now: datetime | None = None
+    settings: Settings,
+    client: AlpacaClient,
+    now: datetime | None = None,
+    risk_client: OfficialRiskClient | None = None,
 ) -> list[dict]:
     now = now or datetime.now(timezone.utc)
+    checker = prepare_risk_checks(settings, client, risk_client)
     symbols = client.universe()
     snapshots = client.snapshots(symbols)
     five_minute = client.bars(symbols, "5Min", now - timedelta(days=10), limit_pages=20)
@@ -149,6 +156,9 @@ def scan_premarket(
         headline = news.get("headline", "")
         if any(word in headline.lower() for word in RISK_WORDS):
             continue
+        risk_result = record_risk_result(client, checker, symbol, now)
+        if risk_result is None:
+            continue
 
         preferred_rsi = settings.preferred_min_rsi <= indicator_rsi <= settings.preferred_max_rsi
         stage = "above provisional trigger" if price > trigger else "watching below trigger"
@@ -182,6 +192,7 @@ def scan_premarket(
                 "news_time": news.get("created_at", ""),
                 "news_url": news.get("url", ""),
                 "score": score,
+                **risk_result,
             }
         )
 
