@@ -239,6 +239,9 @@ def record_risk_result(
 ) -> dict | None:
     assessment = checker.assess(symbol, now)
     client.risk_source_status = dict(checker.status)
+    stocktwits_status = getattr(client, "stocktwits_status", None)
+    if stocktwits_status:
+        client.risk_source_status["stocktwits"] = stocktwits_status
     if not assessment.allowed:
         client.risk_events.append(assessment.event(now))
         return None
