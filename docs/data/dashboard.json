@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "generated_at": null,
+  "market": {"phase": "waiting for first live scan", "is_open": false, "next_open": null, "next_close": null},
+  "system": {"watcher": "configured", "market_data": "Alpaca IEX", "scan_frequency": "5 minutes", "email_bridge": "standing by", "paper_account": "unknown", "paper_positions": 0, "paper_open_orders": 0, "note": "The command center is ready. Live fields populate on the next scheduled market scan."},
+  "candidates": [],
+  "research_log": [],
+  "paper_lab": {"starting_balance": 50, "balance": 50, "completed_trades": 0, "open_trades": 0, "win_rate": 0, "average_win": 0, "average_loss": 0, "profit_factor": null, "expectancy": 0, "maximum_drawdown": 0, "validated": false, "trades": []},
+  "gates": [
+    {"label": "Price", "rule": "$0.50–$100"}, {"label": "Session move", "rule": "2%–8%"},
+    {"label": "Relative volume", "rule": "at least 1.5x"}, {"label": "5-minute liquidity", "rule": "at least $250,000"},
+    {"label": "RSI", "rule": "52–78; 55–72 preferred"}, {"label": "Spread", "rule": "0.40% maximum"},
+    {"label": "VWAP", "rule": "above; within one ATR"}, {"label": "Catalyst", "rule": "verified news within 24 hours"},
+    {"label": "Confirmation", "rule": "second-bar hold or first retest"}
+  ],
+  "privacy": {"public_data": "Market research and paper simulations only", "private_data": "Robinhood verification remains inside ChatGPT", "orders": "No real-order code exists in this repository"}
+}

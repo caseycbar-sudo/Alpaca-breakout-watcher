@@ -11,8 +11,10 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "docs/**"
       - "requirements.txt"
       - ".github/workflows/scan.yml"
+      - ".github/workflows/pages.yml"
 
 permissions:
   contents: write
@@ -56,3 +58,10 @@ jobs:
           git add data/paper_ledger.csv data/premarket_state.json
           git commit -m "[skip ci] update paper lab and alert state"
           git push
+      - name: Package command center
+        uses: actions/upload-artifact@v4
+        with:
+          name: command-center
+          path: docs
+          retention-days: 1
+          if-no-files-found: error

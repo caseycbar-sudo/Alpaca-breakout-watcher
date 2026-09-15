@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071117">
+  <meta name="description" content="Read-only market research, breakout decisions, system health, and paper-trading results.">
+  <title>Driftline Trading Command Center</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071117'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%2327d7c4' stroke-width='3'/%3E%3Cpath d='M32 32L50 22M14 42h10l7-14 8 19 5-9h7' fill='none' stroke='%23f4b860' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='32' r='3' fill='%2327d7c4'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to dashboard</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Command center navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span></div>
+        <div><strong>DRIFTLINE</strong><small>TRADING COMMAND</small></div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="overview"><span>01</span>Overview</button>
+        <button class="nav-item" data-view="research"><span>02</span>Research log</button>
+        <button class="nav-item" data-view="paper"><span>03</span>Paper lab</button>
+        <button class="nav-item" data-view="system"><span>04</span>System</button>
+      </nav>
+      <div class="safety-card">
+        <span class="eyebrow">OPERATING MODE</span>
+        <strong>PAPER — NO REAL ORDER</strong>
+        <p>Research and simulated trades only. Robinhood verification stays private.</p>
+      </div>
+      <a class="repo-link" href="https://github.com/caseycbar-sudo/Alpaca-breakout-watcher" target="_blank" rel="noreferrer">Open source repository <span>↗</span></a>
+    </aside>
+
+    <main id="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CASEY'S MARKET DESK</p>
+          <h1>Command Center</h1>
+        </div>
+        <div class="top-actions">
+          <div class="freshness"><span class="pulse"></span><div><small>LAST SCAN</small><strong id="last-scan">Loading…</strong></div></div>
+          <button id="refresh" class="refresh" aria-label="Refresh dashboard data">Refresh</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-overview" aria-labelledby="overview-title">
+        <h2 class="sr-only" id="overview-title">Overview</h2>
+        <div class="status-ribbon">
+          <div><span class="status-dot" id="watcher-dot"></span><small>WATCHER</small><strong id="watcher-status">Checking</strong></div>
+          <div><small>MARKET</small><strong id="market-phase">—</strong></div>
+          <div><small>DATA FEED</small><strong id="data-feed">—</strong></div>
+          <div><small>EMAIL BRIDGE</small><strong id="bridge-status">—</strong></div>
+        </div>
+
+        <div class="overview-grid">
+          <article class="panel radar-panel">
+            <div class="panel-heading"><div><span class="eyebrow">LIVE RADAR</span><h3>Signal environment</h3></div><span class="live-tag">READ ONLY</span></div>
+            <div class="radar-wrap">
+              <div class="radar" aria-hidden="true"><i></i><b></b><em></em></div>
+              <div class="radar-copy">
+                <strong id="radar-count">0 candidates</strong>
+                <p id="radar-message">Waiting for the latest scan.</p>
+                <div class="next-session"><small>NEXT SESSION EVENT</small><span id="next-open">—</span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel roster-panel">
+            <div class="panel-heading"><div><span class="eyebrow">PRIORITY BOARD</span><h3>Dynamic alert roster</h3></div><span id="roster-count" class="count-badge">0 / 3</span></div>
+            <div id="candidate-list" class="candidate-list"></div>
+          </article>
+        </div>
+
+        <section class="metrics" aria-label="Paper lab summary">
+          <article><small>VIRTUAL BALANCE</small><strong id="balance">$50.00</strong><span>Started at $50</span></article>
+          <article><small>COMPLETED TRADES</small><strong id="trade-count">0</strong><span id="open-count">0 open</span></article>
+          <article><small>WIN RATE</small><strong id="win-rate">0%</strong><span>Closed trades only</span></article>
+          <article><small>EXPECTANCY</small><strong id="expectancy">$0.00</strong><span>Per completed trade</span></article>
+          <article><small>MAX DRAWDOWN</small><strong id="drawdown">$0.00</strong><span>Preserves every loss</span></article>
+        </section>
+
+        <article class="panel decision-panel">
+          <div class="panel-heading"><div><span class="eyebrow">DECISION STANDARD</span><h3>Why an alert earns your attention</h3></div><button class="text-button" data-jump="research">See research log →</button></div>
+          <div id="gate-grid" class="gate-grid"></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-research" aria-labelledby="research-title">
+        <div class="section-intro"><div><span class="eyebrow">AUDIT TRAIL</span><h2 id="research-title">Research & decisions</h2><p>What was checked, where the catalyst came from, and why a name advanced—or stopped.</p></div><div class="legend"><span><i class="cyan"></i>qualified</span><span><i class="amber"></i>stage change</span></div></div>
+        <div class="research-layout">
+          <article class="panel timeline-panel"><div id="research-log" class="timeline"></div></article>
+          <aside class="panel methodology"><span class="eyebrow">HOW TO READ THIS</span><h3>No black-box decisions</h3><p>A ticker appears here only after the scanner checks price action, liquidity, spread, VWAP, RSI, catalyst freshness and confirmation.</p><div class="method-step"><b>1</b><span><strong>Alpaca detects</strong><small>Market-wide momentum and executable data</small></span></div><div class="method-step"><b>2</b><span><strong>The gate challenges it</strong><small>Weak, stale or risky setups are rejected</small></span></div><div class="method-step"><b>3</b><span><strong>ChatGPT verifies</strong><small>Robinhood quote, filings and primary news</small></span></div><div class="method-step"><b>4</b><span><strong>Casey gets the signal</strong><small>Only when the stage meaningfully changes</small></span></div></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-paper" aria-labelledby="paper-title">
+        <div class="section-intro"><div><span class="eyebrow">CONTROLLED EXPERIMENT</span><h2 id="paper-title">Paper-trading laboratory</h2><p>Fills include modeled spread and slippage. Losses are never removed.</p></div><div id="validation-pill" class="validation-pill">NOT YET VALIDATED</div></div>
+        <div class="paper-hero">
+          <article class="panel equity-panel"><div><small>VIRTUAL EQUITY</small><strong id="paper-balance">$50.00</strong><span id="paper-return">$0.00 all-time</span></div><div class="equity-chart" id="equity-chart" aria-label="Paper account equity curve"></div></article>
+          <article class="panel stats-panel" id="paper-stats"></article>
+        </div>
+        <article class="panel trade-table-panel"><div class="panel-heading"><div><span class="eyebrow">LEDGER</span><h3>Every simulated trade</h3></div><span>Maximum $10 per position</span></div><div class="table-scroll"><table><thead><tr><th>Trade</th><th>Setup</th><th>Entry</th><th>Stop / target</th><th>Exit</th><th>Net P/L</th><th>Status</th></tr></thead><tbody id="trade-rows"></tbody></table></div></article>
+      </section>
+
+      <section class="view" id="view-system" aria-labelledby="system-title">
+        <div class="section-intro"><div><span class="eyebrow">INFRASTRUCTURE</span><h2 id="system-title">System & bridge health</h2><p>A plain-English view of what is connected, what is private, and what happens next.</p></div></div>
+        <div class="system-grid">
+          <article class="panel system-map"><div class="node"><span>01</span><div><strong>Alpaca watcher</strong><small>Scans broad market every five minutes</small></div><i></i></div><div class="node"><span>02</span><div><strong>Technical gate</strong><small>Rejects weak or unconfirmed moves</small></div><i></i></div><div class="node"><span>03</span><div><strong>Gmail bridge</strong><small>Wakes verification on a real signal</small></div><i></i></div><div class="node"><span>04</span><div><strong>Private verification</strong><small>Robinhood, filings and primary sources</small></div><i></i></div><div class="node"><span>05</span><div><strong>Your notification</strong><small>Only meaningful changes reach you</small></div></div></article>
+          <article class="panel connection-panel"><span class="eyebrow">CONNECTIONS</span><div class="connection"><span class="status-dot"></span><div><strong>Alpaca market data</strong><small id="connection-alpaca">Checking</small></div></div><div class="connection"><span class="status-dot"></span><div><strong>Email alert bridge</strong><small id="connection-email">Checking</small></div></div><div class="connection"><span class="status-dot"></span><div><strong>Paper laboratory</strong><small id="connection-paper">Checking</small></div></div><div class="connection private"><span class="lock">⌁</span><div><strong>Robinhood verification</strong><small>Private—never published to this site</small></div></div></article>
+        </div>
+        <div class="privacy-grid" id="privacy-grid"></div>
+      </section>
+    </main>
+  </div>
+  <nav class="mobile-nav" aria-label="Mobile navigation"><button class="active" data-view="overview">Overview</button><button data-view="research">Research</button><button data-view="paper">Paper</button><button data-view="system">System</button></nav>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>

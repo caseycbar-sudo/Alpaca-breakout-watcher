@@ -1,8 +1,21 @@
 # Alpaca Breakout Watcher
 
-A read-only premarket and regular-session scanner plus a strict **PAPER—NO REAL ORDER** laboratory.
+A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
 The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation.
+
+## Trading Command Center
+
+The command center shows:
+
+- watcher, market-session, data-feed, and email-bridge status;
+- the dynamic roster with price move, relative volume, and trigger level;
+- catalyst headlines, timestamps, and working source links;
+- the exact screening gates and why an empty roster is intentional;
+- the paper ledger, virtual balance, win rate, expectancy, profit factor, and drawdown;
+- the Alpaca → technical gate → Gmail → private Robinhood-verification bridge.
+
+Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
 
 ## Safety design
 
@@ -35,13 +48,13 @@ For Gmail, enable 2-Step Verification and create an App Password. Never use a no
 
 - **A — Catalyst ORB second-bar hold:** a fresh-catalyst stock breaks its first 15-minute range and holds above it for a second completed bar.
 - **B — First VWAP/level retest:** a breakout pulls back toward VWAP or the opening-range level, then closes back above the anchor.
-- **C — Premarket leader confirmed after open:** a symbol from the saved premarket roster later satisfies the regular-session confirmation rules.
+- **C — Premarket leader confirmed after open:** a symbol from the saved premarket roster later satisfies regular-session confirmation.
 
 ## Core candidate filters
 
 - price $0.50–$100;
 - daily or premarket move 2%–8%;
-- latest completed five-minute acceleration normally 0.40%–2.00% (0.15% minimum on a controlled retest);
+- completed five-minute acceleration normally 0.40%–2.00% (0.15% minimum on a controlled retest);
 - relative volume at least 1.5x;
 - at least $250,000 of dollar volume in the confirmation bar;
 - five-minute RSI allowed from 52–78, with 55–72 ranked higher;
@@ -49,15 +62,15 @@ For Gmail, enable 2-Step Verification and create an App Password. Never use a no
 - executable bid/ask spread no wider than 0.40%;
 - active and tradable Alpaca symbol;
 - catalyst no older than 24 hours;
-- automatic rejection of obvious offering, dilution, reverse-split, or delisting headlines;
-- broad-market filter rejects new longs when both SPY and QQQ are below VWAP and weakening;
-- technical stop below the retest/VWAP/opening-range structure, with no more than one ATR of entry risk.
+- rejection of obvious offering, dilution, reverse-split, or delisting headlines;
+- no new long when both SPY and QQQ are below VWAP and weakening;
+- technical risk no larger than one ATR.
 
-Premarket candidates remain watchlist-only. Regular-session paper entries require a confirmed hold or retest. No email is sent when nothing meets the relevant rules.
+Premarket candidates remain watchlist-only. Regular-session paper entries require a confirmed hold or retest. No trade is invented when nothing meets the rules.
 
 ## Data caveat
 
-The default free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Treat alerts as research and paper simulations, never certainty or financial advice.
+The free `iex` feed is not the complete consolidated SIP market. Volume, spread, and breakout readings can differ from Robinhood or a full-market feed. Automated news is a catalyst filter, not a substitute for checking the company's primary release and current SEC filings. Treat alerts as research and paper simulations, never certainty or financial advice.
 
 ## Local test
 
