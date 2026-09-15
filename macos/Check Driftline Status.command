@@ -24,7 +24,7 @@ else
 fi
 
 printf "\nLATEST ACTIVITY\n"
-printf "---------------\n"
+printf '%s\n' '---------------'
 if [[ -f "$LOG_DIR/watcher.log" ]]; then
   tail -n 20 "$LOG_DIR/watcher.log"
 else
@@ -33,7 +33,7 @@ fi
 
 if [[ -s "$LOG_DIR/watcher-error.log" ]]; then
   printf "\nLATEST ERRORS\n"
-  printf "-------------\n"
+  printf '%s\n' '-------------'
   tail -n 20 "$LOG_DIR/watcher-error.log"
 fi
 

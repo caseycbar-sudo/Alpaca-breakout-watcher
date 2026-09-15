@@ -18,7 +18,9 @@ import threading
 import time
 from typing import Any
 
+import certifi
 import requests
+import ssl
 import websockets
 
 from .config import Settings
@@ -366,7 +368,15 @@ class StreamWatcher:
 
     async def connect_once(self) -> None:
         url = f"{STREAM_ROOT}/{self.settings.feed}"
-        async with websockets.connect(url, ping_interval=20, ping_timeout=20) as websocket:
+        # Python.org macOS installs do not always inherit the Keychain trust store.
+        # Certifi provides a current CA bundle for Alpaca's TLS certificate chain.
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        async with websockets.connect(
+            url,
+            ssl=ssl_context,
+            ping_interval=20,
+            ping_timeout=20,
+        ) as websocket:
             connected = json.loads(await websocket.recv())
             if not any(
                 row.get("T") == "success" and row.get("msg") == "connected"
