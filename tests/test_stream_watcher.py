@@ -74,3 +74,78 @@ def test_live_snapshot_exposes_recent_scanning_activity():
     assert snapshot["health"]["message_count"] == 1
     assert snapshot["symbols"][0]["symbol"] == "TEST"
     assert snapshot["events"][0]["title"] == "Universe refreshed"
+
+
+def test_intelligence_labels_wide_spread_and_explains_rejection():
+    watcher = StreamWatcher(settings())
+    watcher.subscribed = {"WIDE"}
+    watcher.engine.prime("WIDE", previous_close=9.80, bid=9.90, ask=10.20)
+    watcher.engine.trade("WIDE", 10.10, 100, datetime.now(timezone.utc))
+
+    row = watcher.live_snapshot()["symbols"][0]
+
+    assert row["status"] == "BLOCKED — WIDE SPREAD"
+    assert row["status_kind"] == "blocked"
+    assert "exceeds" in row["reason"]
+    assert row["score"] <= 39
+
+
+def test_live_snapshot_includes_clickable_counter_details():
+    watcher = StreamWatcher(settings())
+    watcher.subscribed = {"TEST"}
+    watcher.engine.prime(
+        "TEST",
+        previous_close=9.80,
+        bid=10.09,
+        ask=10.10,
+        trigger=10.12,
+        previous_volume=1_000_000,
+        session_volume=500_000,
+    )
+    timestamp = datetime.now(timezone.utc)
+    watcher.engine.trade("TEST", 10.10, 25, timestamp)
+    watcher.message_count = 1
+    watcher.trade_count = 1
+    watcher.recent_messages.appendleft({
+        "type": "Trade", "symbol": "TEST", "timestamp": timestamp.isoformat()
+    })
+    watcher.recent_trades.appendleft({
+        "symbol": "TEST",
+        "price": 10.10,
+        "size": 25,
+        "notional": 252.50,
+        "timestamp": timestamp.isoformat(),
+    })
+
+    snapshot = watcher.live_snapshot()
+
+    assert snapshot["universe"][0]["trigger"] == 10.12
+    assert snapshot["messages"][0]["type"] == "Trade"
+    assert snapshot["trades"][0]["notional"] == 252.50
+    assert snapshot["symbols"][0]["rolling_vwap"] == 10.10
+
+
+def test_dashboard_contains_all_three_drilldowns():
+    from src.live_dashboard import PAGE
+
+    assert 'data-view="universe"' in PAGE
+    assert 'data-view="messages"' in PAGE
+    assert 'data-view="trades"' in PAGE
+    assert "Ranked intelligence scanner" in PAGE
+
+
+def test_meaningful_activity_survives_restart(tmp_path):
+    path = tmp_path / "stream-state.json"
+    configured = Settings(
+        api_key="test",
+        secret_key="test",
+        stream_state_path=str(path),
+    )
+    first = StreamWatcher(configured)
+    first.record_event("Candidate blocked", "Spread exceeded the safety gate.")
+    first._save_cooldowns()
+
+    restarted = StreamWatcher(configured)
+
+    assert restarted.recent_events[0]["title"] == "Candidate blocked"
+    assert restarted.recent_events[0]["detail"] == "Spread exceeded the safety gate."
