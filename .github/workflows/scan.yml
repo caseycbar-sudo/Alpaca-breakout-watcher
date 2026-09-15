@@ -11,6 +11,7 @@ on:
       - "src/**"
       - "tests/**"
       - "docs/**"
+      - "macos/**"
       - "requirements.txt"
       - ".github/workflows/scan.yml"
       - ".github/workflows/pages.yml"
@@ -20,6 +21,7 @@ on:
       - "src/**"
       - "tests/**"
       - "docs/**"
+      - "macos/**"
       - "requirements.txt"
       - ".github/workflows/scan.yml"
       - ".github/workflows/pages.yml"
@@ -44,6 +46,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Validate Mac controls
+        run: bash -n macos/*.command macos/run_watcher.sh
       - run: python -m pytest -q
       - name: Run read-only scan and paper lab
         if: github.event_name != 'pull_request'
