@@ -36,7 +36,7 @@ from .scanner import AlpacaClient, ET
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
-BUILD_ID = "2026.09.15.4-live-dashboard"
+BUILD_ID = "2026.09.15.5-intelligence-drilldowns"
 
 
 def _utc_now() -> datetime:
@@ -75,6 +75,8 @@ class LiveSymbol:
     ask: float = 0.0
     last_price: float = 0.0
     trigger: float | None = None
+    previous_volume: float = 0.0
+    session_volume: float = 0.0
     ticks: deque[Tick] = field(default_factory=deque)
 
     def add_trade(self, tick: Tick) -> None:
@@ -104,12 +106,16 @@ class EarlyWarningEngine:
         bid: float = 0.0,
         ask: float = 0.0,
         trigger: float | None = None,
+        previous_volume: float = 0.0,
+        session_volume: float = 0.0,
     ) -> None:
         state = self.symbols.setdefault(symbol, LiveSymbol(symbol=symbol))
         state.previous_close = previous_close or state.previous_close
         state.bid = bid or state.bid
         state.ask = ask or state.ask
         state.trigger = trigger if trigger else state.trigger
+        state.previous_volume = previous_volume or state.previous_volume
+        state.session_volume = session_volume or state.session_volume
 
     def quote(self, symbol: str, bid: float, ask: float) -> None:
         state = self.symbols.setdefault(symbol, LiveSymbol(symbol=symbol))
@@ -201,6 +207,7 @@ class StreamWatcher:
         self.settings = settings
         self.client = AlpacaClient(settings)
         self.engine = EarlyWarningEngine(settings)
+        self.data_lock = threading.RLock()
         self.subscribed: set[str] = set()
         self.started_at = _utc_now()
         self.last_message_at: datetime | None = None
@@ -213,16 +220,20 @@ class StreamWatcher:
         self.alert_count = 0
         self.last_universe_refresh_at: datetime | None = None
         self.recent_events: deque[dict[str, str]] = deque(maxlen=80)
+        self.recent_messages: deque[dict[str, Any]] = deque(maxlen=120)
+        self.recent_trades: deque[dict[str, Any]] = deque(maxlen=120)
         self.last_test_at: datetime | None = None
+        self.universe_refresh_count = 0
         self._load_cooldowns()
 
     def record_event(self, title: str, detail: str, kind: str = "info") -> None:
-        self.recent_events.appendleft({
-            "title": title,
-            "detail": detail,
-            "kind": kind,
-            "timestamp": _utc_now().isoformat(),
-        })
+        with self.data_lock:
+            self.recent_events.appendleft({
+                "title": title,
+                "detail": detail,
+                "kind": kind,
+                "timestamp": _utc_now().isoformat(),
+            })
 
     def health(self) -> dict[str, Any]:
         return {
@@ -239,6 +250,9 @@ class StreamWatcher:
             "message_count": self.message_count,
             "trade_count": self.trade_count,
             "quote_count": self.quote_count,
+            "other_message_count": max(
+                0, self.message_count - self.trade_count - self.quote_count
+            ),
             "alert_count": self.alert_count,
             "last_universe_refresh_at": (
                 self.last_universe_refresh_at.isoformat()
@@ -247,34 +261,187 @@ class StreamWatcher:
             "orders_enabled": False,
         }
 
-    def live_snapshot(self) -> dict[str, Any]:
-        now = _utc_now()
-        rows: list[dict[str, Any]] = []
-        for state in self.engine.symbols.values():
-            if not state.ticks or state.last_price <= 0:
-                continue
-            recent = state.window(60, now)
-            fast = state.window(15, now)
-            acceleration = (
-                _pct_change(fast[-1].price, fast[0].price) if len(fast) > 1 else 0.0
+    @staticmethod
+    def _session_fraction(now: datetime) -> float | None:
+        local = now.astimezone(ET)
+        minutes = (local.hour * 60 + local.minute) - (9 * 60 + 30)
+        if minutes < 0 or minutes > 390:
+            return None
+        return max(minutes / 390.0, 1 / 390.0)
+
+    def _score_symbol(self, state: LiveSymbol, now: datetime) -> dict[str, Any]:
+        recent = state.window(60, now)
+        fast = state.window(15, now)
+        volume = sum(tick.size for tick in recent)
+        dollar_volume = sum(tick.price * tick.size for tick in recent)
+        rolling_vwap = (
+            sum(tick.price * tick.size for tick in recent) / volume if volume else 0.0
+        )
+        acceleration = (
+            _pct_change(fast[-1].price, fast[0].price) if len(fast) > 1 else 0.0
+        )
+        day_move = _pct_change(state.last_price, state.previous_close)
+        spread = _spread_pct(state.bid, state.ask)
+        trigger_distance = (
+            _pct_change(state.last_price, state.trigger) if state.trigger else None
+        )
+        fraction = self._session_fraction(now)
+        estimated_rvol = (
+            state.session_volume / (state.previous_volume * fraction)
+            if fraction and state.previous_volume > 0 and state.session_volume > 0
+            else None
+        )
+
+        reasons: list[str] = []
+        status = "SCANNING — BUILDING DATA"
+        kind = "scanning"
+        if not (self.settings.min_price <= state.last_price <= self.settings.max_price):
+            status, kind = "BLOCKED — PRICE RANGE", "blocked"
+            reasons.append("Outside the $0.50–$100 range")
+        elif spread > self.settings.max_spread_pct:
+            status, kind = "BLOCKED — WIDE SPREAD", "blocked"
+            reasons.append(
+                "No reliable executable spread" if spread >= 999
+                else f"{spread:.2f}% spread exceeds {self.settings.max_spread_pct:.2f}%"
             )
-            rows.append({
-                "symbol": state.symbol,
-                "last": state.last_price,
-                "bid": state.bid,
-                "ask": state.ask,
-                "day_move_pct": _pct_change(state.last_price, state.previous_close),
-                "acceleration_pct": acceleration,
-                "volume_60s": sum(tick.size for tick in recent),
-                "spread_pct": _spread_pct(state.bid, state.ask),
-                "last_trade_at": state.ticks[-1].timestamp.isoformat(),
-            })
-        rows.sort(key=lambda row: row["last_trade_at"], reverse=True)
+        elif day_move > self.settings.max_day_move_pct:
+            status, kind = "BLOCKED — OVEREXTENDED", "blocked"
+            reasons.append(f"{day_move:+.2f}% session move exceeds the chase limit")
+        elif day_move < self.settings.min_day_move_pct:
+            status = "SCANNING — BELOW MOVE GATE"
+            reasons.append(f"Needs a {self.settings.min_day_move_pct:.0f}% session move")
+        elif len(recent) < self.settings.stream_min_trade_count:
+            status = "SCANNING — BUILDING DATA"
+            reasons.append(
+                f"{len(recent)}/{self.settings.stream_min_trade_count} recent trades"
+            )
+        elif dollar_volume < self.settings.stream_min_rolling_dollar_volume:
+            status, kind = "BLOCKED — LOW DOLLAR VOLUME", "blocked"
+            reasons.append(
+                f"${dollar_volume:,.0f}/${self.settings.stream_min_rolling_dollar_volume:,.0f} rolling target"
+            )
+        elif acceleration < self.settings.stream_min_15s_move_pct:
+            status = "SCANNING — NO ACCELERATION"
+            reasons.append(
+                f"15-second move below {self.settings.stream_min_15s_move_pct:.2f}%"
+            )
+        elif acceleration > self.settings.stream_max_15s_move_pct:
+            status, kind = "BLOCKED — SPIKE RISK", "blocked"
+            reasons.append("15-second move exceeds the safe acceleration range")
+        elif rolling_vwap <= 0 or state.last_price < rolling_vwap:
+            status, kind = "BLOCKED — BELOW VWAP", "blocked"
+            reasons.append("Price is below rolling 60-second VWAP")
+        elif state.trigger and trigger_distance is not None:
+            proximity = self.settings.stream_trigger_proximity_pct
+            if -proximity <= trigger_distance <= 1.0:
+                status = (
+                    "TRIGGER CROSSED — VERIFYING"
+                    if trigger_distance >= 0 else "NEAR TRIGGER — VERIFYING"
+                )
+                kind = "candidate"
+                reasons.append("Near the saved breakout level; five-minute hold still required")
+            else:
+                status = "SCANNING — AWAY FROM TRIGGER"
+                reasons.append(f"{trigger_distance:+.2f}% from saved trigger")
+        else:
+            status, kind = "EARLY MOMENTUM — VERIFYING", "candidate"
+            reasons.append("Fast move passed local gates; downstream verification required")
+
+        score = 0.0
+        score += min(max((day_move - 1.0) / 5.0, 0.0), 1.0) * 20
+        score += min(max(acceleration / self.settings.stream_min_15s_move_pct, 0.0), 1.0) * 20
+        score += min(dollar_volume / self.settings.stream_min_rolling_dollar_volume, 1.0) * 20
+        score += max(0.0, 1.0 - spread / max(self.settings.max_spread_pct, 0.01)) * 15
+        score += (15 if rolling_vwap and state.last_price >= rolling_vwap else 0)
+        score += min(max((estimated_rvol or 0) / 1.5, 0.0), 1.0) * 10
+        if kind == "blocked":
+            score = min(score, 39)
+        elif kind == "scanning":
+            score = min(score, 59)
+
         return {
-            "health": self.health(),
-            "symbols": rows[:30],
-            "events": list(self.recent_events),
+            "symbol": state.symbol,
+            "last": state.last_price,
+            "bid": state.bid,
+            "ask": state.ask,
+            "day_move_pct": day_move,
+            "acceleration_pct": acceleration,
+            "volume_60s": volume,
+            "dollar_volume_60s": dollar_volume,
+            "rolling_vwap": rolling_vwap,
+            "estimated_rvol": estimated_rvol,
+            "spread_pct": spread,
+            "trigger": state.trigger,
+            "trigger_distance_pct": trigger_distance,
+            "score": round(score),
+            "status": status,
+            "status_kind": kind,
+            "reason": "; ".join(reasons),
+            "last_trade_at": state.ticks[-1].timestamp.isoformat(),
         }
+
+    def live_snapshot(self) -> dict[str, Any]:
+        with self.data_lock:
+            now = _utc_now()
+            rows: list[dict[str, Any]] = []
+            for state in self.engine.symbols.values():
+                if not state.ticks or state.last_price <= 0:
+                    continue
+                rows.append(self._score_symbol(state, now))
+            rows.sort(
+                key=lambda row: (row["score"], row["last_trade_at"]), reverse=True
+            )
+            universe = []
+            for symbol in sorted(self.subscribed):
+                state = self.engine.symbols.get(symbol)
+                universe.append({
+                    "symbol": symbol,
+                    "trigger": state.trigger if state else None,
+                    "last": state.last_price if state else 0,
+                    "bid": state.bid if state else 0,
+                    "ask": state.ask if state else 0,
+                    "previous_close": state.previous_close if state else 0,
+                })
+            return {
+                "health": self.health(),
+                "symbols": rows[:30],
+                "universe": universe,
+                "messages": list(self.recent_messages),
+                "trades": list(self.recent_trades),
+                "events": list(self.recent_events),
+                "sources": [
+                    {
+                        "name": "Alpaca stream",
+                        "state": "live" if self.connected else "reconnecting",
+                        "detail": f"{self.settings.feed.upper()} feed",
+                    },
+                    {
+                        "name": "Market coverage",
+                        "state": "partial" if self.settings.feed == "iex" else "full",
+                        "detail": "IEX sample" if self.settings.feed == "iex" else "consolidated feed",
+                    },
+                    {
+                        "name": "Gmail bridge",
+                        "state": "ready" if self.settings.gmail_app_password else "not configured",
+                        "detail": "alert delivery",
+                    },
+                    {
+                        "name": "Direct webhook",
+                        "state": "ready" if self.settings.alert_webhook_url else "optional",
+                        "detail": "fastest push path",
+                    },
+                    {
+                        "name": "Risk verification",
+                        "state": "on alert",
+                        "detail": "catalyst + SEC + Nasdaq + Robinhood",
+                    },
+                    {
+                        "name": "Order access",
+                        "state": "disabled",
+                        "detail": "read only",
+                    },
+                ],
+            }
 
     def send_test_alert(self) -> bool:
         now = _utc_now()
@@ -297,6 +464,7 @@ class StreamWatcher:
             "Gmail bridge test; no order was created.",
             "alert" if sent else "info",
         )
+        self._save_cooldowns()
         return sent
 
     def _load_cooldowns(self) -> None:
@@ -310,6 +478,9 @@ class StreamWatcher:
                 self.engine.last_alert[symbol] = _parse_time(raw)
             except (TypeError, ValueError):
                 continue
+        for event in reversed(data.get("recent_events", [])):
+            if all(event.get(key) for key in ("title", "detail", "kind", "timestamp")):
+                self.recent_events.appendleft(event)
 
     def _save_cooldowns(self) -> None:
         path = Path(self.settings.stream_state_path)
@@ -318,7 +489,8 @@ class StreamWatcher:
             "last_alert": {
                 symbol: moment.isoformat()
                 for symbol, moment in self.engine.last_alert.items()
-            }
+            },
+            "recent_events": list(self.recent_events)[:40],
         }
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -344,17 +516,21 @@ class StreamWatcher:
         if not selected:
             selected = ["SPY", "QQQ"]
         snapshots = await asyncio.to_thread(self.client.snapshots, selected)
-        for symbol in selected:
-            snapshot = snapshots.get(symbol, {})
-            quote = snapshot.get("latestQuote") or {}
-            previous = snapshot.get("prevDailyBar") or {}
-            self.engine.prime(
-                symbol,
-                float(previous.get("c") or 0),
-                float(quote.get("bp") or 0),
-                float(quote.get("ap") or 0),
-                roster.get(symbol),
-            )
+        with self.data_lock:
+            for symbol in selected:
+                snapshot = snapshots.get(symbol, {})
+                quote = snapshot.get("latestQuote") or {}
+                previous = snapshot.get("prevDailyBar") or {}
+                current = snapshot.get("dailyBar") or {}
+                self.engine.prime(
+                    symbol,
+                    float(previous.get("c") or 0),
+                    float(quote.get("bp") or 0),
+                    float(quote.get("ap") or 0),
+                    roster.get(symbol),
+                    float(previous.get("v") or 0),
+                    float(current.get("v") or 0),
+                )
         additions = set(selected) - self.subscribed
         removals = self.subscribed - set(selected)
         if additions:
@@ -374,12 +550,16 @@ class StreamWatcher:
                 "quotes": batch,
                 "bars": batch,
             }))
+        changed = bool(additions or removals)
         self.subscribed = set(selected)
         self.last_universe_refresh_at = _utc_now()
-        self.record_event(
-            "Universe refreshed",
-            f"Scanning {len(self.subscribed)} live symbols for early momentum.",
-        )
+        self.universe_refresh_count += 1
+        if changed or self.universe_refresh_count == 1:
+            detail = f"Scanning {len(self.subscribed)} live symbols"
+            if additions or removals:
+                detail += f"; {len(additions)} added, {len(removals)} removed"
+            self.record_event("Universe updated", detail + ".")
+            self._save_cooldowns()
 
     def _alert_body(self, signal: dict[str, Any]) -> str:
         trigger = (
@@ -446,22 +626,34 @@ class StreamWatcher:
         symbol = str(message.get("S") or "").upper()
         if not symbol:
             return
-        self.message_count += 1
-        if kind == "q":
-            self.quote_count += 1
-            self.engine.quote(
-                symbol, float(message.get("bp") or 0), float(message.get("ap") or 0)
-            )
-        elif kind == "t":
-            self.trade_count += 1
-            signal = self.engine.trade(
-                symbol,
-                float(message.get("p") or 0),
-                float(message.get("s") or 0),
-                _parse_time(message.get("t")),
-            )
-            if signal:
-                await asyncio.to_thread(self.emit, signal)
+        timestamp = _parse_time(message.get("t"))
+        signal = None
+        with self.data_lock:
+            self.message_count += 1
+            self.recent_messages.appendleft({
+                "type": {"q": "Quote", "t": "Trade", "b": "Bar", "s": "Status"}.get(kind, str(kind)),
+                "symbol": symbol,
+                "timestamp": timestamp.isoformat(),
+            })
+            if kind == "q":
+                self.quote_count += 1
+                self.engine.quote(
+                    symbol, float(message.get("bp") or 0), float(message.get("ap") or 0)
+                )
+            elif kind == "t":
+                self.trade_count += 1
+                price = float(message.get("p") or 0)
+                size = float(message.get("s") or 0)
+                self.recent_trades.appendleft({
+                    "symbol": symbol,
+                    "price": price,
+                    "size": size,
+                    "notional": price * size,
+                    "timestamp": timestamp.isoformat(),
+                })
+                signal = self.engine.trade(symbol, price, size, timestamp)
+        if signal:
+            await asyncio.to_thread(self.emit, signal)
 
     async def connect_once(self) -> None:
         url = f"{STREAM_ROOT}/{self.settings.feed}"
