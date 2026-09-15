@@ -12,6 +12,18 @@ The streaming alert is deliberately preliminary. It requires a 2%–8% session m
 
 ### Always-on deployment
 
+#### Run it continuously on a Mac — no hosting bill
+
+1. On the repository page, choose **Code → Download ZIP**, then open the downloaded folder.
+2. Open the `macos` folder and double-click **Install Driftline Watcher.command**. If macOS blocks it, Control-click the file, choose **Open**, then confirm **Open**.
+3. Enter the Alpaca **paper-account** API key, paper secret key, and Gmail's 16-character App Password when asked. Secret typing is hidden. The two email addresses are already set to `caseycbarai@gmail.com` → `caseycbar@gmail.com`.
+4. The installer opens [http://127.0.0.1:8765/healthz](http://127.0.0.1:8765/healthz). Confirm it shows `"connected": true` and `"orders_enabled": false`.
+5. Use **Check Driftline Status.command**, **Start Driftline Watcher.command**, or **Stop Driftline Watcher.command** at any time.
+
+The Mac service starts at login, automatically restarts after a crash, and prevents idle sleep while it is running. The installer copies the working program into `~/Library/Application Support/DriftlineWatcher/app`, so the downloaded ZIP may be moved or deleted afterward. Keep the Mac powered on, logged in, connected to the internet, and leave a MacBook lid open during market hours. Credentials are stored only in `~/Library/Application Support/DriftlineWatcher/watcher.env`, protected with owner-only permissions; they are never written to the repository or dashboard. GitHub Actions remains the five-minute backup and confirmation scan.
+
+#### Cloud alternative
+
 1. Deploy this repository as a Docker web service using `render.yaml` (or the same `Dockerfile` on Railway, Fly.io, or another host that permits persistent WebSockets).
 2. Add the existing Alpaca paper keys and Gmail secrets to the host. Do not paste secrets into the repository.
 3. Use an always-on plan; a service that sleeps cannot provide seconds-level alerts.
