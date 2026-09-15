@@ -1,6 +1,11 @@
 name: Publish command center
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
   workflow_run:
     workflows: ["Alpaca breakout watcher"]
     types: [completed]
