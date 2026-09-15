@@ -38,7 +38,6 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
       - name: Run read-only scan and paper lab
-        if: github.event_name != 'push'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
