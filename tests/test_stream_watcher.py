@@ -13,6 +13,9 @@ def settings() -> Settings:
         stream_min_15s_move_pct=0.25,
         stream_max_15s_move_pct=2.5,
         stream_cooldown_seconds=600,
+        crypto_min_rolling_dollar_volume=1_000,
+        crypto_min_15s_move_pct=0.15,
+        crypto_max_15s_move_pct=2.0,
     )
 
 
@@ -132,6 +135,53 @@ def test_dashboard_contains_all_three_drilldowns():
     assert 'data-view="messages"' in PAGE
     assert 'data-view="trades"' in PAGE
     assert "Ranked intelligence scanner" in PAGE
+
+
+def test_crypto_signal_uses_crypto_thresholds_and_has_no_stock_price_cap():
+    engine = EarlyWarningEngine(settings())
+    now = datetime(2026, 9, 15, 19, 30, tzinfo=timezone.utc)
+    engine.prime(
+        "BTC/USD",
+        previous_close=74_000,
+        bid=75_090,
+        ask=75_100,
+        asset_class="crypto",
+    )
+    result = None
+    for seconds, price in [(12, 74_950), (9, 74_980), (6, 75_020), (0, 75_100)]:
+        result = engine.trade("BTC/USD", price, 0.1, now - timedelta(seconds=seconds))
+
+    assert result is not None
+    assert result["asset_class"] == "crypto"
+    assert result["symbol"] == "BTC/USD"
+
+
+def test_live_snapshot_separates_stock_and_crypto_rankings():
+    watcher = StreamWatcher(settings())
+    watcher.subscribed = {"TEST"}
+    watcher.crypto_subscribed = {"BTC/USD"}
+    now = datetime.now(timezone.utc)
+    watcher.engine.prime("TEST", 9.80, 10.09, 10.10)
+    watcher.engine.trade("TEST", 10.10, 100, now)
+    watcher.engine.prime(
+        "BTC/USD", 74_000, 75_090, 75_100, asset_class="crypto"
+    )
+    watcher.engine.trade("BTC/USD", 75_100, 0.1, now)
+
+    snapshot = watcher.live_snapshot()
+
+    assert snapshot["symbols"][0]["symbol"] == "TEST"
+    assert snapshot["crypto"][0]["symbol"] == "BTC/USD"
+    assert snapshot["health"]["crypto_symbols"] == 1
+    assert snapshot["crypto_universe"][0]["symbol"] == "BTC/USD"
+
+
+def test_dashboard_includes_clickable_crypto_drilldown_and_scanner():
+    from src.live_dashboard import PAGE
+
+    assert 'data-view="crypto"' in PAGE
+    assert 'id="cryptoRows"' in PAGE
+    assert "24/7 crypto intelligence scanner" in PAGE
 
 
 def test_meaningful_activity_survives_restart(tmp_path):
