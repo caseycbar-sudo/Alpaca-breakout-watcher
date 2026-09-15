@@ -8,6 +8,7 @@ import requests
 from .config import Settings
 from .indicators import atr, five_minute_move_pct, relative_volume, rsi, spread_pct, vwap
 from .risk_sources import OfficialRiskClient
+from .stocktwits import StocktwitsClient
 
 DATA_URL = "https://data.alpaca.markets"
 PAPER_URL = "https://paper-api.alpaca.markets"
@@ -32,6 +33,7 @@ class AlpacaClient:
             "APCA-API-KEY-ID": settings.api_key,
             "APCA-API-SECRET-KEY": settings.secret_key,
         }
+        self.stocktwits = StocktwitsClient()
 
     def _get(self, base: str, path: str, params: dict | None = None):
         response = requests.get(
@@ -74,7 +76,11 @@ class AlpacaClient:
                     symbol = item.get("symbol")
                     if symbol and symbol not in symbols:
                         symbols.append(symbol)
-        return symbols[: self.settings.max_symbols]
+        # Stocktwits expands discovery beyond Alpaca's mover lists. It is deliberately
+        # secondary: every symbol must still clear all Alpaca, news, SEC, and halt gates.
+        social_symbols = self.stocktwits.trending_symbols(limit=30)
+        self.stocktwits_status = self.stocktwits.status
+        return list(dict.fromkeys(social_symbols + symbols))[: self.settings.max_symbols]
 
     def snapshots(self, symbols: list[str]) -> dict:
         if not symbols:
@@ -356,10 +362,19 @@ def scan(
             continue
 
         preferred_rsi = settings.preferred_min_rsi <= indicator_rsi <= settings.preferred_max_rsi
+        stocktwits = None
+        social_client = getattr(client, "stocktwits", None)
+        if social_client is not None:
+            stocktwits = social_client.symbol_pulse(symbol, now)
+        social_attention = min(
+            float((stocktwits or {}).get("stocktwits_message_count_1h", 0)) / 40.0,
+            0.5,
+        )
         score = (
             rel_volume
             + (1.0 if preferred_rsi else 0.0)
             + (0.5 if "aligned" in market_context else 0.0)
+            + social_attention
             - spread
         )
         matches.append(
@@ -387,6 +402,7 @@ def scan(
                 "news_time": news.get("created_at", ""),
                 "news_url": news.get("url", ""),
                 "score": score,
+                **(stocktwits or {}),
                 **risk_result,
             }
         )
