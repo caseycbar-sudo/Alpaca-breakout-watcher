@@ -57,6 +57,7 @@ class Settings:
     )
     crypto_max_spread_pct: float = float(os.getenv("CRYPTO_MAX_SPREAD_PCT", "0.50"))
     stream_state_path: str = os.getenv("STREAM_STATE_PATH", "data/stream_state.json")
+    stream_picks_path: str = os.getenv("STREAM_PICKS_PATH", "data/stream_picks.json")
     alert_webhook_url: str = os.getenv("ALERT_WEBHOOK_URL", "")
     alert_webhook_token: str = os.getenv("ALERT_WEBHOOK_TOKEN", "")
     health_port: int = int(os.getenv("PORT", "8080"))

@@ -47,8 +47,14 @@ async function load(showToast=false){
   try{const response=await fetch(`data/dashboard.json?v=${Date.now()}`,{cache:'no-store'});if(!response.ok)throw new Error('data unavailable');render(await response.json());if(showToast)toast('Dashboard refreshed');}
   catch(error){$('watcher-status').textContent='data unavailable';$('watcher-dot').style.background='var(--amber)';toast('Could not refresh—showing the last loaded view');}
 }
+async function loadBacktest(){
+  const root=$('backtest-root');if(!root||!window.DriftlineBacktest)return;
+  try{const response=await fetch(`data/backtest.json?v=${Date.now()}`,{cache:'no-store'});if(!response.ok)throw new Error('missing');window.DriftlineBacktest.render(await response.json(),root);}
+  catch(error){if(!root.dataset.loaded)window.DriftlineBacktest.empty(root,'No backtest yet','The backtest has not published results yet. Run it from GitHub Actions or with the Mac launcher.');return;}
+  root.dataset.loaded='1';
+}
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.view)));
 document.querySelectorAll('[data-jump]').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.jump)));
-$('refresh').addEventListener('click',()=>load(true));
-load();setInterval(()=>load(false),120000);
+$('refresh').addEventListener('click',()=>{load(true);loadBacktest();});
+load();loadBacktest();setInterval(()=>load(false),120000);setInterval(loadBacktest,1800000);

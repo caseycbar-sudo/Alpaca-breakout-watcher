@@ -34,11 +34,12 @@ from .live_dashboard import dashboard_page
 from .options_flow import OptionsVolumeMonitor
 from .premarket import STATE_PATH as ROSTER_PATH
 from .scanner import AlpacaClient, ET
+from .study_list import record_picks
 
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
 CRYPTO_STREAM_ROOT = "wss://stream.data.alpaca.markets/v1beta3/crypto"
-BUILD_ID = "2026.09.15.7-options-volume"
+BUILD_ID = "2026.09.15.8-master-backtest-lab"
 
 
 def _utc_now() -> datetime:
@@ -789,6 +790,13 @@ class StreamWatcher:
             f"{signal['stage']} at {signal['price']:.4f}; verification required.",
             "alert",
         )
+        if signal.get("asset_class", "stock") == "stock":
+            # Research bookkeeping only: feeds the isolated backtest study list.
+            record_picks(
+                [signal["symbol"]],
+                "stream",
+                path=self.settings.stream_picks_path,
+            )
         self._save_cooldowns()
 
     async def handle(

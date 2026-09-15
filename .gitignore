@@ -3,3 +3,6 @@
 __pycache__/
 *.py[cod]
 data/stream_state.json
+data/stream_picks.json
+data/backtest/
+data/*.tmp

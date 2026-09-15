@@ -68,6 +68,23 @@ and never enables options trading.
 
 Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
 
+## Backtest Lab — research only
+
+The Backtest Lab replays the A/B/C setup shapes over historical five-minute bars and keeps its results completely separate from live alerts and the paper ledger. It enters on the next bar, models spread plus slippage, assumes the stop was hit first when a stop and target both fit inside one bar, and applies the same $50 balance, $10 position, three-trades-per-day, and two-loss daily limits.
+
+- The learning track studies every recognizable setup shape so failed gates can be compared honestly.
+- The strict track includes only setups that pass every historical gate available to replay.
+- Pattern mining trains on the older 70% of days and must agree on the newest unseen 30%.
+- The explainable second-opinion model reports when it cannot beat chance; it never becomes an automatic trading rule.
+- Historical quotes, SEC filings, and Nasdaq halts are not replayed, so the report clearly labels those limits.
+
+Run **Install Driftline Watcher.command** again and choose **Y** to reuse saved settings. Then double-click **Run Backtest Lab.command**. The private report and CSV details are stored under `~/Library/Application Support/DriftlineWatcher/backtest`. The public Command Center also has a **Backtest lab** tab populated by `.github/workflows/backtest.yml` after completed research runs.
+
+```bash
+python -m src.backtest_lab
+python -m src.backtest_lab --symbols SOFI,PLTR --days 120 --report backtest.html
+```
+
 ## Safety design
 
 - Use **Alpaca paper-account keys only**.

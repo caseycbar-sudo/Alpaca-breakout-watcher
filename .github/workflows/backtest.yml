@@ -1,0 +1,98 @@
+name: Driftline backtest lab
+
+# Research only: replays past market data to learn which setups tend to work.
+# It never sends alerts, never edits the live paper ledger, and has no order code.
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Optional comma-separated tickers (blank = study list + watcher picks)"
+        required: false
+        default: ""
+      days:
+        description: "Calendar days of history (20–400)"
+        required: false
+        default: "120"
+  schedule:
+    # Weekdays at 21:15 UTC — after the U.S. close in both daylight and standard time.
+    - cron: "15 21 * * 1-5"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: driftline-backtest
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - name: Replay setups and learn patterns
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_DATA_FEED: ${{ vars.ALPACA_DATA_FEED || 'iex' }}
+          BACKTEST_MAX_SYMBOLS: ${{ vars.BACKTEST_MAX_SYMBOLS || '60' }}
+          BACKTEST_SPREAD_PCT: ${{ vars.BACKTEST_SPREAD_PCT || '0.15' }}
+          INPUT_SYMBOLS: ${{ github.event.inputs.symbols }}
+          INPUT_DAYS: ${{ github.event.inputs.days || '120' }}
+        run: |
+          if ! [[ "$INPUT_DAYS" =~ ^[0-9]+$ ]] || [ "$INPUT_DAYS" -lt 20 ] || [ "$INPUT_DAYS" -gt 400 ]; then
+            echo "Days must be between 20 and 400; using 120."
+            INPUT_DAYS=120
+          fi
+          ARGS=(--days "$INPUT_DAYS")
+          if [ -n "$INPUT_SYMBOLS" ]; then
+            ARGS+=(--symbols "$INPUT_SYMBOLS")
+          fi
+          python -m src.backtest_lab "${ARGS[@]}"
+      - name: Keep detailed spreadsheets for 30 days
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-details
+          path: data/backtest
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Save results for the Command Center
+        run: |
+          if git diff --quiet -- docs/data/backtest.json data/backtest_history.json && \
+             [ -z "$(git ls-files --others --exclude-standard docs/data/backtest.json data/backtest_history.json)" ]; then
+            exit 0
+          fi
+          git config user.name "alpaca-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/data/backtest.json data/backtest_history.json
+          git commit -m "[skip ci] update backtest lab"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            sleep $((attempt * 10))
+          done
+          exit 1
+      - name: Publish the refreshed Command Center
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Weekdays 08:00–21:59 UTC the scheduled five-minute scan republishes the site
+          # within minutes. Outside that window the market is closed, so a one-off scan
+          # only refreshes the dashboard (no paper entries, no alert emails).
+          DOW=$(date -u +%u); HOUR=$((10#$(date -u +%H)))
+          if [ "$DOW" -le 5 ] && [ "$HOUR" -ge 8 ] && [ "$HOUR" -le 21 ]; then
+            echo "The next scheduled scan will publish the results."
+          else
+            gh workflow run scan.yml --ref main
+          fi
+
