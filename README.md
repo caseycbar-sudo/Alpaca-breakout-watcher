@@ -2,7 +2,7 @@
 
 A read-only premarket and regular-session scanner, a strict **PAPER—NO REAL ORDER** laboratory, and the [Driftline Trading Command Center](https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/).
 
-The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation.
+The watcher scans Alpaca's active/mover universe every five minutes. Premarket scans build a rotating daily roster and send only meaningful new or changed candidates. Regular-session scans evaluate catalyst momentum, VWAP, volatility-adjusted risk, dollar liquidity, broad-market alignment, and opening-range confirmation. Every technically qualified name must also clear the official Nasdaq Trader halt feed and SEC EDGAR filing checks before it can reach the roster.
 
 ## Trading Command Center
 
@@ -14,6 +14,8 @@ The command center shows:
 - the exact screening gates and why an empty roster is intentional;
 - the paper ledger, virtual balance, win rate, expectancy, profit factor, and drawdown;
 - the Alpaca → technical gate → Gmail → private Robinhood-verification bridge.
+- live connection status for SEC EDGAR and the Nasdaq Trader halt feed;
+- a linked audit entry when a halt, offering, dilution, reverse split, or listing risk blocks a setup.
 
 Only public market research and paper simulations are published. Credentials, complete account numbers, and private Robinhood information never enter the dashboard. It is responsive and refreshes itself every two minutes.
 
@@ -21,6 +23,9 @@ Only public market research and paper simulations are published. Credentials, co
 
 - Use **Alpaca paper-account keys only**.
 - The code has no create, replace, cancel, or submit-order method.
+- A confirmed Nasdaq halt is a hard block.
+- A recent SEC registration/prospectus or filing with offering, dilution, reverse-split, or listing-risk language is a hard block.
+- If either official risk source cannot be verified, the candidate is suppressed instead of assumed safe.
 - Premarket alerts are watchlist-only; they cannot create paper entries.
 - Maximum simulated position: $10 from a $50 virtual balance.
 - Maximum three new simulations per market day.
@@ -41,6 +46,7 @@ Only public market research and paper simulations are published. Credentials, co
 | `ALERT_EMAIL_FROM` | Gmail address sending alerts |
 | `ALERT_EMAIL_TO` | Address receiving alerts |
 | `GMAIL_APP_PASSWORD` | 16-character Google App Password |
+| `SEC_USER_AGENT` | Optional SEC-compliant app/contact string; falls back to `DriftlineWatcher/1.0` plus the sender address |
 
 For Gmail, enable 2-Step Verification and create an App Password. Never use a normal Gmail or Alpaca password.
 
@@ -63,6 +69,8 @@ For Gmail, enable 2-Step Verification and create an App Password. Never use a no
 - active and tradable Alpaca symbol;
 - catalyst no older than 24 hours;
 - rejection of obvious offering, dilution, reverse-split, or delisting headlines;
+- official Nasdaq Trader halt/resumption verification;
+- the last 30 days of SEC submissions, including prospectuses and filing text for offering, convertible, warrant, reverse-split, and listing-risk language;
 - no new long when both SPY and QQQ are below VWAP and weakening;
 - technical risk no larger than one ATR.
 

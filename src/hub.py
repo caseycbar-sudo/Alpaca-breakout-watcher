@@ -24,6 +24,7 @@ def _public_candidate(row: dict) -> dict:
         "premarket_volume", "relative_volume", "vwap", "atr", "rsi",
         "breakout_level", "technical_stop", "stage", "confirmation", "setup",
         "market_context", "news_headline", "news_time", "news_url", "score",
+        "halt_check", "sec_check", "sec_filings", "risk_sources",
     )
     return {key: row[key] for key in keys if key in row}
 
@@ -83,6 +84,8 @@ def publish_hub(
     paper_account: dict | None = None,
     email_sent: bool = False,
     note: str = "",
+    risk_events: list[dict] | None = None,
+    source_status: dict | None = None,
 ) -> None:
     account = paper_account or {}
     roster = [_public_candidate(row) for row in candidates[:5]]
@@ -110,6 +113,10 @@ def publish_hub(
             "detail": "Recorded by the read-only watcher and paper laboratory.",
             "source_url": "",
         })
+    research.extend((risk_events or [])[-12:])
+    research.sort(key=lambda row: str(row.get("time", "")), reverse=True)
+
+    sources = source_status or {}
 
     payload = {
         "schema_version": 1,
@@ -128,6 +135,8 @@ def publish_hub(
             "paper_account": "attention" if account.get("trading_blocked") else "healthy",
             "paper_positions": len(account.get("positions") or []),
             "paper_open_orders": len(account.get("open_orders") or []),
+            "sec_edgar": sources.get("sec_edgar", "not checked"),
+            "nasdaq_halts": sources.get("nasdaq_halts", "not checked"),
             "note": note,
         },
         "candidates": roster,
@@ -142,6 +151,8 @@ def publish_hub(
             {"label": "Spread", "rule": "0.40% maximum"},
             {"label": "VWAP", "rule": "above; within one ATR"},
             {"label": "Catalyst", "rule": "verified news within 24 hours"},
+            {"label": "SEC filing", "rule": "no fresh offering, dilution or listing risk"},
+            {"label": "Trading halt", "rule": "clear on Nasdaq Trader's official feed"},
             {"label": "Confirmation", "rule": "second-bar hold or first retest"},
         ],
         "privacy": {

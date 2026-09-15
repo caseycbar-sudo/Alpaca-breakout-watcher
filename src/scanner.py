@@ -7,6 +7,7 @@ import requests
 
 from .config import Settings
 from .indicators import atr, five_minute_move_pct, relative_volume, rsi, spread_pct, vwap
+from .risk_sources import OfficialRiskClient
 
 DATA_URL = "https://data.alpaca.markets"
 PAPER_URL = "https://paper-api.alpaca.markets"
@@ -209,8 +210,48 @@ def market_regime(five_minute: dict[str, list[dict]], now: datetime) -> tuple[bo
     return not both_bearish, ", ".join(labels) if labels else "market data unavailable"
 
 
-def scan(settings: Settings, client: AlpacaClient, now: datetime | None = None) -> list[dict]:
+def prepare_risk_checks(
+    settings: Settings,
+    client: AlpacaClient,
+    risk_client: OfficialRiskClient | None = None,
+) -> OfficialRiskClient:
+    user_agent = settings.sec_user_agent
+    if not user_agent and settings.email_from:
+        user_agent = f"DriftlineWatcher/1.0 {settings.email_from}"
+    checker = risk_client or OfficialRiskClient(user_agent)
+    checker.refresh_halts()
+    client.risk_events = []
+    client.risk_source_status = dict(checker.status)
+    return checker
+
+
+def record_risk_result(
+    client: AlpacaClient,
+    checker: OfficialRiskClient,
+    symbol: str,
+    now: datetime,
+) -> dict | None:
+    assessment = checker.assess(symbol, now)
+    client.risk_source_status = dict(checker.status)
+    if not assessment.allowed:
+        client.risk_events.append(assessment.event(now))
+        return None
+    return {
+        "halt_check": assessment.halt_check,
+        "sec_check": assessment.sec_check,
+        "sec_filings": assessment.filings,
+        "risk_sources": assessment.source_urls,
+    }
+
+
+def scan(
+    settings: Settings,
+    client: AlpacaClient,
+    now: datetime | None = None,
+    risk_client: OfficialRiskClient | None = None,
+) -> list[dict]:
     now = now or datetime.now(timezone.utc)
+    checker = prepare_risk_checks(settings, client, risk_client)
     symbols = client.universe()
     all_symbols = list(dict.fromkeys(symbols + list(MARKET_SYMBOLS)))
     snapshots = client.snapshots(symbols)
@@ -310,6 +351,9 @@ def scan(settings: Settings, client: AlpacaClient, now: datetime | None = None) 
         headline = news.get("headline", "")
         if any(word in headline.lower() for word in RISK_WORDS):
             continue
+        risk_result = record_risk_result(client, checker, symbol, now)
+        if risk_result is None:
+            continue
 
         preferred_rsi = settings.preferred_min_rsi <= indicator_rsi <= settings.preferred_max_rsi
         score = (
@@ -343,6 +387,7 @@ def scan(settings: Settings, client: AlpacaClient, now: datetime | None = None) 
                 "news_time": news.get("created_at", ""),
                 "news_url": news.get("url", ""),
                 "score": score,
+                **risk_result,
             }
         )
     return sorted(matches, key=lambda row: row["score"], reverse=True)

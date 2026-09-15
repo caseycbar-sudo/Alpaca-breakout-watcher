@@ -39,6 +39,8 @@ def main() -> None:
             events=events,
             lab=lab,
             paper_account=account,
+            risk_events=[],
+            source_status={"sec_edgar": "not checked", "nasdaq_halts": "not checked"},
             note="U.S. equities are closed. The next scheduled scan will refresh the research board.",
         )
         print("Outside today's premarket and regular U.S. stock session; hub refreshed.")
@@ -65,6 +67,8 @@ def main() -> None:
             lab=lab,
             paper_account=account,
             email_sent=email_sent,
+            risk_events=getattr(client, "risk_events", []),
+            source_status=getattr(client, "risk_source_status", {}),
             note=(
                 "Dynamic roster updated; regular-session confirmation is still required."
                 if event
@@ -109,6 +113,8 @@ def main() -> None:
         lab=lab,
         paper_account=account,
         email_sent=email_sent,
+        risk_events=getattr(client, "risk_events", []),
+        source_status=getattr(client, "risk_source_status", {}),
         note=(
             "Meaningful setup or account status recorded."
             if events
