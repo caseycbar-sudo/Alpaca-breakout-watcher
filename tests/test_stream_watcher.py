@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from src.config import Settings
-from src.stream_watcher import EarlyWarningEngine, StreamWatcher
+from src.stream_watcher import EarlyWarningEngine, StreamWatcher, load_backtest_summary
 
 
 def settings() -> Settings:
@@ -190,6 +190,35 @@ def test_dashboard_includes_clickable_options_volume_intelligence():
     assert 'data-view="options"' in PAGE
     assert 'id="optionRows"' in PAGE
     assert "Options volume intelligence" in PAGE
+
+
+def test_dashboard_makes_backtest_learning_visible():
+    from src.live_dashboard import PAGE
+
+    assert 'data-view="backtest"' in PAGE
+    assert 'id="backtestSetups"' in PAGE
+    assert "Historical learning lab" in PAGE
+
+
+def test_backtest_summary_is_loaded_without_exposing_full_report(tmp_path):
+    report = tmp_path / "backtest.json"
+    report.write_text(
+        '{"generated_at":"2026-09-16T00:00:00+00:00",'
+        '"summary":{"tickers":12,"learning":{"trades":44,"avg_r":0.21,"win_rate":54.5},'
+        '"portfolio":{"trades":3,"net_pl":0.42}},'
+        '"model":{"status":"faint","test_auc":0.56},'
+        '"patterns":{"promising":[{"pattern":"RSI 55–65"}],'
+        '"avoid":[{"pattern":"Wide spread"}]}}',
+        encoding="utf-8",
+    )
+
+    summary = load_backtest_summary([report])
+
+    assert summary["status"] == "ready"
+    assert summary["setups"] == 44
+    assert summary["paper_trades"] == 3
+    assert summary["promising"] == ["RSI 55–65"]
+    assert "summary" not in summary
 
 
 def test_live_snapshot_exposes_options_health_and_rows():
