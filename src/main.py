@@ -11,6 +11,7 @@ from .premarket import (
     todays_roster_symbols,
 )
 from .scanner import AlpacaClient, prepare_risk_checks, scan
+from .study_list import record_picks
 
 
 def main() -> None:
@@ -49,6 +50,7 @@ def main() -> None:
 
     if premarket:
         candidates = scan_premarket(settings, client, now)
+        record_picks([row["symbol"] for row in candidates], "premarket", now)
         event = roster_event(candidates, now)
         if event:
             events.append(event)
@@ -84,6 +86,7 @@ def main() -> None:
         events.extend(lab.process_exits(client.snapshots(open_symbols), now))
 
     candidates = scan(settings, client, now)
+    record_picks([row["symbol"] for row in candidates], "scanner", now)
     premarket_symbols = todays_roster_symbols(now)
     for candidate in candidates:
         if candidate["symbol"] in premarket_symbols:

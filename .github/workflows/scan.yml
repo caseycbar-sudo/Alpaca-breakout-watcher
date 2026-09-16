@@ -15,6 +15,7 @@ on:
       - "requirements.txt"
       - ".github/workflows/scan.yml"
       - ".github/workflows/pages.yml"
+      - ".github/workflows/backtest.yml"
   push:
     branches: [main]
     paths:
@@ -25,6 +26,7 @@ on:
       - "requirements.txt"
       - ".github/workflows/scan.yml"
       - ".github/workflows/pages.yml"
+      - ".github/workflows/backtest.yml"
 
 permissions:
   contents: write
@@ -63,14 +65,20 @@ jobs:
       - name: Preserve paper ledger and alert state
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
-          if git diff --quiet -- data/paper_ledger.csv data/premarket_state.json; then
+          if git diff --quiet -- data/paper_ledger.csv data/premarket_state.json data/study_picks.json && \
+             [ -z "$(git ls-files --others --exclude-standard data/study_picks.json)" ]; then
             exit 0
           fi
           git config user.name "alpaca-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/paper_ledger.csv data/premarket_state.json
+          if [ -f data/study_picks.json ]; then git add data/study_picks.json; fi
           git commit -m "[skip ci] update paper lab and alert state"
-          git push
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            sleep $((attempt * 10))
+          done
+          exit 1
       - name: Package command center
         uses: actions/upload-artifact@v4
         with:

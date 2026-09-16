@@ -25,6 +25,7 @@
         <button class="nav-item" data-view="research"><span>02</span>Research log</button>
         <button class="nav-item" data-view="paper"><span>03</span>Paper lab</button>
         <button class="nav-item" data-view="system"><span>04</span>System</button>
+        <button class="nav-item" data-view="backtest"><span>05</span>Backtest lab</button>
       </nav>
       <div class="safety-card">
         <span class="eyebrow">OPERATING MODE</span>
@@ -113,10 +114,15 @@
         </div>
         <div class="privacy-grid" id="privacy-grid"></div>
       </section>
+
+      <section class="view" id="view-backtest" aria-label="Backtest lab">
+        <div id="backtest-root"><div class="empty-state"><strong>Loading the backtest lab…</strong></div></div>
+      </section>
     </main>
   </div>
-  <nav class="mobile-nav" aria-label="Mobile navigation"><button class="active" data-view="overview">Overview</button><button data-view="research">Research</button><button data-view="paper">Paper</button><button data-view="system">System</button></nav>
+  <nav class="mobile-nav" aria-label="Mobile navigation"><button class="active" data-view="overview">Overview</button><button data-view="research">Research</button><button data-view="paper">Paper</button><button data-view="system">System</button><button data-view="backtest">Backtest</button></nav>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/backtest.js" defer></script>
   <script src="assets/app.js" defer></script>
 </body>
 </html>

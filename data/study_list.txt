@@ -1,0 +1,15 @@
+# Driftline Backtest Lab — my study list
+#
+# Add any stock ticker you want the nightly backtest to study, one per line
+# (or several on a line separated by spaces or commas). Lines starting with #
+# are ignored. Crypto pairs are skipped because the setups use the stock session.
+#
+# Tickers the watcher flags are added automatically; you do not need to list them.
+# If fewer than 10 tickers are known, the lab fills in with today's most-active
+# movers so it always has something to learn from.
+#
+# Examples (remove the leading # to use them):
+# SOFI
+# PLTR
+# RIVN
+

@@ -63,6 +63,8 @@ chmod 700 "$SUPPORT_DIR" "$LOG_DIR"
 printf "Copying the watcher into its permanent Mac folder...\n"
 ditto "$SOURCE_DIR/src" "$APP_DIR/src" || fail "The watcher program could not be copied."
 ditto "$SOURCE_DIR/data" "$APP_DIR/data" || fail "The watcher data could not be copied."
+mkdir -p "$APP_DIR/docs"
+ditto "$SOURCE_DIR/docs/assets" "$APP_DIR/docs/assets" || fail "The report styles could not be copied."
 cp "$SOURCE_DIR/requirements.txt" "$APP_DIR/requirements.txt"
 
 printf "Preparing the private Python environment...\n"
