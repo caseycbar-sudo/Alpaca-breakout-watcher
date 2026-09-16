@@ -39,7 +39,7 @@ from .study_list import record_picks
 
 STREAM_ROOT = "wss://stream.data.alpaca.markets/v2"
 CRYPTO_STREAM_ROOT = "wss://stream.data.alpaca.markets/v1beta3/crypto"
-BUILD_ID = "2026.09.15.8-master-backtest-lab"
+BUILD_ID = "2026.09.16.9-visible-backtest-lab"
 
 
 def _utc_now() -> datetime:
@@ -61,6 +61,46 @@ def _spread_pct(bid: float, ask: float) -> float:
     if bid <= 0 or ask < bid or midpoint <= 0:
         return 999.0
     return ((ask - bid) / midpoint) * 100.0
+
+
+def load_backtest_summary(paths: list[Path] | None = None) -> dict[str, Any]:
+    """Load a compact, read-only Backtest Lab summary for the live dashboard."""
+    candidates = paths or [
+        Path.home() / "Library/Application Support/DriftlineWatcher/backtest/backtest.json",
+        Path("docs/data/backtest.json"),
+        Path("data/backtest.json"),
+    ]
+    for path in candidates:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            summary = payload.get("summary") or {}
+            learning = summary.get("learning") or {}
+            portfolio = summary.get("portfolio") or {}
+            model = payload.get("model") or {}
+            patterns = payload.get("patterns") or {}
+            return {
+                "status": "ready",
+                "generated_at": payload.get("generated_at"),
+                "tickers": int(summary.get("tickers") or 0),
+                "setups": int(learning.get("trades") or 0),
+                "average_r": float(learning.get("avg_r") or 0),
+                "win_rate": float(learning.get("win_rate") or 0),
+                "paper_trades": int(portfolio.get("trades") or 0),
+                "paper_pl": float(portfolio.get("net_pl") or 0),
+                "model_status": str(model.get("status") or "waiting"),
+                "model_auc": model.get("test_auc"),
+                "promising": [str(row.get("pattern")) for row in patterns.get("promising", [])[:5]],
+                "avoid": [str(row.get("pattern")) for row in patterns.get("avoid", [])[:5]],
+                "source": str(path),
+            }
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, AttributeError):
+            continue
+    return {
+        "status": "not_run",
+        "tickers": 0,
+        "setups": 0,
+        "message": "Run ‘Run Backtest Lab.command’ once to create the first report.",
+    }
 
 
 @dataclass
@@ -498,6 +538,7 @@ class StreamWatcher:
                 })
             return {
                 "health": self.health(),
+                "backtest": load_backtest_summary(),
                 "symbols": stock_rows[:30],
                 "crypto": crypto_rows[:20],
                 "options": list(self.options_monitor.rows),
