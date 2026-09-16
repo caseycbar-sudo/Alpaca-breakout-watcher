@@ -1,0 +1,20 @@
+[
+ {
+  "generated_at": "2026-09-16T21:28:52.412205+00:00",
+  "tickers": 20,
+  "learning_trades": 952,
+  "learning_avg_r": -0.2693,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.587,
+  "promising": [
+   "Stop distance: 4%+"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Signal-bar move: 0\u20130.4%"
+  ],
+  "run": "study list"
+ }
+]
