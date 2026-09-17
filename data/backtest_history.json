@@ -16,5 +16,21 @@
    "Signal-bar move: 0\u20130.4%"
   ],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-09-17T21:27:13.274748+00:00",
+  "tickers": 20,
+  "learning_trades": 868,
+  "learning_avg_r": -0.2346,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.525,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP + SPY/QQQ mood: mixed"
+  ],
+  "run": "study list"
  }
 ]
