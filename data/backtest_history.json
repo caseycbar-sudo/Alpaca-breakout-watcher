@@ -32,5 +32,22 @@
    "Distance above VWAP: below VWAP + SPY/QQQ mood: mixed"
   ],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-09-18T21:26:46.849988+00:00",
+  "tickers": 20,
+  "learning_trades": 953,
+  "learning_avg_r": -0.3627,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.663,
+  "promising": [
+   "5-min RSI: over 78 + Opening gap: flat (\u00b11%)"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
  }
 ]
