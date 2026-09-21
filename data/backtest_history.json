@@ -49,5 +49,23 @@
    "Stop distance: under 0.5%"
   ],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-09-21T21:27:38.894594+00:00",
+  "tickers": 20,
+  "learning_trades": 993,
+  "learning_avg_r": -0.3707,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.596,
+  "promising": [
+   "Signal-bar move: 1\u20132%"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Share price: $20\u201350"
+  ],
+  "run": "study list"
  }
 ]
