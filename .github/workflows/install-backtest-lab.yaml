@@ -1,0 +1,88 @@
+name: Install backtest lab
+
+# One-time helper so the backtest lab can be installed from a phone.
+#
+# How to use it (all in a mobile browser, desktop site mode):
+#   1. Put this file in the repo at .github/workflows/install-backtest-lab.yml
+#   2. Upload Alpaca-breakout-watcher-backtest-lab.zip to the repo root
+#   3. That upload starts this job. It unpacks the new files onto a branch
+#      called "backtest-lab" and opens nothing on main until you merge.
+#   4. Open the repo's Branches or Pull requests page, review, and merge.
+#
+# It never touches the live paper ledger, the premarket state, or the
+# published dashboard data. It deletes the zip and itself on the branch.
+
+on:
+  push:
+    paths:
+      - "Alpaca-breakout-watcher-backtest-lab.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: install-backtest-lab
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Unpack the update onto a review branch
+        run: |
+          set -euo pipefail
+          ZIP="Alpaca-breakout-watcher-backtest-lab.zip"
+          if [ ! -f "$ZIP" ]; then
+            echo "No $ZIP in the repository root. Upload it and this job will run again."
+            exit 1
+          fi
+
+          rm -rf /tmp/unpack && mkdir -p /tmp/unpack
+          unzip -q "$ZIP" -d /tmp/unpack
+          ROOT="$(dirname "$(find /tmp/unpack -maxdepth 3 -name requirements.txt | head -1)")"
+          if [ -z "$ROOT" ] || [ ! -d "$ROOT/src" ]; then
+            echo "That zip does not look like the watcher project."
+            exit 1
+          fi
+
+          git config user.name "alpaca-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -B backtest-lab
+
+          # Only code, tests, site assets, workflows and docs are replaced.
+          # data/paper_ledger.csv, data/premarket_state.json, data/study_picks.json
+          # and docs/data/*.json are left exactly as they are.
+          for folder in src tests macos docs/assets .github/workflows; do
+            mkdir -p "$folder"
+            cp -a "$ROOT/$folder/." "$folder/"
+          done
+          for file in docs/index.html README.md .gitignore data/study_list.txt requirements.txt Dockerfile render.yaml .env.example; do
+            if [ -f "$ROOT/$file" ]; then
+              mkdir -p "$(dirname "$file")"
+              cp -a "$ROOT/$file" "$file"
+            fi
+          done
+          chmod +x macos/*.command macos/*.sh || true
+
+          rm -f "$ZIP" .github/workflows/install-backtest-lab.yml
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed; the branch already matches the zip."
+            exit 0
+          fi
+          git commit -m "Add research-only backtest lab"
+          git push --force -u origin backtest-lab
+          echo "Done. Open the branch 'backtest-lab', check the files, then merge it into main."
+
+      - name: Check the tests pass on the new branch
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet -r requirements.txt
+          PYTHONPATH="$GITHUB_WORKSPACE" python -m pytest -q
