@@ -181,5 +181,22 @@
    "Opening gap: flat (\u00b11%)"
   ],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-01T00:34:34.753939+00:00",
+  "tickers": 20,
+  "learning_trades": 2240,
+  "learning_avg_r": -0.8193,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.788,
+  "promising": [],
+  "avoid": [
+   "Share price: $50\u2013100",
+   "Stop distance: under 0.5%",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
  }
 ]

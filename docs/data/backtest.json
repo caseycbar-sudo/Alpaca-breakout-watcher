@@ -1,10 +1,10 @@
 {
  "schema_version": 1,
- "generated_at": "2026-09-30T00:29:50.170941+00:00",
+ "generated_at": "2026-10-01T00:34:34.753939+00:00",
  "mode": "RESEARCH ONLY \u2014 no alerts, no paper entries, no orders",
  "window": {
-  "start": "2026-06-02",
-  "end": "2026-09-30",
+  "start": "2026-06-03",
+  "end": "2026-10-01",
   "trading_days": 83,
   "lookback_days": 120
  },
@@ -18,37 +18,13 @@
  },
  "study_list": [
   {
-   "symbol": "SLXN",
+   "symbol": "NIVF",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
   },
   {
-   "symbol": "SLND",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "SOAR",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "SDEV",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "BKYI",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "HYG",
+   "symbol": "RETO",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
@@ -60,13 +36,37 @@
    "last_flagged": null
   },
   {
+   "symbol": "TGE",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
+   "symbol": "CNTB",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
    "symbol": "NVDA",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
   },
   {
-   "symbol": "CAPS",
+   "symbol": "AEON",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
+   "symbol": "NU",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
+   "symbol": "WBD",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
@@ -84,31 +84,37 @@
    "last_flagged": null
   },
   {
+   "symbol": "LESL",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
+   "symbol": "HYG",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
+   "symbol": "PACB",
+   "source": "today's movers (fill-in)",
+   "days_flagged": 0,
+   "last_flagged": null
+  },
+  {
    "symbol": "SPCX",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
   },
   {
-   "symbol": "NU",
+   "symbol": "ZBAO",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
   },
   {
-   "symbol": "GRAB",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "IOVA",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "VVOS",
+   "symbol": "SOAR",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
@@ -120,19 +126,13 @@
    "last_flagged": null
   },
   {
-   "symbol": "CCL",
+   "symbol": "BITO",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
   },
   {
-   "symbol": "RETO",
-   "source": "today's movers (fill-in)",
-   "days_flagged": 0,
-   "last_flagged": null
-  },
-  {
-   "symbol": "SOXS",
+   "symbol": "TSLL",
    "source": "today's movers (fill-in)",
    "days_flagged": 0,
    "last_flagged": null
@@ -141,13 +141,13 @@
  "summary": {
   "tickers": 20,
   "learning": {
-   "trades": 2016,
-   "win_rate": 14.04,
-   "avg_r": -0.8442,
-   "total_r": -1701.882,
-   "avg_win_r": 1.241,
-   "avg_loss_r": -1.185,
-   "profit_factor": 0.171
+   "trades": 2240,
+   "win_rate": 14.51,
+   "avg_r": -0.8193,
+   "total_r": -1835.319,
+   "avg_win_r": 1.309,
+   "avg_loss_r": -1.181,
+   "profit_factor": 0.188
   },
   "strict_setups": {
    "trades": 2,
@@ -175,13 +175,13 @@
    {
     "setup": "A \u2014 catalyst ORB second-bar hold",
     "learning": {
-     "trades": 510,
-     "win_rate": 26.67,
-     "avg_r": -0.4927,
-     "total_r": -251.285,
-     "avg_win_r": 1.151,
-     "avg_loss_r": -1.091,
-     "profit_factor": 0.384
+     "trades": 594,
+     "win_rate": 26.94,
+     "avg_r": -0.4502,
+     "total_r": -267.412,
+     "avg_win_r": 1.23,
+     "avg_loss_r": -1.07,
+     "profit_factor": 0.424
     },
     "portfolio": {
      "trades": 0,
@@ -194,13 +194,13 @@
    {
     "setup": "B \u2014 first VWAP/level retest",
     "learning": {
-     "trades": 1505,
-     "win_rate": 9.7,
-     "avg_r": -0.9639,
-     "total_r": -1450.696,
-     "avg_win_r": 1.333,
-     "avg_loss_r": -1.211,
-     "profit_factor": 0.118
+     "trades": 1646,
+     "win_rate": 10.02,
+     "avg_r": -0.9526,
+     "total_r": -1567.908,
+     "avg_win_r": 1.385,
+     "avg_loss_r": -1.213,
+     "profit_factor": 0.127
     },
     "portfolio": {
      "trades": 2,
@@ -219,12 +219,10 @@
    {
     "setup": "C \u2014 premarket leader confirmed after open",
     "learning": {
-     "trades": 1,
-     "win_rate": 100.0,
-     "avg_r": 0.099,
-     "total_r": 0.099,
-     "avg_win_r": 0.099,
-     "avg_loss_r": 0.0,
+     "trades": 0,
+     "win_rate": 0.0,
+     "avg_r": 0.0,
+     "total_r": 0.0,
      "profit_factor": null
     },
     "portfolio": {
@@ -247,57 +245,32 @@
   "train_days": 58,
   "test_days": 25,
   "train_range": [
-   "2026-06-02",
-   "2026-08-24"
+   "2026-06-03",
+   "2026-08-25"
   ],
   "test_range": [
-   "2026-08-25",
-   "2026-09-29"
+   "2026-08-26",
+   "2026-09-30"
   ],
   "baseline": {
    "train": {
-    "n": 1416,
-    "avg_r": -0.8653,
-    "win_rate": 13.6,
-    "total_r": -1225.316,
-    "t": -33.86,
-    "std": 0.9617
+    "n": 1579,
+    "avg_r": -0.8522,
+    "win_rate": 13.8,
+    "total_r": -1345.627,
+    "t": -34.37,
+    "std": 0.9854
    },
    "test": {
-    "n": 600,
-    "avg_r": -0.7943,
-    "win_rate": 15.0,
-    "total_r": -476.566,
-    "t": -20.3,
-    "std": 0.9582
+    "n": 661,
+    "avg_r": -0.7408,
+    "win_rate": 16.2,
+    "total_r": -489.692,
+    "t": -18.28,
+    "std": 1.0419
    }
   },
-  "promising": [
-   {
-    "feature": "risk",
-    "feature_label": "Stop distance",
-    "bucket": "4%+",
-    "pattern": "Stop distance: 4%+",
-    "train": {
-     "n": 83,
-     "avg_r": 0.0455,
-     "win_rate": 41.0,
-     "total_r": 3.779,
-     "t": 8.0,
-     "std": 1.0374
-    },
-    "test": {
-     "n": 53,
-     "avg_r": 0.0063,
-     "win_rate": 37.7,
-     "total_r": 0.336,
-     "t": 5.13,
-     "std": 1.1371
-    },
-    "verdict": "promising",
-    "evidence": "strong"
-   }
-  ],
+  "promising": [],
   "avoid": [
    {
     "feature": "price",
@@ -305,20 +278,20 @@
     "bucket": "$50\u2013100",
     "pattern": "Share price: $50\u2013100",
     "train": {
-     "n": 839,
-     "avg_r": -1.2923,
-     "win_rate": 2.0,
-     "total_r": -1084.228,
-     "t": -28.75,
-     "std": 0.4302
+     "n": 833,
+     "avg_r": -1.319,
+     "win_rate": 1.2,
+     "total_r": -1098.719,
+     "t": -40.1,
+     "std": 0.336
     },
     "test": {
-     "n": 286,
-     "avg_r": -1.249,
-     "win_rate": 2.1,
-     "total_r": -357.224,
-     "t": -17.93,
-     "std": 0.4288
+     "n": 259,
+     "avg_r": -1.2591,
+     "win_rate": 1.5,
+     "total_r": -326.115,
+     "t": -19.61,
+     "std": 0.4254
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -329,20 +302,20 @@
     "bucket": "under 0.5%",
     "pattern": "Stop distance: under 0.5%",
     "train": {
-     "n": 889,
-     "avg_r": -1.2858,
-     "win_rate": 1.7,
-     "total_r": -1143.04,
-     "t": -28.33,
-     "std": 0.4425
+     "n": 1006,
+     "avg_r": -1.2228,
+     "win_rate": 3.1,
+     "total_r": -1230.118,
+     "t": -21.19,
+     "std": 0.5548
     },
     "test": {
-     "n": 322,
-     "avg_r": -1.2353,
-     "win_rate": 1.9,
-     "total_r": -397.765,
-     "t": -16.58,
-     "std": 0.4772
+     "n": 354,
+     "avg_r": -1.2261,
+     "win_rate": 2.0,
+     "total_r": -434.052,
+     "t": -16.8,
+     "std": 0.5436
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -353,20 +326,20 @@
     "bucket": "flat (\u00b11%)",
     "pattern": "Opening gap: flat (\u00b11%)",
     "train": {
-     "n": 1005,
-     "avg_r": -1.0935,
-     "win_rate": 7.4,
-     "total_r": -1098.937,
-     "t": -9.47,
-     "std": 0.7642
+     "n": 1120,
+     "avg_r": -1.0415,
+     "win_rate": 8.7,
+     "total_r": -1166.521,
+     "t": -7.83,
+     "std": 0.8097
     },
     "test": {
-     "n": 392,
-     "avg_r": -1.0221,
-     "win_rate": 8.7,
-     "total_r": -400.658,
-     "t": -5.99,
-     "std": 0.7534
+     "n": 442,
+     "avg_r": -0.9687,
+     "win_rate": 9.3,
+     "total_r": -428.17,
+     "t": -5.65,
+     "std": 0.8482
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -377,20 +350,20 @@
     "bucket": "0\u20132%",
     "pattern": "Move vs. prior close: 0\u20132%",
     "train": {
-     "n": 786,
-     "avg_r": -1.0852,
-     "win_rate": 6.7,
-     "total_r": -852.965,
-     "t": -8.36,
-     "std": 0.737
+     "n": 872,
+     "avg_r": -1.0261,
+     "win_rate": 8.4,
+     "total_r": -894.734,
+     "t": -6.28,
+     "std": 0.8178
     },
     "test": {
-     "n": 300,
-     "avg_r": -1.019,
+     "n": 312,
+     "avg_r": -1.0213,
      "win_rate": 8.0,
-     "total_r": -305.69,
-     "t": -5.28,
-     "std": 0.7365
+     "total_r": -318.631,
+     "t": -6.24,
+     "std": 0.7938
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -401,68 +374,20 @@
     "bucket": "$1M\u20135M",
     "pattern": "Signal-bar dollar volume: $1M\u20135M",
     "train": {
-     "n": 442,
-     "avg_r": -1.1015,
-     "win_rate": 7.2,
-     "total_r": -486.881,
-     "t": -7.15,
-     "std": 0.6951
-    },
-    "test": {
-     "n": 187,
-     "avg_r": -1.0666,
-     "win_rate": 7.0,
-     "total_r": -199.452,
-     "t": -5.86,
-     "std": 0.6351
-    },
-    "verdict": "avoid",
-    "evidence": "strong"
-   },
-   {
-    "feature": "five_minute_move",
-    "feature_label": "Signal-bar move",
-    "bucket": "0\u20130.4%",
-    "pattern": "Signal-bar move: 0\u20130.4%",
-    "train": {
-     "n": 805,
-     "avg_r": -1.0426,
-     "win_rate": 7.6,
-     "total_r": -839.303,
-     "t": -6.87,
-     "std": 0.7322
-    },
-    "test": {
-     "n": 326,
-     "avg_r": -0.918,
-     "win_rate": 10.7,
-     "total_r": -299.276,
-     "t": -2.68,
-     "std": 0.8337
-    },
-    "verdict": "avoid",
-    "evidence": "strong"
-   },
-   {
-    "feature": "rsi",
-    "feature_label": "5-min RSI",
-    "bucket": "under 52",
-    "pattern": "5-min RSI: under 52",
-    "train": {
-     "n": 435,
-     "avg_r": -1.05,
+     "n": 480,
+     "avg_r": -1.0668,
      "win_rate": 8.5,
-     "total_r": -456.742,
-     "t": -4.2,
-     "std": 0.9168
+     "total_r": -512.069,
+     "t": -6.57,
+     "std": 0.7155
     },
     "test": {
-     "n": 156,
-     "avg_r": -1.028,
-     "win_rate": 9.0,
-     "total_r": -160.367,
-     "t": -3.49,
-     "std": 0.8366
+     "n": 214,
+     "avg_r": -0.9874,
+     "win_rate": 9.3,
+     "total_r": -211.303,
+     "t": -5.08,
+     "std": 0.7099
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -473,20 +398,44 @@
     "bucket": "B \u2014 first VWAP/level retest",
     "pattern": "Setup: B \u2014 first VWAP/level retest",
     "train": {
-     "n": 1065,
-     "avg_r": -0.992,
-     "win_rate": 9.3,
-     "total_r": -1056.45,
-     "t": -4.95,
-     "std": 0.8357
+     "n": 1174,
+     "avg_r": -0.9619,
+     "win_rate": 10.0,
+     "total_r": -1129.306,
+     "t": -4.29,
+     "std": 0.8758
     },
     "test": {
-     "n": 440,
-     "avg_r": -0.896,
-     "win_rate": 10.7,
-     "total_r": -394.245,
-     "t": -2.52,
-     "std": 0.8467
+     "n": 472,
+     "avg_r": -0.9292,
+     "win_rate": 10.2,
+     "total_r": -438.601,
+     "t": -4.76,
+     "std": 0.8594
+    },
+    "verdict": "avoid",
+    "evidence": "strong"
+   },
+   {
+    "feature": "five_minute_move",
+    "feature_label": "Signal-bar move",
+    "bucket": "0\u20130.4%",
+    "pattern": "Signal-bar move: 0\u20130.4%",
+    "train": {
+     "n": 924,
+     "avg_r": -0.9994,
+     "win_rate": 8.5,
+     "total_r": -923.47,
+     "t": -5.48,
+     "std": 0.8159
+    },
+    "test": {
+     "n": 368,
+     "avg_r": -0.8882,
+     "win_rate": 11.7,
+     "total_r": -326.869,
+     "t": -3.07,
+     "std": 0.9221
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -497,20 +446,44 @@
     "bucket": "11:30\u20132:00 (midday)",
     "pattern": "Time of day (ET): 11:30\u20132:00 (midday)",
     "train": {
-     "n": 513,
-     "avg_r": -1.0115,
-     "win_rate": 9.4,
-     "total_r": -518.897,
-     "t": -4.1,
-     "std": 0.8078
+     "n": 575,
+     "avg_r": -0.9864,
+     "win_rate": 10.4,
+     "total_r": -567.193,
+     "t": -3.9,
+     "std": 0.8263
     },
     "test": {
-     "n": 243,
-     "avg_r": -0.9176,
-     "win_rate": 11.9,
-     "total_r": -222.975,
-     "t": -2.26,
-     "std": 0.8504
+     "n": 265,
+     "avg_r": -0.9141,
+     "win_rate": 11.3,
+     "total_r": -242.239,
+     "t": -3.14,
+     "std": 0.8976
+    },
+    "verdict": "avoid",
+    "evidence": "strong"
+   },
+   {
+    "feature": "rsi",
+    "feature_label": "5-min RSI",
+    "bucket": "under 52",
+    "pattern": "5-min RSI: under 52",
+    "train": {
+     "n": 489,
+     "avg_r": -1.0487,
+     "win_rate": 8.8,
+     "total_r": -512.834,
+     "t": -4.75,
+     "std": 0.9144
+    },
+    "test": {
+     "n": 182,
+     "avg_r": -0.8785,
+     "win_rate": 14.3,
+     "total_r": -159.891,
+     "t": -1.71,
+     "std": 1.0876
     },
     "verdict": "avoid",
     "evidence": "moderate"
@@ -521,66 +494,64 @@
     "bucket": "1\u20131.5x",
     "pattern": "Relative volume: 1\u20131.5x",
     "train": {
-     "n": 423,
-     "avg_r": -0.9751,
-     "win_rate": 10.9,
-     "total_r": -412.454,
-     "t": -2.51,
-     "std": 0.8978
+     "n": 456,
+     "avg_r": -0.9741,
+     "win_rate": 10.3,
+     "total_r": -444.207,
+     "t": -2.88,
+     "std": 0.9026
     },
     "test": {
-     "n": 177,
-     "avg_r": -0.9983,
-     "win_rate": 10.2,
-     "total_r": -176.692,
-     "t": -3.47,
-     "std": 0.7828
+     "n": 187,
+     "avg_r": -0.9278,
+     "win_rate": 11.2,
+     "total_r": -173.501,
+     "t": -2.71,
+     "std": 0.9435
     },
     "verdict": "avoid",
     "evidence": "moderate"
    },
    {
-    "feature": "day_move",
-    "feature_label": "Move vs. prior close",
-    "bucket": "down",
-    "pattern": "Move vs. prior close: down",
+    "feature": "setup+gap",
+    "pattern": "Setup: B \u2014 first VWAP/level retest + Opening gap: flat (\u00b11%)",
     "train": {
-     "n": 352,
-     "avg_r": -0.9894,
-     "win_rate": 9.9,
-     "total_r": -348.26,
-     "t": -2.54,
-     "std": 0.9151
+     "n": 925,
+     "avg_r": -1.0916,
+     "win_rate": 6.7,
+     "total_r": -1009.715,
+     "t": -9.7,
+     "std": 0.7503
     },
     "test": {
-     "n": 154,
-     "avg_r": -0.9171,
-     "win_rate": 11.0,
-     "total_r": -141.227,
-     "t": -1.89,
-     "std": 0.8067
+     "n": 359,
+     "avg_r": -1.0996,
+     "win_rate": 5.6,
+     "total_r": -394.743,
+     "t": -10.61,
+     "std": 0.6404
     },
     "verdict": "avoid",
-    "evidence": "moderate"
+    "evidence": "strong"
    },
    {
     "feature": "time_bucket+gap",
     "pattern": "Time of day (ET): 11:30\u20132:00 (midday) + Opening gap: flat (\u00b11%)",
     "train": {
-     "n": 389,
-     "avg_r": -1.1942,
-     "win_rate": 4.6,
-     "total_r": -464.535,
-     "t": -10.71,
-     "std": 0.6059
+     "n": 433,
+     "avg_r": -1.156,
+     "win_rate": 5.5,
+     "total_r": -500.551,
+     "t": -9.72,
+     "std": 0.6504
     },
     "test": {
-     "n": 188,
-     "avg_r": -1.1589,
-     "win_rate": 5.9,
-     "total_r": -217.882,
-     "t": -9.31,
-     "std": 0.5373
+     "n": 201,
+     "avg_r": -1.12,
+     "win_rate": 5.5,
+     "total_r": -225.119,
+     "t": -7.87,
+     "std": 0.6831
     },
     "verdict": "avoid",
     "evidence": "strong"
@@ -590,225 +561,225 @@
    {
     "gate": "5-min liquidity",
     "passed": {
-     "n": 1489,
-     "avg_r": -0.9586,
-     "win_rate": 10.8,
-     "total_r": -1427.339,
-     "t": -44.54,
-     "std": 0.8304
+     "n": 1615,
+     "avg_r": -0.9457,
+     "win_rate": 11.1,
+     "total_r": -1527.229,
+     "t": -45.36,
+     "std": 0.8378
     },
     "failed": {
-     "n": 527,
-     "avg_r": -0.521,
-     "win_rate": 23.1,
-     "total_r": -274.543,
-     "t": -9.95,
-     "std": 1.2022
+     "n": 625,
+     "avg_r": -0.4929,
+     "win_rate": 23.4,
+     "total_r": -308.09,
+     "t": -9.59,
+     "std": 1.2844
     },
     "verdict": "not helping"
    },
    {
     "gate": "5-min move",
     "passed": {
-     "n": 434,
-     "avg_r": -0.2526,
-     "win_rate": 30.9,
-     "total_r": -109.612,
-     "t": -4.5,
-     "std": 1.1695
+     "n": 456,
+     "avg_r": -0.3163,
+     "win_rate": 28.9,
+     "total_r": -144.232,
+     "t": -5.87,
+     "std": 1.1511
     },
     "failed": {
-     "n": 1582,
-     "avg_r": -1.0065,
-     "win_rate": 9.4,
-     "total_r": -1592.27,
-     "t": -48.55,
-     "std": 0.8246
+     "n": 1784,
+     "avg_r": -0.9479,
+     "win_rate": 10.8,
+     "total_r": -1691.088,
+     "t": -43.55,
+     "std": 0.9193
     },
     "verdict": "helping"
    },
    {
     "gate": "RSI",
     "passed": {
-     "n": 1186,
-     "avg_r": -0.8134,
-     "win_rate": 14.6,
-     "total_r": -964.664,
-     "t": -29.2,
-     "std": 0.9591
+     "n": 1290,
+     "avg_r": -0.7955,
+     "win_rate": 14.8,
+     "total_r": -1026.168,
+     "t": -28.67,
+     "std": 0.9964
     },
     "failed": {
-     "n": 830,
-     "avg_r": -0.8882,
-     "win_rate": 13.3,
-     "total_r": -737.217,
-     "t": -26.59,
-     "std": 0.9624
+     "n": 950,
+     "avg_r": -0.8517,
+     "win_rate": 14.1,
+     "total_r": -809.151,
+     "t": -25.93,
+     "std": 1.0125
     },
     "verdict": "unclear"
    },
    {
     "gate": "VWAP distance",
     "passed": {
-     "n": 632,
-     "avg_r": -0.9969,
-     "win_rate": 11.4,
-     "total_r": -630.043,
-     "t": -24.03,
-     "std": 1.0428
+     "n": 727,
+     "avg_r": -0.9588,
+     "win_rate": 12.0,
+     "total_r": -697.051,
+     "t": -23.39,
+     "std": 1.1054
     },
     "failed": {
-     "n": 1384,
-     "avg_r": -0.7744,
-     "win_rate": 15.2,
-     "total_r": -1071.838,
-     "t": -31.55,
-     "std": 0.9131
+     "n": 1513,
+     "avg_r": -0.7523,
+     "win_rate": 15.7,
+     "total_r": -1138.269,
+     "t": -31.01,
+     "std": 0.9437
     },
     "verdict": "not helping"
    },
    {
     "gate": "above VWAP",
     "passed": {
-     "n": 1808,
-     "avg_r": -0.8258,
-     "win_rate": 14.3,
-     "total_r": -1493.067,
-     "t": -37.36,
-     "std": 0.9398
+     "n": 2023,
+     "avg_r": -0.7983,
+     "win_rate": 14.8,
+     "total_r": -1614.976,
+     "t": -36.31,
+     "std": 0.9889
     },
     "failed": {
-     "n": 208,
-     "avg_r": -1.0039,
-     "win_rate": 12.0,
-     "total_r": -208.815,
-     "t": -12.95,
-     "std": 1.1182
+     "n": 217,
+     "avg_r": -1.0154,
+     "win_rate": 11.5,
+     "total_r": -220.343,
+     "t": -13.43,
+     "std": 1.1137
     },
     "verdict": "helping"
    },
    {
     "gate": "catalyst",
     "passed": {
-     "n": 669,
-     "avg_r": -0.6395,
-     "win_rate": 18.8,
-     "total_r": -427.839,
-     "t": -16.04,
-     "std": 1.0311
+     "n": 763,
+     "avg_r": -0.7018,
+     "win_rate": 17.2,
+     "total_r": -535.498,
+     "t": -19.39,
+     "std": 1.0
     },
     "failed": {
-     "n": 1347,
-     "avg_r": -0.9458,
-     "win_rate": 11.7,
-     "total_r": -1274.043,
-     "t": -38.25,
-     "std": 0.9076
+     "n": 1477,
+     "avg_r": -0.88,
+     "win_rate": 13.1,
+     "total_r": -1299.821,
+     "t": -33.82,
+     "std": 1.0002
     },
     "verdict": "helping"
    },
    {
     "gate": "market",
     "passed": {
-     "n": 1687,
-     "avg_r": -0.8641,
-     "win_rate": 13.6,
-     "total_r": -1457.712,
-     "t": -37.47,
-     "std": 0.9472
+     "n": 1921,
+     "avg_r": -0.8262,
+     "win_rate": 14.1,
+     "total_r": -1587.175,
+     "t": -36.19,
+     "std": 1.0006
     },
     "failed": {
-     "n": 329,
-     "avg_r": -0.7422,
-     "win_rate": 16.1,
-     "total_r": -244.17,
-     "t": -13.15,
-     "std": 1.0239
+     "n": 319,
+     "avg_r": -0.7779,
+     "win_rate": 16.9,
+     "total_r": -248.144,
+     "t": -13.61,
+     "std": 1.0212
     },
     "verdict": "unclear"
    },
    {
     "gate": "price",
     "passed": {
-     "n": 1678,
-     "avg_r": -0.9605,
+     "n": 1855,
+     "avg_r": -0.9507,
      "win_rate": 10.7,
-     "total_r": -1611.743,
-     "t": -45.73,
-     "std": 0.8604
+     "total_r": -1763.522,
+     "t": -46.09,
+     "std": 0.8885
     },
     "failed": {
-     "n": 338,
-     "avg_r": -0.2667,
-     "win_rate": 30.5,
-     "total_r": -90.139,
-     "t": -4.09,
-     "std": 1.1982
+     "n": 385,
+     "avg_r": -0.1865,
+     "win_rate": 33.0,
+     "total_r": -71.798,
+     "t": -2.92,
+     "std": 1.2549
     },
     "verdict": "not helping"
    },
    {
     "gate": "relative volume",
     "passed": {
-     "n": 441,
-     "avg_r": -0.5753,
-     "win_rate": 22.0,
-     "total_r": -253.696,
-     "t": -10.63,
-     "std": 1.1365
+     "n": 502,
+     "avg_r": -0.5437,
+     "win_rate": 22.1,
+     "total_r": -272.961,
+     "t": -10.73,
+     "std": 1.1357
     },
     "failed": {
-     "n": 1575,
-     "avg_r": -0.9195,
-     "win_rate": 11.8,
-     "total_r": -1448.186,
-     "t": -40.92,
-     "std": 0.8917
+     "n": 1738,
+     "avg_r": -0.8989,
+     "win_rate": 12.3,
+     "total_r": -1562.358,
+     "t": -39.56,
+     "std": 0.9474
     },
     "verdict": "helping"
    },
    {
     "gate": "risk within ATR",
     "passed": {
-     "n": 116,
-     "avg_r": -0.6413,
-     "win_rate": 15.5,
-     "total_r": -74.386,
-     "t": -5.34,
-     "std": 1.293
+     "n": 135,
+     "avg_r": -0.6002,
+     "win_rate": 16.3,
+     "total_r": -81.031,
+     "t": -4.47,
+     "std": 1.5619
     },
     "failed": {
-     "n": 1900,
-     "avg_r": -0.8566,
-     "win_rate": 13.9,
-     "total_r": -1627.495,
-     "t": -39.89,
-     "std": 0.9359
+     "n": 2105,
+     "avg_r": -0.8334,
+     "win_rate": 14.4,
+     "total_r": -1754.288,
+     "t": -40.02,
+     "std": 0.9554
     },
     "verdict": "unclear"
    },
    {
     "gate": "session move",
     "passed": {
-     "n": 300,
-     "avg_r": -0.1663,
-     "win_rate": 34.7,
-     "total_r": -49.897,
-     "t": -2.47,
-     "std": 1.1679
+     "n": 352,
+     "avg_r": -0.2277,
+     "win_rate": 32.4,
+     "total_r": -80.159,
+     "t": -3.61,
+     "std": 1.1849
     },
     "failed": {
-     "n": 1716,
-     "avg_r": -0.9627,
-     "win_rate": 10.4,
-     "total_r": -1651.985,
-     "t": -45.96,
-     "std": 0.8676
+     "n": 1888,
+     "avg_r": -0.9296,
+     "win_rate": 11.2,
+     "total_r": -1755.16,
+     "t": -43.66,
+     "std": 0.9253
     },
     "verdict": "helping"
    }
   ],
-  "patterns_tested": 337,
+  "patterns_tested": 352,
   "min_trades": {
    "learning": 20,
    "check": 10,
@@ -819,47 +790,23 @@
   {
    "feature": "setup",
    "feature_label": "Setup",
-   "bucket": "A \u2014 catalyst ORB second-bar hold",
-   "pattern": "Setup: A \u2014 catalyst ORB second-bar hold",
-   "train": {
-    "n": 350,
-    "avg_r": -0.4828,
-    "win_rate": 26.6,
-    "total_r": -168.965,
-    "t": 6.0,
-    "std": 1.1925
-   },
-   "test": {
-    "n": 160,
-    "avg_r": -0.5145,
-    "win_rate": 26.9,
-    "total_r": -82.32,
-    "t": 3.02,
-    "std": 1.1714
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "setup",
-   "feature_label": "Setup",
    "bucket": "B \u2014 first VWAP/level retest",
    "pattern": "Setup: B \u2014 first VWAP/level retest",
    "train": {
-    "n": 1065,
-    "avg_r": -0.992,
-    "win_rate": 9.3,
-    "total_r": -1056.45,
-    "t": -4.95,
-    "std": 0.8357
+    "n": 1174,
+    "avg_r": -0.9619,
+    "win_rate": 10.0,
+    "total_r": -1129.306,
+    "t": -4.29,
+    "std": 0.8758
    },
    "test": {
-    "n": 440,
-    "avg_r": -0.896,
-    "win_rate": 10.7,
-    "total_r": -394.245,
-    "t": -2.52,
-    "std": 0.8467
+    "n": 472,
+    "avg_r": -0.9292,
+    "win_rate": 10.2,
+    "total_r": -438.601,
+    "t": -4.76,
+    "std": 0.8594
    },
    "verdict": "avoid",
    "evidence": "strong"
@@ -867,95 +814,23 @@
   {
    "feature": "setup",
    "feature_label": "Setup",
-   "bucket": "C \u2014 premarket leader confirmed after open",
-   "pattern": "Setup: C \u2014 premarket leader confirmed after open",
+   "bucket": "A \u2014 catalyst ORB second-bar hold",
+   "pattern": "Setup: A \u2014 catalyst ORB second-bar hold",
    "train": {
-    "n": 1,
-    "avg_r": 0.099,
-    "win_rate": 100.0,
-    "total_r": 0.099,
-    "t": 0.0,
-    "std": 0.0
+    "n": 405,
+    "avg_r": -0.5341,
+    "win_rate": 24.9,
+    "total_r": -216.321,
+    "t": 5.35,
+    "std": 1.1955
    },
    "test": {
-    "n": 0,
-    "avg_r": 0.0,
-    "win_rate": 0.0,
-    "total_r": 0.0,
-    "t": 0.0,
-    "std": 0.0
-   },
-   "verdict": "not proven",
-   "evidence": "not enough trades"
-  },
-  {
-   "feature": "time_bucket",
-   "feature_label": "Time of day (ET)",
-   "bucket": "10:30\u201311:30",
-   "pattern": "Time of day (ET): 10:30\u201311:30",
-   "train": {
-    "n": 304,
-    "avg_r": -0.7953,
-    "win_rate": 17.1,
-    "total_r": -241.771,
-    "t": 1.18,
-    "std": 1.0362
-   },
-   "test": {
-    "n": 124,
-    "avg_r": -0.7516,
-    "win_rate": 17.7,
-    "total_r": -93.203,
-    "t": 0.48,
-    "std": 0.9975
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "time_bucket",
-   "feature_label": "Time of day (ET)",
-   "bucket": "11:30\u20132:00 (midday)",
-   "pattern": "Time of day (ET): 11:30\u20132:00 (midday)",
-   "train": {
-    "n": 513,
-    "avg_r": -1.0115,
-    "win_rate": 9.4,
-    "total_r": -518.897,
-    "t": -4.1,
-    "std": 0.8078
-   },
-   "test": {
-    "n": 243,
-    "avg_r": -0.9176,
-    "win_rate": 11.9,
-    "total_r": -222.975,
-    "t": -2.26,
-    "std": 0.8504
-   },
-   "verdict": "avoid",
-   "evidence": "moderate"
-  },
-  {
-   "feature": "time_bucket",
-   "feature_label": "Time of day (ET)",
-   "bucket": "2:00\u20133:30",
-   "pattern": "Time of day (ET): 2:00\u20133:30",
-   "train": {
-    "n": 303,
-    "avg_r": -0.9662,
-    "win_rate": 10.9,
-    "total_r": -292.749,
-    "t": -2.03,
-    "std": 0.8643
-   },
-   "test": {
-    "n": 108,
-    "avg_r": -0.8731,
-    "win_rate": 11.1,
-    "total_r": -94.295,
-    "t": -1.08,
-    "std": 0.7596
+    "n": 189,
+    "avg_r": -0.2703,
+    "win_rate": 31.2,
+    "total_r": -51.091,
+    "t": 5.04,
+    "std": 1.2841
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -966,44 +841,92 @@
    "bucket": "9:30\u201310:30",
    "pattern": "Time of day (ET): 9:30\u201310:30",
    "train": {
-    "n": 296,
-    "avg_r": -0.5807,
-    "win_rate": 20.3,
-    "total_r": -171.899,
-    "t": 4.29,
-    "std": 1.1412
+    "n": 335,
+    "avg_r": -0.5942,
+    "win_rate": 18.5,
+    "total_r": -199.056,
+    "t": 4.15,
+    "std": 1.1376
    },
    "test": {
-    "n": 125,
-    "avg_r": -0.5287,
-    "win_rate": 21.6,
-    "total_r": -66.093,
-    "t": 2.48,
-    "std": 1.1961
+    "n": 141,
+    "avg_r": -0.4017,
+    "win_rate": 27.0,
+    "total_r": -56.639,
+    "t": 3.28,
+    "std": 1.2285
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "rsi",
-   "feature_label": "5-min RSI",
-   "bucket": "55\u201365",
-   "pattern": "5-min RSI: 55\u201365",
+   "feature": "time_bucket",
+   "feature_label": "Time of day (ET)",
+   "bucket": "10:30\u201311:30",
+   "pattern": "Time of day (ET): 10:30\u201311:30",
    "train": {
-    "n": 371,
-    "avg_r": -0.8968,
-    "win_rate": 11.6,
-    "total_r": -332.694,
-    "t": -0.64,
-    "std": 0.9401
+    "n": 349,
+    "avg_r": -0.7602,
+    "win_rate": 18.3,
+    "total_r": -265.317,
+    "t": 1.62,
+    "std": 1.059
    },
    "test": {
-    "n": 158,
-    "avg_r": -0.7956,
-    "win_rate": 13.9,
-    "total_r": -125.703,
-    "t": -0.02,
-    "std": 0.9384
+    "n": 135,
+    "avg_r": -0.6888,
+    "win_rate": 17.0,
+    "total_r": -92.988,
+    "t": 0.56,
+    "std": 1.0788
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "time_bucket",
+   "feature_label": "Time of day (ET)",
+   "bucket": "11:30\u20132:00 (midday)",
+   "pattern": "Time of day (ET): 11:30\u20132:00 (midday)",
+   "train": {
+    "n": 575,
+    "avg_r": -0.9864,
+    "win_rate": 10.4,
+    "total_r": -567.193,
+    "t": -3.9,
+    "std": 0.8263
+   },
+   "test": {
+    "n": 265,
+    "avg_r": -0.9141,
+    "win_rate": 11.3,
+    "total_r": -242.239,
+    "t": -3.14,
+    "std": 0.8976
+   },
+   "verdict": "avoid",
+   "evidence": "strong"
+  },
+  {
+   "feature": "time_bucket",
+   "feature_label": "Time of day (ET)",
+   "bucket": "2:00\u20133:30",
+   "pattern": "Time of day (ET): 2:00\u20133:30",
+   "train": {
+    "n": 320,
+    "avg_r": -0.9814,
+    "win_rate": 10.0,
+    "total_r": -314.061,
+    "t": -2.48,
+    "std": 0.9317
+   },
+   "test": {
+    "n": 120,
+    "avg_r": -0.8152,
+    "win_rate": 13.3,
+    "total_r": -97.826,
+    "t": -0.84,
+    "std": 0.9672
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1014,44 +937,20 @@
    "bucket": "65\u201372",
    "pattern": "5-min RSI: 65\u201372",
    "train": {
-    "n": 215,
-    "avg_r": -0.8028,
-    "win_rate": 15.3,
-    "total_r": -172.612,
-    "t": 0.94,
-    "std": 0.9734
+    "n": 250,
+    "avg_r": -0.7497,
+    "win_rate": 16.8,
+    "total_r": -187.433,
+    "t": 1.69,
+    "std": 0.9584
    },
    "test": {
-    "n": 91,
-    "avg_r": -0.6534,
-    "win_rate": 15.4,
-    "total_r": -59.459,
-    "t": 1.33,
-    "std": 1.011
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "rsi",
-   "feature_label": "5-min RSI",
-   "bucket": "72\u201378",
-   "pattern": "5-min RSI: 72\u201378",
-   "train": {
-    "n": 136,
-    "avg_r": -0.7322,
-    "win_rate": 17.6,
-    "total_r": -99.581,
-    "t": 1.64,
-    "std": 0.9486
-   },
-   "test": {
-    "n": 76,
-    "avg_r": -0.5245,
-    "win_rate": 27.6,
-    "total_r": -39.86,
-    "t": 2.45,
-    "std": 0.9608
+    "n": 94,
+    "avg_r": -0.6281,
+    "win_rate": 18.1,
+    "total_r": -59.041,
+    "t": 1.07,
+    "std": 1.0245
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1062,20 +961,92 @@
    "bucket": "over 78",
    "pattern": "5-min RSI: over 78",
    "train": {
-    "n": 169,
-    "avg_r": -0.4632,
-    "win_rate": 26.6,
-    "total_r": -78.288,
-    "t": 5.35,
-    "std": 0.9764
+    "n": 189,
+    "avg_r": -0.5038,
+    "win_rate": 22.8,
+    "total_r": -95.219,
+    "t": 4.78,
+    "std": 1.0015
    },
    "test": {
-    "n": 69,
-    "avg_r": -0.5857,
-    "win_rate": 20.3,
-    "total_r": -40.41,
-    "t": 1.57,
-    "std": 1.1041
+    "n": 89,
+    "avg_r": -0.4472,
+    "win_rate": 24.7,
+    "total_r": -39.797,
+    "t": 2.53,
+    "std": 1.0941
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "rsi",
+   "feature_label": "5-min RSI",
+   "bucket": "72\u201378",
+   "pattern": "5-min RSI: 72\u201378",
+   "train": {
+    "n": 157,
+    "avg_r": -0.7187,
+    "win_rate": 18.5,
+    "total_r": -112.841,
+    "t": 1.73,
+    "std": 0.9692
+   },
+   "test": {
+    "n": 84,
+    "avg_r": -0.5082,
+    "win_rate": 25.0,
+    "total_r": -42.692,
+    "t": 2.13,
+    "std": 1.0012
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "rsi",
+   "feature_label": "5-min RSI",
+   "bucket": "55\u201365",
+   "pattern": "5-min RSI: 55\u201365",
+   "train": {
+    "n": 383,
+    "avg_r": -0.8918,
+    "win_rate": 12.0,
+    "total_r": -341.564,
+    "t": -0.76,
+    "std": 1.0158
+   },
+   "test": {
+    "n": 168,
+    "avg_r": -0.8425,
+    "win_rate": 10.7,
+    "total_r": -141.542,
+    "t": -1.32,
+    "std": 0.9979
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "rsi",
+   "feature_label": "5-min RSI",
+   "bucket": "52\u201355",
+   "pattern": "5-min RSI: 52\u201355",
+   "train": {
+    "n": 111,
+    "avg_r": -0.8625,
+    "win_rate": 13.5,
+    "total_r": -95.737,
+    "t": -0.1,
+    "std": 1.0373
+   },
+   "test": {
+    "n": 44,
+    "avg_r": -1.062,
+    "win_rate": 6.8,
+    "total_r": -46.728,
+    "t": -2.7,
+    "std": 0.7889
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1086,47 +1057,23 @@
    "bucket": "under 52",
    "pattern": "5-min RSI: under 52",
    "train": {
-    "n": 435,
-    "avg_r": -1.05,
-    "win_rate": 8.5,
-    "total_r": -456.742,
-    "t": -4.2,
-    "std": 0.9168
+    "n": 489,
+    "avg_r": -1.0487,
+    "win_rate": 8.8,
+    "total_r": -512.834,
+    "t": -4.75,
+    "std": 0.9144
    },
    "test": {
-    "n": 156,
-    "avg_r": -1.028,
-    "win_rate": 9.0,
-    "total_r": -160.367,
-    "t": -3.49,
-    "std": 0.8366
+    "n": 182,
+    "avg_r": -0.8785,
+    "win_rate": 14.3,
+    "total_r": -159.891,
+    "t": -1.71,
+    "std": 1.0876
    },
    "verdict": "avoid",
-   "evidence": "strong"
-  },
-  {
-   "feature": "rsi",
-   "feature_label": "5-min RSI",
-   "bucket": "52\u201355",
-   "pattern": "5-min RSI: 52\u201355",
-   "train": {
-    "n": 90,
-    "avg_r": -0.9489,
-    "win_rate": 12.2,
-    "total_r": -85.399,
-    "t": -0.81,
-    "std": 0.983
-   },
-   "test": {
-    "n": 50,
-    "avg_r": -1.0154,
-    "win_rate": 10.0,
-    "total_r": -50.768,
-    "t": -1.78,
-    "std": 0.8782
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
+   "evidence": "moderate"
   },
   {
    "feature": "relative_volume",
@@ -1134,20 +1081,20 @@
    "bucket": "1.5\u20133x",
    "pattern": "Relative volume: 1.5\u20133x",
    "train": {
-    "n": 166,
-    "avg_r": -0.591,
-    "win_rate": 22.9,
-    "total_r": -98.106,
-    "t": 3.25,
-    "std": 1.0867
+    "n": 219,
+    "avg_r": -0.5614,
+    "win_rate": 22.8,
+    "total_r": -122.942,
+    "t": 3.9,
+    "std": 1.1042
    },
    "test": {
-    "n": 140,
-    "avg_r": -0.9779,
-    "win_rate": 8.6,
-    "total_r": -136.905,
-    "t": -2.52,
-    "std": 0.863
+    "n": 151,
+    "avg_r": -0.8582,
+    "win_rate": 12.6,
+    "total_r": -129.595,
+    "t": -1.64,
+    "std": 0.8775
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1158,68 +1105,20 @@
    "bucket": "under 1x",
    "pattern": "Relative volume: under 1x",
    "train": {
-    "n": 753,
-    "avg_r": -0.9422,
-    "win_rate": 10.8,
-    "total_r": -709.466,
-    "t": -2.4,
-    "std": 0.8795
+    "n": 831,
+    "avg_r": -0.9087,
+    "win_rate": 12.0,
+    "total_r": -755.161,
+    "t": -1.74,
+    "std": 0.9343
    },
    "test": {
-    "n": 221,
-    "avg_r": -0.681,
-    "win_rate": 18.1,
-    "total_r": -150.511,
-    "t": 1.75,
-    "std": 0.9607
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "relative_volume",
-   "feature_label": "Relative volume",
-   "bucket": "1\u20131.5x",
-   "pattern": "Relative volume: 1\u20131.5x",
-   "train": {
-    "n": 423,
-    "avg_r": -0.9751,
-    "win_rate": 10.9,
-    "total_r": -412.454,
-    "t": -2.51,
-    "std": 0.8978
-   },
-   "test": {
-    "n": 177,
-    "avg_r": -0.9983,
-    "win_rate": 10.2,
-    "total_r": -176.692,
-    "t": -3.47,
-    "std": 0.7828
-   },
-   "verdict": "avoid",
-   "evidence": "moderate"
-  },
-  {
-   "feature": "relative_volume",
-   "feature_label": "Relative volume",
-   "bucket": "3\u20136x",
-   "pattern": "Relative volume: 3\u20136x",
-   "train": {
-    "n": 43,
-    "avg_r": -0.3179,
-    "win_rate": 30.2,
-    "total_r": -13.668,
-    "t": 3.03,
-    "std": 1.186
-   },
-   "test": {
-    "n": 31,
-    "avg_r": -0.2624,
-    "win_rate": 32.3,
-    "total_r": -8.133,
-    "t": 2.48,
-    "std": 1.195
+    "n": 264,
+    "avg_r": -0.7178,
+    "win_rate": 17.4,
+    "total_r": -189.489,
+    "t": 0.36,
+    "std": 1.0446
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1230,47 +1129,71 @@
    "bucket": "6x+",
    "pattern": "Relative volume: 6x+",
    "train": {
-    "n": 31,
-    "avg_r": 0.2703,
-    "win_rate": 48.4,
-    "total_r": 8.378,
-    "t": 4.55,
-    "std": 1.3899
+    "n": 34,
+    "avg_r": 0.0167,
+    "win_rate": 41.2,
+    "total_r": 0.568,
+    "t": 3.54,
+    "std": 1.4307
    },
    "test": {
-    "n": 31,
-    "avg_r": -0.1395,
-    "win_rate": 32.3,
-    "total_r": -4.324,
-    "t": 2.68,
-    "std": 1.3628
+    "n": 36,
+    "avg_r": -0.0722,
+    "win_rate": 33.3,
+    "total_r": -2.599,
+    "t": 2.97,
+    "std": 1.3498
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "day_move",
-   "feature_label": "Move vs. prior close",
-   "bucket": "0\u20132%",
-   "pattern": "Move vs. prior close: 0\u20132%",
+   "feature": "relative_volume",
+   "feature_label": "Relative volume",
+   "bucket": "1\u20131.5x",
+   "pattern": "Relative volume: 1\u20131.5x",
    "train": {
-    "n": 786,
-    "avg_r": -1.0852,
-    "win_rate": 6.7,
-    "total_r": -852.965,
-    "t": -8.36,
-    "std": 0.737
+    "n": 456,
+    "avg_r": -0.9741,
+    "win_rate": 10.3,
+    "total_r": -444.207,
+    "t": -2.88,
+    "std": 0.9026
    },
    "test": {
-    "n": 300,
-    "avg_r": -1.019,
-    "win_rate": 8.0,
-    "total_r": -305.69,
-    "t": -5.28,
-    "std": 0.7365
+    "n": 187,
+    "avg_r": -0.9278,
+    "win_rate": 11.2,
+    "total_r": -173.501,
+    "t": -2.71,
+    "std": 0.9435
    },
    "verdict": "avoid",
-   "evidence": "strong"
+   "evidence": "moderate"
+  },
+  {
+   "feature": "relative_volume",
+   "feature_label": "Relative volume",
+   "bucket": "3\u20136x",
+   "pattern": "Relative volume: 3\u20136x",
+   "train": {
+    "n": 39,
+    "avg_r": -0.6124,
+    "win_rate": 17.9,
+    "total_r": -23.885,
+    "t": 1.33,
+    "std": 1.1224
+   },
+   "test": {
+    "n": 23,
+    "avg_r": 0.2388,
+    "win_rate": 39.1,
+    "total_r": 5.493,
+    "t": 3.59,
+    "std": 1.3096
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
   },
   {
    "feature": "day_move",
@@ -1278,92 +1201,20 @@
    "bucket": "down",
    "pattern": "Move vs. prior close: down",
    "train": {
-    "n": 352,
-    "avg_r": -0.9894,
+    "n": 373,
+    "avg_r": -0.9861,
     "win_rate": 9.9,
-    "total_r": -348.26,
-    "t": -2.54,
-    "std": 0.9151
+    "total_r": -367.803,
+    "t": -2.81,
+    "std": 0.9192
    },
    "test": {
-    "n": 154,
-    "avg_r": -0.9171,
-    "win_rate": 11.0,
-    "total_r": -141.227,
-    "t": -1.89,
-    "std": 0.8067
-   },
-   "verdict": "avoid",
-   "evidence": "moderate"
-  },
-  {
-   "feature": "day_move",
-   "feature_label": "Move vs. prior close",
-   "bucket": "4\u20138%",
-   "pattern": "Move vs. prior close: 4\u20138%",
-   "train": {
-    "n": 74,
-    "avg_r": 0.0344,
-    "win_rate": 40.5,
-    "total_r": 2.542,
-    "t": 6.54,
-    "std": 1.1841
-   },
-   "test": {
-    "n": 43,
-    "avg_r": -0.4725,
-    "win_rate": 23.3,
-    "total_r": -20.319,
-    "t": 1.69,
-    "std": 1.2458
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "day_move",
-   "feature_label": "Move vs. prior close",
-   "bucket": "15%+",
-   "pattern": "Move vs. prior close: 15%+",
-   "train": {
-    "n": 37,
-    "avg_r": 0.0277,
-    "win_rate": 37.8,
-    "total_r": 1.026,
-    "t": 4.12,
-    "std": 1.3186
-   },
-   "test": {
-    "n": 38,
-    "avg_r": -0.1452,
-    "win_rate": 31.6,
-    "total_r": -5.519,
-    "t": 3.07,
-    "std": 1.3053
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "day_move",
-   "feature_label": "Move vs. prior close",
-   "bucket": "8\u201315%",
-   "pattern": "Move vs. prior close: 8\u201315%",
-   "train": {
-    "n": 30,
-    "avg_r": -0.0363,
-    "win_rate": 53.3,
-    "total_r": -1.089,
-    "t": 4.21,
-    "std": 1.0784
-   },
-   "test": {
-    "n": 18,
-    "avg_r": 0.1522,
-    "win_rate": 44.4,
-    "total_r": 2.74,
-    "t": 3.22,
-    "std": 1.2473
+    "n": 189,
+    "avg_r": -0.8389,
+    "win_rate": 13.8,
+    "total_r": -158.548,
+    "t": -1.33,
+    "std": 1.0145
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1374,68 +1225,116 @@
    "bucket": "2\u20134%",
    "pattern": "Move vs. prior close: 2\u20134%",
    "train": {
-    "n": 137,
-    "avg_r": -0.1939,
-    "win_rate": 32.8,
-    "total_r": -26.57,
-    "t": 6.94,
-    "std": 1.1326
+    "n": 148,
+    "avg_r": -0.3884,
+    "win_rate": 29.1,
+    "total_r": -57.477,
+    "t": 5.66,
+    "std": 0.9962
    },
    "test": {
-    "n": 47,
-    "avg_r": -0.1394,
-    "win_rate": 40.4,
-    "total_r": -6.551,
-    "t": 3.95,
-    "std": 1.1359
+    "n": 48,
+    "avg_r": 0.1256,
+    "win_rate": 45.8,
+    "total_r": 6.027,
+    "t": 4.99,
+    "std": 1.2032
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "gap",
-   "feature_label": "Opening gap",
-   "bucket": "gap up 1\u20133%",
-   "pattern": "Opening gap: gap up 1\u20133%",
+   "feature": "day_move",
+   "feature_label": "Move vs. prior close",
+   "bucket": "4\u20138%",
+   "pattern": "Move vs. prior close: 4\u20138%",
    "train": {
-    "n": 144,
-    "avg_r": -0.3901,
-    "win_rate": 29.2,
-    "total_r": -56.17,
-    "t": 5.05,
-    "std": 1.1293
+    "n": 110,
+    "avg_r": -0.1533,
+    "win_rate": 32.7,
+    "total_r": -16.864,
+    "t": 5.32,
+    "std": 1.3774
    },
    "test": {
-    "n": 57,
-    "avg_r": -0.6844,
-    "win_rate": 15.8,
-    "total_r": -39.008,
-    "t": 0.79,
-    "std": 1.0464
+    "n": 46,
+    "avg_r": -0.2575,
+    "win_rate": 28.3,
+    "total_r": -11.846,
+    "t": 2.8,
+    "std": 1.1698
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "gap",
-   "feature_label": "Opening gap",
-   "bucket": "flat (\u00b11%)",
-   "pattern": "Opening gap: flat (\u00b11%)",
+   "feature": "day_move",
+   "feature_label": "Move vs. prior close",
+   "bucket": "8\u201315%",
+   "pattern": "Move vs. prior close: 8\u201315%",
    "train": {
-    "n": 1005,
-    "avg_r": -1.0935,
-    "win_rate": 7.4,
-    "total_r": -1098.937,
-    "t": -9.47,
-    "std": 0.7642
+    "n": 48,
+    "avg_r": -0.1159,
+    "win_rate": 43.8,
+    "total_r": -5.562,
+    "t": 4.14,
+    "std": 1.2337
    },
    "test": {
-    "n": 392,
-    "avg_r": -1.0221,
-    "win_rate": 8.7,
-    "total_r": -400.658,
-    "t": -5.99,
-    "std": 0.7534
+    "n": 23,
+    "avg_r": 0.4102,
+    "win_rate": 52.2,
+    "total_r": 9.435,
+    "t": 4.57,
+    "std": 1.208
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "day_move",
+   "feature_label": "Move vs. prior close",
+   "bucket": "15%+",
+   "pattern": "Move vs. prior close: 15%+",
+   "train": {
+    "n": 28,
+    "avg_r": -0.1138,
+    "win_rate": 28.6,
+    "total_r": -3.188,
+    "t": 2.83,
+    "std": 1.3782
+   },
+   "test": {
+    "n": 43,
+    "avg_r": -0.3751,
+    "win_rate": 20.9,
+    "total_r": -16.129,
+    "t": 2.08,
+    "std": 1.1539
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "day_move",
+   "feature_label": "Move vs. prior close",
+   "bucket": "0\u20132%",
+   "pattern": "Move vs. prior close: 0\u20132%",
+   "train": {
+    "n": 872,
+    "avg_r": -1.0261,
+    "win_rate": 8.4,
+    "total_r": -894.734,
+    "t": -6.28,
+    "std": 0.8178
+   },
+   "test": {
+    "n": 312,
+    "avg_r": -1.0213,
+    "win_rate": 8.0,
+    "total_r": -318.631,
+    "t": -6.24,
+    "std": 0.7938
    },
    "verdict": "avoid",
    "evidence": "strong"
@@ -1446,20 +1345,92 @@
    "bucket": "gap down",
    "pattern": "Opening gap: gap down",
    "train": {
-    "n": 213,
-    "avg_r": -0.3141,
-    "win_rate": 25.8,
-    "total_r": -66.903,
-    "t": 7.0,
-    "std": 1.1485
+    "n": 226,
+    "avg_r": -0.3612,
+    "win_rate": 25.7,
+    "total_r": -81.63,
+    "t": 6.28,
+    "std": 1.175
    },
    "test": {
-    "n": 103,
-    "avg_r": -0.2589,
-    "win_rate": 30.1,
-    "total_r": -26.671,
-    "t": 4.87,
-    "std": 1.1147
+    "n": 121,
+    "avg_r": -0.2009,
+    "win_rate": 33.9,
+    "total_r": -24.305,
+    "t": 4.48,
+    "std": 1.3263
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "gap",
+   "feature_label": "Opening gap",
+   "bucket": "gap up 1\u20133%",
+   "pattern": "Opening gap: gap up 1\u20133%",
+   "train": {
+    "n": 170,
+    "avg_r": -0.5312,
+    "win_rate": 24.7,
+    "total_r": -90.299,
+    "t": 4.01,
+    "std": 1.0437
+   },
+   "test": {
+    "n": 45,
+    "avg_r": -0.195,
+    "win_rate": 28.9,
+    "total_r": -8.776,
+    "t": 3.04,
+    "std": 1.2044
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "gap",
+   "feature_label": "Opening gap",
+   "bucket": "flat (\u00b11%)",
+   "pattern": "Opening gap: flat (\u00b11%)",
+   "train": {
+    "n": 1120,
+    "avg_r": -1.0415,
+    "win_rate": 8.7,
+    "total_r": -1166.521,
+    "t": -7.83,
+    "std": 0.8097
+   },
+   "test": {
+    "n": 442,
+    "avg_r": -0.9687,
+    "win_rate": 9.3,
+    "total_r": -428.17,
+    "t": -5.65,
+    "std": 0.8482
+   },
+   "verdict": "avoid",
+   "evidence": "strong"
+  },
+  {
+   "feature": "gap",
+   "feature_label": "Opening gap",
+   "bucket": "gap up 3\u20138%",
+   "pattern": "Opening gap: gap up 3\u20138%",
+   "train": {
+    "n": 43,
+    "avg_r": -0.0439,
+    "win_rate": 34.9,
+    "total_r": -1.886,
+    "t": 3.12,
+    "std": 1.6991
+   },
+   "test": {
+    "n": 21,
+    "avg_r": -0.586,
+    "win_rate": 33.3,
+    "total_r": -12.306,
+    "t": 0.9,
+    "std": 0.7903
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1470,44 +1441,20 @@
    "bucket": "gap up 8%+",
    "pattern": "Opening gap: gap up 8%+",
    "train": {
-    "n": 31,
-    "avg_r": -0.0281,
-    "win_rate": 35.5,
-    "total_r": -0.87,
-    "t": 3.68,
-    "std": 1.2657
+    "n": 20,
+    "avg_r": -0.2645,
+    "win_rate": 30.0,
+    "total_r": -5.291,
+    "t": 1.92,
+    "std": 1.3669
    },
    "test": {
-    "n": 30,
-    "avg_r": -0.4788,
-    "win_rate": 16.7,
-    "total_r": -14.365,
-    "t": 1.5,
-    "std": 1.1553
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "gap",
-   "feature_label": "Opening gap",
-   "bucket": "gap up 3\u20138%",
-   "pattern": "Opening gap: gap up 3\u20138%",
-   "train": {
-    "n": 23,
-    "avg_r": -0.1059,
-    "win_rate": 47.8,
-    "total_r": -2.436,
-    "t": 3.24,
-    "std": 1.1235
-   },
-   "test": {
-    "n": 18,
-    "avg_r": 0.2298,
-    "win_rate": 61.1,
-    "total_r": 4.136,
-    "t": 3.34,
-    "std": 1.3024
+    "n": 32,
+    "avg_r": -0.5042,
+    "win_rate": 15.6,
+    "total_r": -16.136,
+    "t": 1.21,
+    "std": 1.1054
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1518,92 +1465,20 @@
    "bucket": "red bar",
    "pattern": "Signal-bar move: red bar",
    "train": {
-    "n": 387,
-    "avg_r": -0.9701,
-    "win_rate": 12.4,
-    "total_r": -375.438,
-    "t": -2.22,
-    "std": 0.9289
+    "n": 418,
+    "avg_r": -0.9243,
+    "win_rate": 14.1,
+    "total_r": -386.347,
+    "t": -1.47,
+    "std": 1.0031
    },
    "test": {
-    "n": 168,
-    "avg_r": -0.906,
-    "win_rate": 12.5,
-    "total_r": -152.214,
-    "t": -1.62,
-    "std": 0.8959
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "five_minute_move",
-   "feature_label": "Signal-bar move",
-   "bucket": "0\u20130.4%",
-   "pattern": "Signal-bar move: 0\u20130.4%",
-   "train": {
-    "n": 805,
-    "avg_r": -1.0426,
-    "win_rate": 7.6,
-    "total_r": -839.303,
-    "t": -6.87,
-    "std": 0.7322
-   },
-   "test": {
-    "n": 326,
-    "avg_r": -0.918,
-    "win_rate": 10.7,
-    "total_r": -299.276,
-    "t": -2.68,
-    "std": 0.8337
-   },
-   "verdict": "avoid",
-   "evidence": "strong"
-  },
-  {
-   "feature": "five_minute_move",
-   "feature_label": "Signal-bar move",
-   "bucket": "2%+",
-   "pattern": "Signal-bar move: 2%+",
-   "train": {
-    "n": 22,
-    "avg_r": -0.1082,
-    "win_rate": 27.3,
-    "total_r": -2.381,
-    "t": 2.9,
-    "std": 1.2251
-   },
-   "test": {
-    "n": 29,
-    "avg_r": 0.2413,
-    "win_rate": 44.8,
-    "total_r": 6.997,
-    "t": 4.11,
-    "std": 1.3559
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "five_minute_move",
-   "feature_label": "Signal-bar move",
-   "bucket": "1\u20132%",
-   "pattern": "Signal-bar move: 1\u20132%",
-   "train": {
-    "n": 62,
-    "avg_r": -0.1498,
-    "win_rate": 35.5,
-    "total_r": -9.286,
-    "t": 4.6,
-    "std": 1.226
-   },
-   "test": {
-    "n": 27,
-    "avg_r": -0.2148,
-    "win_rate": 25.9,
-    "total_r": -5.801,
-    "t": 2.42,
-    "std": 1.2434
+    "n": 173,
+    "avg_r": -0.7652,
+    "win_rate": 15.6,
+    "total_r": -132.377,
+    "t": -0.3,
+    "std": 1.0518
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1614,68 +1489,92 @@
    "bucket": "0.4\u20131%",
    "pattern": "Signal-bar move: 0.4\u20131%",
    "train": {
-    "n": 140,
-    "avg_r": 0.0078,
-    "win_rate": 40.0,
-    "total_r": 1.091,
-    "t": 7.85,
-    "std": 1.316
+    "n": 149,
+    "avg_r": -0.1191,
+    "win_rate": 33.6,
+    "total_r": -17.743,
+    "t": 6.91,
+    "std": 1.2943
    },
    "test": {
-    "n": 50,
-    "avg_r": -0.5254,
-    "win_rate": 28.0,
-    "total_r": -26.272,
-    "t": 1.93,
-    "std": 0.9843
+    "n": 55,
+    "avg_r": -0.3262,
+    "win_rate": 30.9,
+    "total_r": -17.944,
+    "t": 2.64,
+    "std": 1.1649
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "vwap_distance",
-   "feature_label": "Distance above VWAP",
-   "bucket": "below VWAP",
-   "pattern": "Distance above VWAP: below VWAP",
+   "feature": "five_minute_move",
+   "feature_label": "Signal-bar move",
+   "bucket": "0\u20130.4%",
+   "pattern": "Signal-bar move: 0\u20130.4%",
    "train": {
-    "n": 151,
-    "avg_r": -0.9575,
-    "win_rate": 12.6,
-    "total_r": -144.582,
-    "t": -0.95,
-    "std": 1.1864
+    "n": 924,
+    "avg_r": -0.9994,
+    "win_rate": 8.5,
+    "total_r": -923.47,
+    "t": -5.48,
+    "std": 0.8159
    },
    "test": {
-    "n": 57,
-    "avg_r": -1.1269,
-    "win_rate": 10.5,
-    "total_r": -64.233,
-    "t": -2.76,
-    "std": 0.9113
+    "n": 368,
+    "avg_r": -0.8882,
+    "win_rate": 11.7,
+    "total_r": -326.869,
+    "t": -3.07,
+    "std": 0.9221
+   },
+   "verdict": "avoid",
+   "evidence": "strong"
+  },
+  {
+   "feature": "five_minute_move",
+   "feature_label": "Signal-bar move",
+   "bucket": "1\u20132%",
+   "pattern": "Signal-bar move: 1\u20132%",
+   "train": {
+    "n": 54,
+    "avg_r": -0.414,
+    "win_rate": 29.6,
+    "total_r": -22.355,
+    "t": 3.27,
+    "std": 0.9855
+   },
+   "test": {
+    "n": 27,
+    "avg_r": -0.2382,
+    "win_rate": 29.6,
+    "total_r": -6.431,
+    "t": 2.02,
+    "std": 1.2903
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "vwap_distance",
-   "feature_label": "Distance above VWAP",
-   "bucket": "2+ ATR",
-   "pattern": "Distance above VWAP: 2+ ATR",
+   "feature": "five_minute_move",
+   "feature_label": "Signal-bar move",
+   "bucket": "2%+",
+   "pattern": "Signal-bar move: 2%+",
    "train": {
-    "n": 561,
-    "avg_r": -0.7648,
-    "win_rate": 16.0,
-    "total_r": -429.069,
-    "t": 2.94,
-    "std": 0.8104
+    "n": 34,
+    "avg_r": 0.1261,
+    "win_rate": 41.2,
+    "total_r": 4.288,
+    "t": 4.48,
+    "std": 1.2737
    },
    "test": {
-    "n": 253,
-    "avg_r": -0.6953,
-    "win_rate": 17.8,
-    "total_r": -175.92,
-    "t": 1.66,
-    "std": 0.9496
+    "n": 38,
+    "avg_r": -0.1598,
+    "win_rate": 31.6,
+    "total_r": -6.071,
+    "t": 2.8,
+    "std": 1.2771
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1686,20 +1585,20 @@
    "bucket": "1\u20132 ATR",
    "pattern": "Distance above VWAP: 1\u20132 ATR",
    "train": {
-    "n": 402,
-    "avg_r": -0.8272,
-    "win_rate": 13.4,
-    "total_r": -332.519,
-    "t": 0.75,
-    "std": 1.0165
+    "n": 460,
+    "avg_r": -0.784,
+    "win_rate": 15.0,
+    "total_r": -360.636,
+    "t": 1.41,
+    "std": 1.0378
    },
    "test": {
-    "n": 168,
-    "avg_r": -0.7996,
-    "win_rate": 13.1,
-    "total_r": -134.33,
-    "t": -0.07,
-    "std": 0.9187
+    "n": 210,
+    "avg_r": -0.7962,
+    "win_rate": 14.8,
+    "total_r": -167.208,
+    "t": -0.78,
+    "std": 1.0271
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1707,23 +1606,23 @@
   {
    "feature": "vwap_distance",
    "feature_label": "Distance above VWAP",
-   "bucket": "0.5\u20131 ATR",
-   "pattern": "Distance above VWAP: 0.5\u20131 ATR",
+   "bucket": "2+ ATR",
+   "pattern": "Distance above VWAP: 2+ ATR",
    "train": {
-    "n": 182,
-    "avg_r": -1.0362,
-    "win_rate": 9.3,
-    "total_r": -188.581,
-    "t": -2.54,
-    "std": 0.9091
+    "n": 595,
+    "avg_r": -0.767,
+    "win_rate": 15.8,
+    "total_r": -456.371,
+    "t": 2.55,
+    "std": 0.8159
    },
    "test": {
-    "n": 76,
-    "avg_r": -0.8447,
-    "win_rate": 14.5,
-    "total_r": -64.199,
-    "t": -0.42,
-    "std": 1.0386
+    "n": 249,
+    "avg_r": -0.6107,
+    "win_rate": 18.1,
+    "total_r": -152.053,
+    "t": 2.1,
+    "std": 0.9792
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1734,71 +1633,71 @@
    "bucket": "0\u20130.5 ATR",
    "pattern": "Distance above VWAP: 0\u20130.5 ATR",
    "train": {
-    "n": 120,
-    "avg_r": -1.088,
-    "win_rate": 10.8,
-    "total_r": -130.565,
-    "t": -2.2,
-    "std": 1.1116
+    "n": 154,
+    "avg_r": -0.995,
+    "win_rate": 12.3,
+    "total_r": -153.231,
+    "t": -1.51,
+    "std": 1.1735
    },
    "test": {
-    "n": 46,
-    "avg_r": -0.8236,
+    "n": 54,
+    "avg_r": -0.8713,
     "win_rate": 13.0,
-    "total_r": -37.884,
-    "t": -0.2,
-    "std": 1.004
+    "total_r": -47.051,
+    "t": -0.95,
+    "std": 1.0107
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "risk",
-   "feature_label": "Stop distance",
-   "bucket": "0.5\u20131%",
-   "pattern": "Stop distance: 0.5\u20131%",
+   "feature": "vwap_distance",
+   "feature_label": "Distance above VWAP",
+   "bucket": "0.5\u20131 ATR",
+   "pattern": "Distance above VWAP: 0.5\u20131 ATR",
    "train": {
-    "n": 145,
-    "avg_r": -0.2663,
-    "win_rate": 27.6,
-    "total_r": -38.619,
-    "t": 5.82,
-    "std": 1.2397
+    "n": 214,
+    "avg_r": -0.9829,
+    "win_rate": 9.3,
+    "total_r": -210.331,
+    "t": -1.84,
+    "std": 1.0398
    },
    "test": {
-    "n": 86,
-    "avg_r": -0.5554,
-    "win_rate": 20.9,
-    "total_r": -47.761,
-    "t": 2.06,
-    "std": 1.0776
+    "n": 87,
+    "avg_r": -0.7827,
+    "win_rate": 17.2,
+    "total_r": -68.094,
+    "t": -0.34,
+    "std": 1.1368
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "risk",
-   "feature_label": "Stop distance",
-   "bucket": "under 0.5%",
-   "pattern": "Stop distance: under 0.5%",
+   "feature": "vwap_distance",
+   "feature_label": "Distance above VWAP",
+   "bucket": "below VWAP",
+   "pattern": "Distance above VWAP: below VWAP",
    "train": {
-    "n": 889,
-    "avg_r": -1.2858,
-    "win_rate": 1.7,
-    "total_r": -1143.04,
-    "t": -28.33,
-    "std": 0.4425
+    "n": 156,
+    "avg_r": -1.0581,
+    "win_rate": 10.3,
+    "total_r": -165.059,
+    "t": -2.38,
+    "std": 1.0825
    },
    "test": {
-    "n": 322,
-    "avg_r": -1.2353,
-    "win_rate": 1.9,
-    "total_r": -397.765,
-    "t": -16.58,
-    "std": 0.4772
+    "n": 61,
+    "avg_r": -0.9063,
+    "win_rate": 14.8,
+    "total_r": -55.285,
+    "t": -1.08,
+    "std": 1.1923
    },
-   "verdict": "avoid",
-   "evidence": "strong"
+   "verdict": "mixed",
+   "evidence": "weak"
   },
   {
    "feature": "risk",
@@ -1806,20 +1705,20 @@
    "bucket": "1\u20132%",
    "pattern": "Stop distance: 1\u20132%",
    "train": {
-    "n": 180,
-    "avg_r": -0.1573,
-    "win_rate": 32.2,
-    "total_r": -28.32,
-    "t": 7.58,
-    "std": 1.2535
+    "n": 185,
+    "avg_r": -0.2863,
+    "win_rate": 27.6,
+    "total_r": -52.971,
+    "t": 6.27,
+    "std": 1.2281
    },
    "test": {
-    "n": 86,
-    "avg_r": -0.2829,
-    "win_rate": 31.4,
-    "total_r": -24.332,
-    "t": 4.42,
-    "std": 1.0735
+    "n": 80,
+    "avg_r": -0.0917,
+    "win_rate": 37.5,
+    "total_r": -7.34,
+    "t": 4.86,
+    "std": 1.1951
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1830,20 +1729,20 @@
    "bucket": "2\u20134%",
    "pattern": "Stop distance: 2\u20134%",
    "train": {
-    "n": 119,
-    "avg_r": -0.1606,
-    "win_rate": 38.7,
-    "total_r": -19.116,
-    "t": 7.73,
-    "std": 0.9942
+    "n": 123,
+    "avg_r": -0.1965,
+    "win_rate": 38.2,
+    "total_r": -24.165,
+    "t": 7.54,
+    "std": 0.9639
    },
    "test": {
-    "n": 53,
-    "avg_r": -0.1329,
-    "win_rate": 35.8,
-    "total_r": -7.043,
-    "t": 4.28,
-    "std": 1.1247
+    "n": 64,
+    "avg_r": -0.2282,
+    "win_rate": 32.8,
+    "total_r": -14.604,
+    "t": 3.63,
+    "std": 1.1285
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1854,92 +1753,68 @@
    "bucket": "4%+",
    "pattern": "Stop distance: 4%+",
    "train": {
-    "n": 83,
-    "avg_r": 0.0455,
-    "win_rate": 41.0,
-    "total_r": 3.779,
-    "t": 8.0,
-    "std": 1.0374
-   },
-   "test": {
-    "n": 53,
-    "avg_r": 0.0063,
-    "win_rate": 37.7,
-    "total_r": 0.336,
-    "t": 5.13,
-    "std": 1.1371
-   },
-   "verdict": "promising",
-   "evidence": "strong"
-  },
-  {
-   "feature": "liquidity",
-   "feature_label": "Signal-bar dollar volume",
-   "bucket": "$5M+",
-   "pattern": "Signal-bar dollar volume: $5M+",
-   "train": {
-    "n": 137,
-    "avg_r": -0.5594,
-    "win_rate": 23.4,
-    "total_r": -76.639,
-    "t": 3.34,
-    "std": 1.0707
+    "n": 91,
+    "avg_r": -0.0485,
+    "win_rate": 41.8,
+    "total_r": -4.41,
+    "t": 7.08,
+    "std": 1.0832
    },
    "test": {
     "n": 72,
-    "avg_r": -0.728,
-    "win_rate": 13.9,
-    "total_r": -52.419,
-    "t": 0.64,
-    "std": 0.8831
+    "avg_r": 0.0572,
+    "win_rate": 36.1,
+    "total_r": 4.118,
+    "t": 5.5,
+    "std": 1.232
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "liquidity",
-   "feature_label": "Signal-bar dollar volume",
-   "bucket": "$1M\u20135M",
-   "pattern": "Signal-bar dollar volume: $1M\u20135M",
+   "feature": "risk",
+   "feature_label": "Stop distance",
+   "bucket": "under 0.5%",
+   "pattern": "Stop distance: under 0.5%",
    "train": {
-    "n": 442,
-    "avg_r": -1.1015,
-    "win_rate": 7.2,
-    "total_r": -486.881,
-    "t": -7.15,
-    "std": 0.6951
+    "n": 1006,
+    "avg_r": -1.2228,
+    "win_rate": 3.1,
+    "total_r": -1230.118,
+    "t": -21.19,
+    "std": 0.5548
    },
    "test": {
-    "n": 187,
-    "avg_r": -1.0666,
-    "win_rate": 7.0,
-    "total_r": -199.452,
-    "t": -5.86,
-    "std": 0.6351
+    "n": 354,
+    "avg_r": -1.2261,
+    "win_rate": 2.0,
+    "total_r": -434.052,
+    "t": -16.8,
+    "std": 0.5436
    },
    "verdict": "avoid",
    "evidence": "strong"
   },
   {
-   "feature": "liquidity",
-   "feature_label": "Signal-bar dollar volume",
-   "bucket": "under $100k",
-   "pattern": "Signal-bar dollar volume: under $100k",
+   "feature": "risk",
+   "feature_label": "Stop distance",
+   "bucket": "0.5\u20131%",
+   "pattern": "Stop distance: 0.5\u20131%",
    "train": {
-    "n": 204,
-    "avg_r": -0.2888,
-    "win_rate": 30.4,
-    "total_r": -58.915,
-    "t": 6.23,
-    "std": 1.3209
+    "n": 174,
+    "avg_r": -0.1952,
+    "win_rate": 29.3,
+    "total_r": -33.963,
+    "t": 6.16,
+    "std": 1.4066
    },
    "test": {
-    "n": 146,
-    "avg_r": -0.4175,
-    "win_rate": 26.7,
-    "total_r": -60.95,
-    "t": 3.72,
-    "std": 1.2256
+    "n": 91,
+    "avg_r": -0.4155,
+    "win_rate": 25.3,
+    "total_r": -37.813,
+    "t": 2.67,
+    "std": 1.1639
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1950,20 +1825,44 @@
    "bucket": "$250k\u20131M",
    "pattern": "Signal-bar dollar volume: $250k\u20131M",
    "train": {
-    "n": 499,
-    "avg_r": -0.967,
-    "win_rate": 10.4,
-    "total_r": -482.556,
-    "t": -2.69,
-    "std": 0.845
+    "n": 534,
+    "avg_r": -0.9414,
+    "win_rate": 10.5,
+    "total_r": -502.697,
+    "t": -2.32,
+    "std": 0.8872
    },
    "test": {
-    "n": 152,
-    "avg_r": -0.8513,
-    "win_rate": 14.5,
-    "total_r": -129.392,
-    "t": -0.75,
-    "std": 0.9364
+    "n": 154,
+    "avg_r": -1.0053,
+    "win_rate": 10.4,
+    "total_r": -154.824,
+    "t": -3.92,
+    "std": 0.8373
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "liquidity",
+   "feature_label": "Signal-bar dollar volume",
+   "bucket": "under $100k",
+   "pattern": "Signal-bar dollar volume: under $100k",
+   "train": {
+    "n": 271,
+    "avg_r": -0.4532,
+    "win_rate": 25.1,
+    "total_r": -122.814,
+    "t": 4.96,
+    "std": 1.3256
+   },
+   "test": {
+    "n": 181,
+    "avg_r": -0.1582,
+    "win_rate": 32.0,
+    "total_r": -28.63,
+    "t": 5.76,
+    "std": 1.3605
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -1974,116 +1873,68 @@
    "bucket": "$100k\u2013250k",
    "pattern": "Signal-bar dollar volume: $100k\u2013250k",
    "train": {
-    "n": 134,
-    "avg_r": -0.8979,
-    "win_rate": 11.2,
-    "total_r": -120.325,
-    "t": -0.4,
-    "std": 0.947
+    "n": 136,
+    "avg_r": -0.8446,
+    "win_rate": 13.2,
+    "total_r": -114.867,
+    "t": 0.08,
+    "std": 1.0477
    },
    "test": {
-    "n": 43,
-    "avg_r": -0.7989,
-    "win_rate": 14.0,
-    "total_r": -34.352,
-    "t": -0.03,
-    "std": 0.8992
+    "n": 37,
+    "avg_r": -1.1292,
+    "win_rate": 5.4,
+    "total_r": -41.779,
+    "t": -3.09,
+    "std": 0.7646
    },
    "verdict": "mixed",
    "evidence": "weak"
   },
   {
-   "feature": "price",
-   "feature_label": "Share price",
-   "bucket": "over $100",
-   "pattern": "Share price: over $100",
+   "feature": "liquidity",
+   "feature_label": "Signal-bar dollar volume",
+   "bucket": "$1M\u20135M",
+   "pattern": "Signal-bar dollar volume: $1M\u20135M",
    "train": {
-    "n": 122,
-    "avg_r": -0.2672,
-    "win_rate": 32.0,
-    "total_r": -32.603,
-    "t": 6.21,
-    "std": 1.0634
+    "n": 480,
+    "avg_r": -1.0668,
+    "win_rate": 8.5,
+    "total_r": -512.069,
+    "t": -6.57,
+    "std": 0.7155
    },
    "test": {
-    "n": 72,
-    "avg_r": -0.4777,
-    "win_rate": 22.2,
-    "total_r": -34.397,
-    "t": 3.05,
-    "std": 0.8807
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "price",
-   "feature_label": "Share price",
-   "bucket": "$50\u2013100",
-   "pattern": "Share price: $50\u2013100",
-   "train": {
-    "n": 839,
-    "avg_r": -1.2923,
-    "win_rate": 2.0,
-    "total_r": -1084.228,
-    "t": -28.75,
-    "std": 0.4302
-   },
-   "test": {
-    "n": 286,
-    "avg_r": -1.249,
-    "win_rate": 2.1,
-    "total_r": -357.224,
-    "t": -17.93,
-    "std": 0.4288
+    "n": 214,
+    "avg_r": -0.9874,
+    "win_rate": 9.3,
+    "total_r": -211.303,
+    "t": -5.08,
+    "std": 0.7099
    },
    "verdict": "avoid",
    "evidence": "strong"
   },
   {
-   "feature": "price",
-   "feature_label": "Share price",
-   "bucket": "$2\u20135",
-   "pattern": "Share price: $2\u20135",
+   "feature": "liquidity",
+   "feature_label": "Signal-bar dollar volume",
+   "bucket": "$5M+",
+   "pattern": "Signal-bar dollar volume: $5M+",
    "train": {
-    "n": 183,
-    "avg_r": -0.2796,
-    "win_rate": 32.2,
-    "total_r": -51.174,
-    "t": 7.11,
-    "std": 1.1146
+    "n": 158,
+    "avg_r": -0.5897,
+    "win_rate": 22.2,
+    "total_r": -93.18,
+    "t": 3.22,
+    "std": 1.0234
    },
    "test": {
-    "n": 55,
-    "avg_r": -0.3973,
-    "win_rate": 30.9,
-    "total_r": -21.849,
-    "t": 2.87,
-    "std": 1.0265
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "price",
-   "feature_label": "Share price",
-   "bucket": "$20\u201350",
-   "pattern": "Share price: $20\u201350",
-   "train": {
-    "n": 70,
-    "avg_r": -0.4802,
-    "win_rate": 15.7,
-    "total_r": -33.614,
-    "t": 3.33,
-    "std": 0.968
-   },
-   "test": {
-    "n": 42,
-    "avg_r": -0.551,
-    "win_rate": 14.3,
-    "total_r": -23.14,
-    "t": 1.55,
-    "std": 1.0148
+    "n": 75,
+    "avg_r": -0.7088,
+    "win_rate": 14.7,
+    "total_r": -53.157,
+    "t": 0.32,
+    "std": 0.8755
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2094,20 +1945,44 @@
    "bucket": "$5\u201320",
    "pattern": "Share price: $5\u201320",
    "train": {
-    "n": 116,
-    "avg_r": -0.1883,
-    "win_rate": 32.8,
-    "total_r": -21.839,
-    "t": 6.19,
-    "std": 1.1777
+    "n": 245,
+    "avg_r": -0.3152,
+    "win_rate": 29.0,
+    "total_r": -77.215,
+    "t": 7.44,
+    "std": 1.1292
    },
    "test": {
-    "n": 49,
-    "avg_r": -0.3305,
-    "win_rate": 26.5,
-    "total_r": -16.195,
-    "t": 3.12,
-    "std": 1.0415
+    "n": 91,
+    "avg_r": -0.5722,
+    "win_rate": 19.8,
+    "total_r": -52.07,
+    "t": 1.65,
+    "std": 0.9726
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "price",
+   "feature_label": "Share price",
+   "bucket": "$2\u20135",
+   "pattern": "Share price: $2\u20135",
+   "train": {
+    "n": 125,
+    "avg_r": -0.4786,
+    "win_rate": 24.0,
+    "total_r": -59.823,
+    "t": 3.96,
+    "std": 1.054
+   },
+   "test": {
+    "n": 36,
+    "avg_r": -0.0023,
+    "win_rate": 44.4,
+    "total_r": -0.082,
+    "t": 3.63,
+    "std": 1.2199
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2118,20 +1993,92 @@
    "bucket": "under $2",
    "pattern": "Share price: under $2",
    "train": {
-    "n": 86,
-    "avg_r": -0.0216,
-    "win_rate": 33.7,
-    "total_r": -1.858,
-    "t": 5.34,
-    "std": 1.4646
+    "n": 156,
+    "avg_r": -0.1442,
+    "win_rate": 33.3,
+    "total_r": -22.498,
+    "t": 5.83,
+    "std": 1.5172
    },
    "test": {
+    "n": 157,
+    "avg_r": -0.1276,
+    "win_rate": 32.5,
+    "total_r": -20.026,
+    "t": 5.6,
+    "std": 1.3733
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "price",
+   "feature_label": "Share price",
+   "bucket": "$50\u2013100",
+   "pattern": "Share price: $50\u2013100",
+   "train": {
+    "n": 833,
+    "avg_r": -1.319,
+    "win_rate": 1.2,
+    "total_r": -1098.719,
+    "t": -40.1,
+    "std": 0.336
+   },
+   "test": {
+    "n": 259,
+    "avg_r": -1.2591,
+    "win_rate": 1.5,
+    "total_r": -326.115,
+    "t": -19.61,
+    "std": 0.4254
+   },
+   "verdict": "avoid",
+   "evidence": "strong"
+  },
+  {
+   "feature": "price",
+   "feature_label": "Share price",
+   "bucket": "over $100",
+   "pattern": "Share price: over $100",
+   "train": {
+    "n": 124,
+    "avg_r": -0.2784,
+    "win_rate": 31.5,
+    "total_r": -34.521,
+    "t": 6.03,
+    "std": 1.0588
+   },
+   "test": {
+    "n": 73,
+    "avg_r": -0.4456,
+    "win_rate": 23.3,
+    "total_r": -32.53,
+    "t": 2.74,
+    "std": 0.9211
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "price",
+   "feature_label": "Share price",
+   "bucket": "$20\u201350",
+   "pattern": "Share price: $20\u201350",
+   "train": {
     "n": 96,
-    "avg_r": -0.2475,
-    "win_rate": 33.3,
-    "total_r": -23.761,
-    "t": 3.95,
-    "std": 1.3555
+    "avg_r": -0.5505,
+    "win_rate": 16.7,
+    "total_r": -52.851,
+    "t": 2.92,
+    "std": 1.0124
+   },
+   "test": {
+    "n": 45,
+    "avg_r": -1.3082,
+    "win_rate": 2.2,
+    "total_r": -58.869,
+    "t": -10.7,
+    "std": 0.3556
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2142,44 +2089,20 @@
    "bucket": "mixed",
    "pattern": "SPY/QQQ mood: mixed",
    "train": {
-    "n": 747,
-    "avg_r": -0.9184,
-    "win_rate": 12.3,
-    "total_r": -686.03,
-    "t": -1.55,
-    "std": 0.9387
+    "n": 844,
+    "avg_r": -0.8839,
+    "win_rate": 13.2,
+    "total_r": -746.003,
+    "t": -0.92,
+    "std": 1.0022
    },
    "test": {
-    "n": 320,
-    "avg_r": -0.7645,
-    "win_rate": 15.9,
-    "total_r": -244.626,
-    "t": 0.55,
-    "std": 0.9639
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "market_mood",
-   "feature_label": "SPY/QQQ mood",
-   "bucket": "aligned",
-   "pattern": "SPY/QQQ mood: aligned",
-   "train": {
-    "n": 437,
-    "avg_r": -0.8433,
-    "win_rate": 14.0,
-    "total_r": -368.532,
-    "t": 0.48,
-    "std": 0.9556
-   },
-   "test": {
-    "n": 183,
-    "avg_r": -0.8662,
-    "win_rate": 14.2,
-    "total_r": -158.524,
-    "t": -1.05,
-    "std": 0.9238
+    "n": 343,
+    "avg_r": -0.6875,
+    "win_rate": 16.6,
+    "total_r": -235.826,
+    "t": 0.89,
+    "std": 1.1104
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2190,20 +2113,44 @@
    "bucket": "bearish",
    "pattern": "SPY/QQQ mood: bearish",
    "train": {
-    "n": 232,
-    "avg_r": -0.736,
-    "win_rate": 17.2,
-    "total_r": -170.754,
-    "t": 1.9,
-    "std": 1.034
+    "n": 234,
+    "avg_r": -0.8113,
+    "win_rate": 15.8,
+    "total_r": -189.839,
+    "t": 0.62,
+    "std": 1.0025
    },
    "test": {
-    "n": 97,
-    "avg_r": -0.7569,
-    "win_rate": 13.4,
-    "total_r": -73.416,
-    "t": 0.37,
-    "std": 1.0047
+    "n": 85,
+    "avg_r": -0.6859,
+    "win_rate": 20.0,
+    "total_r": -58.306,
+    "t": 0.47,
+    "std": 1.0717
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "market_mood",
+   "feature_label": "SPY/QQQ mood",
+   "bucket": "aligned",
+   "pattern": "SPY/QQQ mood: aligned",
+   "train": {
+    "n": 501,
+    "avg_r": -0.8179,
+    "win_rate": 14.0,
+    "total_r": -409.786,
+    "t": 0.81,
+    "std": 0.9482
+   },
+   "test": {
+    "n": 233,
+    "avg_r": -0.8393,
+    "win_rate": 14.2,
+    "total_r": -195.56,
+    "t": -1.64,
+    "std": 0.9164
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2211,15 +2158,63 @@
   {
    "feature": "catalyst",
    "feature_label": "News catalyst (24h)",
-   "bucket": "unknown",
-   "pattern": "News catalyst (24h): unknown",
+   "bucket": "no",
+   "pattern": "News catalyst (24h): no",
    "train": {
-    "n": 1,
-    "avg_r": -1.0,
-    "win_rate": 0.0,
-    "total_r": -1.0,
-    "t": 0.0,
-    "std": 0.0
+    "n": 1151,
+    "avg_r": -0.9355,
+    "win_rate": 11.5,
+    "total_r": -1076.712,
+    "t": -2.97,
+    "std": 0.9511
+   },
+   "test": {
+    "n": 323,
+    "avg_r": -0.6951,
+    "win_rate": 18.6,
+    "total_r": -224.51,
+    "t": 0.73,
+    "std": 1.1306
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "catalyst",
+   "feature_label": "News catalyst (24h)",
+   "bucket": "yes",
+   "pattern": "News catalyst (24h): yes",
+   "train": {
+    "n": 425,
+    "avg_r": -0.636,
+    "win_rate": 19.8,
+    "total_r": -270.316,
+    "t": 4.3,
+    "std": 1.0352
+   },
+   "test": {
+    "n": 338,
+    "avg_r": -0.7846,
+    "win_rate": 13.9,
+    "total_r": -265.182,
+    "t": -0.85,
+    "std": 0.949
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "catalyst",
+   "feature_label": "News catalyst (24h)",
+   "bucket": "risky headline",
+   "pattern": "News catalyst (24h): risky headline",
+   "train": {
+    "n": 3,
+    "avg_r": 0.4668,
+    "win_rate": 66.7,
+    "total_r": 1.401,
+    "t": 1.52,
+    "std": 1.5011
    },
    "test": {
     "n": 0,
@@ -2233,97 +2228,25 @@
    "evidence": "not enough trades"
   },
   {
-   "feature": "catalyst",
-   "feature_label": "News catalyst (24h)",
-   "bucket": "no",
-   "pattern": "News catalyst (24h): no",
-   "train": {
-    "n": 1062,
-    "avg_r": -0.9675,
-    "win_rate": 10.5,
-    "total_r": -1027.462,
-    "t": -3.79,
-    "std": 0.8786
-   },
-   "test": {
-    "n": 285,
-    "avg_r": -0.8652,
-    "win_rate": 15.8,
-    "total_r": -246.582,
-    "t": -1.19,
-    "std": 1.0059
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "catalyst",
-   "feature_label": "News catalyst (24h)",
-   "bucket": "yes",
-   "pattern": "News catalyst (24h): yes",
-   "train": {
-    "n": 353,
-    "avg_r": -0.5577,
-    "win_rate": 22.9,
-    "total_r": -196.855,
-    "t": 5.14,
-    "std": 1.1246
-   },
-   "test": {
-    "n": 315,
-    "avg_r": -0.7301,
-    "win_rate": 14.3,
-    "total_r": -229.984,
-    "t": 1.25,
-    "std": 0.9097
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
-   "feature": "weekday",
-   "feature_label": "Weekday",
-   "bucket": "Tue",
-   "pattern": "Weekday: Tue",
-   "train": {
-    "n": 320,
-    "avg_r": -0.92,
-    "win_rate": 12.8,
-    "total_r": -294.395,
-    "t": -1.07,
-    "std": 0.913
-   },
-   "test": {
-    "n": 146,
-    "avg_r": -0.6129,
-    "win_rate": 21.2,
-    "total_r": -89.485,
-    "t": 2.13,
-    "std": 1.0307
-   },
-   "verdict": "mixed",
-   "evidence": "weak"
-  },
-  {
    "feature": "weekday",
    "feature_label": "Weekday",
    "bucket": "Wed",
    "pattern": "Weekday: Wed",
    "train": {
-    "n": 284,
-    "avg_r": -0.9091,
-    "win_rate": 12.3,
-    "total_r": -258.194,
-    "t": -0.79,
-    "std": 0.9385
+    "n": 327,
+    "avg_r": -0.8887,
+    "win_rate": 11.9,
+    "total_r": -290.6,
+    "t": -0.72,
+    "std": 0.9225
    },
    "test": {
-    "n": 113,
-    "avg_r": -0.7398,
-    "win_rate": 14.2,
-    "total_r": -83.592,
-    "t": 0.64,
-    "std": 0.9013
+    "n": 153,
+    "avg_r": -0.5432,
+    "win_rate": 19.6,
+    "total_r": -83.115,
+    "t": 2.08,
+    "std": 1.1773
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2334,20 +2257,20 @@
    "bucket": "Thu",
    "pattern": "Weekday: Thu",
    "train": {
-    "n": 340,
-    "avg_r": -0.9189,
-    "win_rate": 13.2,
-    "total_r": -312.441,
-    "t": -1.05,
-    "std": 0.9396
+    "n": 366,
+    "avg_r": -0.9509,
+    "win_rate": 12.8,
+    "total_r": -348.032,
+    "t": -2.07,
+    "std": 0.9136
    },
    "test": {
-    "n": 151,
-    "avg_r": -1.0181,
-    "win_rate": 9.3,
-    "total_r": -153.735,
-    "t": -3.02,
-    "std": 0.9104
+    "n": 204,
+    "avg_r": -0.8612,
+    "win_rate": 13.7,
+    "total_r": -175.679,
+    "t": -1.77,
+    "std": 0.973
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2358,20 +2281,20 @@
    "bucket": "Fri",
    "pattern": "Weekday: Fri",
    "train": {
-    "n": 196,
-    "avg_r": -0.7493,
-    "win_rate": 15.8,
-    "total_r": -146.868,
-    "t": 1.59,
-    "std": 1.0217
+    "n": 215,
+    "avg_r": -0.7713,
+    "win_rate": 14.0,
+    "total_r": -165.819,
+    "t": 1.17,
+    "std": 1.0104
    },
    "test": {
-    "n": 63,
-    "avg_r": -0.472,
-    "win_rate": 23.8,
-    "total_r": -29.739,
-    "t": 2.38,
-    "std": 1.0766
+    "n": 81,
+    "avg_r": -0.7997,
+    "win_rate": 16.0,
+    "total_r": -64.777,
+    "t": -0.52,
+    "std": 1.0169
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2382,20 +2305,44 @@
    "bucket": "Mon",
    "pattern": "Weekday: Mon",
    "train": {
-    "n": 276,
-    "avg_r": -0.7733,
-    "win_rate": 14.9,
-    "total_r": -213.418,
-    "t": 1.51,
-    "std": 1.0148
+    "n": 294,
+    "avg_r": -0.7255,
+    "win_rate": 17.0,
+    "total_r": -213.311,
+    "t": 1.88,
+    "std": 1.1539
    },
    "test": {
     "n": 127,
-    "avg_r": -0.945,
-    "win_rate": 11.0,
-    "total_r": -120.014,
-    "t": -2.05,
-    "std": 0.8293
+    "avg_r": -0.8943,
+    "win_rate": 12.6,
+    "total_r": -113.576,
+    "t": -1.89,
+    "std": 0.917
+   },
+   "verdict": "mixed",
+   "evidence": "weak"
+  },
+  {
+   "feature": "weekday",
+   "feature_label": "Weekday",
+   "bucket": "Tue",
+   "pattern": "Weekday: Tue",
+   "train": {
+    "n": 377,
+    "avg_r": -0.8697,
+    "win_rate": 13.8,
+    "total_r": -327.865,
+    "t": -0.36,
+    "std": 0.9386
+   },
+   "test": {
+    "n": 96,
+    "avg_r": -0.5473,
+    "win_rate": 20.8,
+    "total_r": -52.545,
+    "t": 1.77,
+    "std": 1.0718
    },
    "verdict": "mixed",
    "evidence": "weak"
@@ -2404,69 +2351,69 @@
  "model": {
   "status": "faint",
   "verdict": "A faint signal on unseen days \u2014 slightly better than a coin flip. Not reliable enough to act on yet.",
-  "train_trades": 1415,
-  "test_trades": 600,
-  "train_auc": 0.835,
-  "test_auc": 0.79,
-  "top_third_avg_r": -0.24,
-  "bottom_third_avg_r": -1.293,
-  "all_avg_r": -0.794,
+  "train_trades": 1579,
+  "test_trades": 661,
+  "train_auc": 0.81,
+  "test_auc": 0.788,
+  "top_third_avg_r": -0.11,
+  "bottom_third_avg_r": -1.266,
+  "all_avg_r": -0.741,
   "factors": [
    {
     "factor": "Share price",
-    "weight": -0.406,
+    "weight": -0.422,
     "effect": "Lower share price \u2192 more winners"
    },
    {
-    "factor": "Fresh news catalyst",
-    "weight": 0.262,
-    "effect": "Fresh news catalyst \u2192 more winners"
-   },
-   {
     "factor": "Stop distance",
-    "weight": 0.234,
+    "weight": 0.233,
     "effect": "Higher stop distance \u2192 more winners"
    },
    {
+    "factor": "Fresh news catalyst",
+    "weight": 0.201,
+    "effect": "Fresh news catalyst \u2192 more winners"
+   },
+   {
     "factor": "Setup B (VWAP/level retest)",
-    "weight": -0.226,
+    "weight": -0.179,
     "effect": "Setup B (VWAP/level retest) \u2192 fewer winners"
    },
    {
     "factor": "5-min RSI",
-    "weight": 0.212,
+    "weight": 0.171,
     "effect": "Higher 5-min RSI \u2192 more winners"
    },
    {
     "factor": "Minutes after the open",
-    "weight": -0.147,
+    "weight": -0.139,
     "effect": "Lower minutes after the open \u2192 more winners"
    },
    {
     "factor": "Signal-bar dollar volume",
-    "weight": 0.097,
+    "weight": 0.123,
     "effect": "Higher signal-bar dollar volume \u2192 more winners"
    },
    {
-    "factor": "Move vs. prior close",
-    "weight": 0.083,
-    "effect": "Higher move vs. prior close \u2192 more winners"
+    "factor": "Opening gap",
+    "weight": -0.097,
+    "effect": "Lower opening gap \u2192 more winners"
    }
   ]
  },
  "tickers": [
   {
-   "symbol": "FNGR",
-   "days_with_data": 79,
+   "symbol": "ZBAO",
+   "days_with_data": 82,
    "news": "ok",
    "learning": {
-    "trades": 40,
-    "win_rate": 40.0,
-    "avg_r": 0.0392,
-    "total_r": 1.57,
-    "avg_win_r": 1.422,
-    "avg_loss_r": -0.883,
-    "profit_factor": 1.074
+    "trades": 43,
+    "win_rate": 48.84,
+    "avg_r": 0.2847,
+    "total_r": 12.241,
+    "avg_win_r": 1.427,
+    "avg_loss_r": -0.805,
+    "profit_factor": 1.691
    },
    "strict": {
     "trades": 0,
@@ -2477,17 +2424,227 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 37.5,
-   "target_rate": 22.5,
-   "avg_best_r": 0.896,
-   "note": "No clear edge either way",
+   "stop_rate": 32.6,
+   "target_rate": 23.3,
+   "avg_best_r": 1.189,
+   "note": "Breakouts have tended to follow through",
    "highlights": [
-    "Best setup: B \u2014 first VWAP/level retest (+0.09R over 7)",
-    "Best time: 9:30\u201310:30 (+0.50R over 10)",
-    "Weakest time: 2:00\u20133:30 (-0.65R over 5)",
-    "Best market mood: aligned (+0.45R over 15)"
+    "Best setup: B \u2014 first VWAP/level retest (+1.22R over 10)",
+    "Best time: 10:30\u201311:30 (+0.85R over 14)",
+    "Weakest time: 9:30\u201310:30 (-0.54R over 9)",
+    "Best market mood: mixed (+0.40R over 26)"
    ],
    "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T13:35:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.091614,
+     "exit": 0.089488,
+     "exit_reason": "end of session",
+     "r_multiple": -0.2152
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:05:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.086308,
+     "exit": 0.097578,
+     "exit_reason": "target",
+     "r_multiple": 2.4459
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T10:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.084305,
+     "exit": 0.093583,
+     "exit_reason": "target",
+     "r_multiple": 3.2826
+    },
+    {
+     "date": "2026-09-28",
+     "entry_time": "2026-09-28T10:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.085707,
+     "exit": 0.08829,
+     "exit_reason": "end of session",
+     "r_multiple": 0.7086
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T14:05:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.090513,
+     "exit": 0.091685,
+     "exit_reason": "end of session",
+     "r_multiple": 0.3903
+    }
+   ]
+  },
+  {
+   "symbol": "AEON",
+   "days_with_data": 62,
+   "news": "ok",
+   "learning": {
+    "trades": 23,
+    "win_rate": 43.48,
+    "avg_r": 0.1971,
+    "total_r": 4.533,
+    "avg_win_r": 1.688,
+    "avg_loss_r": -0.95,
+    "profit_factor": 1.367
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 47.8,
+   "target_rate": 30.4,
+   "avg_best_r": 1.299,
+   "note": "Breakouts have tended to follow through",
+   "highlights": [
+    "Best setup: B \u2014 first VWAP/level retest (+0.90R over 8)",
+    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.18R over 15)",
+    "Best time: 2:00\u20133:30 (+0.80R over 5)",
+    "Weakest time: 11:30\u20132:00 (midday) (-0.04R over 9)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:55:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.335519,
+     "exit": 0.307255,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.310488,
+     "exit": 0.306162,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.394893,
+     "exit": 0.306847,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:20:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 0.310388,
+     "exit": 0.349796,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    },
+    {
+     "date": "2026-09-22",
+     "entry_time": "2026-09-22T13:50:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.258923,
+     "exit": 0.263071,
+     "exit_reason": "target",
+     "r_multiple": 2.5382
+    }
+   ]
+  },
+  {
+   "symbol": "FNGR",
+   "days_with_data": 79,
+   "news": "ok",
+   "learning": {
+    "trades": 44,
+    "win_rate": 38.64,
+    "avg_r": 0.033,
+    "total_r": 1.453,
+    "avg_win_r": 1.456,
+    "avg_loss_r": -0.863,
+    "profit_factor": 1.062
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 38.6,
+   "target_rate": 22.7,
+   "avg_best_r": 0.937,
+   "note": "No clear edge either way",
+   "highlights": [
+    "Best setup: A \u2014 catalyst ORB second-bar hold (+0.10R over 37)",
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.33R over 7)",
+    "Best time: 9:30\u201310:30 (+0.37R over 11)",
+    "Weakest time: 2:00\u20133:30 (-0.65R over 5)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T13:35:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.178223,
+     "exit": 0.176579,
+     "exit_reason": "end of session",
+     "r_multiple": -0.1358
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:25:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.170213,
+     "exit": 0.178505,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.170613,
+     "exit": 0.165918,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T10:00:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 0.180626,
+     "exit": 0.165689,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
     {
      "date": "2026-09-24",
      "entry_time": "2026-09-24T12:45:00-04:00",
@@ -2497,467 +2654,91 @@
      "exit": 0.145418,
      "exit_reason": "end of session",
      "r_multiple": 0.5131
+    }
+   ]
+  },
+  {
+   "symbol": "TSLL",
+   "days_with_data": 83,
+   "news": "ok",
+   "learning": {
+    "trades": 79,
+    "win_rate": 32.91,
+    "avg_r": -0.0974,
+    "total_r": -7.693,
+    "avg_win_r": 1.45,
+    "avg_loss_r": -0.856,
+    "profit_factor": 0.831
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 49.4,
+   "target_rate": 19.0,
+   "avg_best_r": 0.768,
+   "note": "No clear edge either way",
+   "highlights": [
+    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.14R over 31)",
+    "Best time: 10:30\u201311:30 (+0.12R over 16)",
+    "Weakest time: 2:00\u20133:30 (-0.74R over 8)",
+    "Best market mood: bearish (+0.03R over 6)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T13:40:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 8.941166,
+     "exit": 8.928828,
+     "exit_reason": "end of session",
+     "r_multiple": -0.067
     },
     {
      "date": "2026-09-24",
      "entry_time": "2026-09-24T12:20:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.139775,
-     "exit": 0.147418,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T11:20:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 0.140776,
-     "exit": 0.138926,
+     "entry": 10.332904,
+     "exit": 10.34206,
      "exit_reason": "end of session",
-     "r_multiple": -0.7512
-    },
-    {
-     "date": "2026-09-18",
-     "entry_time": "2026-09-18T11:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.141377,
-     "exit": 0.138726,
-     "exit_reason": "stop",
-     "r_multiple": -1.2583
-    },
-    {
-     "date": "2026-09-17",
-     "entry_time": "2026-09-17T10:10:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.151289,
-     "exit": 0.142222,
-     "exit_reason": "end of session",
-     "r_multiple": -0.8949
-    }
-   ]
-  },
-  {
-   "symbol": "IOVA",
-   "days_with_data": 83,
-   "news": "ok",
-   "learning": {
-    "trades": 87,
-    "win_rate": 36.78,
-    "avg_r": -0.0862,
-    "total_r": -7.496,
-    "avg_win_r": 1.341,
-    "avg_loss_r": -0.917,
-    "profit_factor": 0.851
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 52.9,
-   "target_rate": 18.4,
-   "avg_best_r": 0.865,
-   "note": "No clear edge either way",
-   "highlights": [
-    "Best setup: A \u2014 catalyst ORB second-bar hold (+0.03R over 40)",
-    "Weakest setup: B \u2014 first VWAP/level retest (-0.18R over 47)",
-    "Best time: 9:30\u201310:30 (+0.24R over 26)",
-    "Weakest time: 2:00\u20133:30 (-0.34R over 18)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T12:35:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 14.728393,
-     "exit": 14.486874,
-     "exit_reason": "end of session",
-     "r_multiple": -0.2308
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:55:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 13.897355,
-     "exit": 14.647538,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:40:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 13.727143,
-     "exit": 13.481786,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:05:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 13.99748,
-     "exit": 13.391245,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T12:35:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 11.05881,
-     "exit": 10.971273,
-     "exit_reason": "end of session",
-     "r_multiple": -0.4888
-    }
-   ]
-  },
-  {
-   "symbol": "VVOS",
-   "days_with_data": 78,
-   "news": "ok",
-   "learning": {
-    "trades": 26,
-    "win_rate": 38.46,
-    "avg_r": -0.0962,
-    "total_r": -2.501,
-    "avg_win_r": 1.271,
-    "avg_loss_r": -0.951,
-    "profit_factor": 0.836
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 42.3,
-   "target_rate": 15.4,
-   "avg_best_r": 0.804,
-   "note": "No clear edge either way",
-   "highlights": [
-    "Best time: 2:00\u20133:30 (+1.01R over 6)",
-    "Weakest time: 10:30\u201311:30 (-0.66R over 7)",
-    "Best market mood: mixed (+0.10R over 15)",
-    "Weakest market mood: bearish (-0.39R over 6)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.14448,
-     "exit": 0.149912,
-     "exit_reason": "end of session",
-     "r_multiple": 0.7581
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T13:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.159499,
-     "exit": 0.1599,
-     "exit_reason": "end of session",
-     "r_multiple": 0.3297
-    },
-    {
-     "date": "2026-09-16",
-     "entry_time": "2026-09-16T12:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.161602,
-     "exit": 0.160799,
-     "exit_reason": "end of session",
-     "r_multiple": -0.2557
-    },
-    {
-     "date": "2026-09-11",
-     "entry_time": "2026-09-11T13:35:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.180425,
-     "exit": 0.179975,
-     "exit_reason": "stop",
-     "r_multiple": -1.0087
-    },
-    {
-     "date": "2026-09-10",
-     "entry_time": "2026-09-10T10:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.182127,
-     "exit": 0.181073,
-     "exit_reason": "end of session",
-     "r_multiple": -0.1112
-    }
-   ]
-  },
-  {
-   "symbol": "SLXN",
-   "days_with_data": 69,
-   "news": "ok",
-   "learning": {
-    "trades": 17,
-    "win_rate": 29.41,
-    "avg_r": -0.1311,
-    "total_r": -2.229,
-    "avg_win_r": 1.927,
-    "avg_loss_r": -0.989,
-    "profit_factor": 0.812
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 47.1,
-   "target_rate": 23.5,
-   "avg_best_r": 0.905,
-   "note": "No clear edge either way",
-   "highlights": [
-    "Best time: 2:00\u20133:30 (+0.37R over 5)",
-    "Weakest time: 9:30\u201310:30 (-0.57R over 6)",
-    "Weakest market mood: bearish (-0.18R over 6)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T11:30:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.330513,
-     "exit": 0.320199,
-     "exit_reason": "stop",
-     "r_multiple": -1.6222
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T09:55:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 0.385782,
-     "exit": 0.323406,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T14:30:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.547884,
-     "exit": 0.541522,
-     "exit_reason": "end of session",
-     "r_multiple": -0.0581
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T10:35:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.478798,
-     "exit": 0.560199,
-     "exit_reason": "target",
-     "r_multiple": 2.0463
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T10:20:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.453066,
-     "exit": 0.439396,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    }
-   ]
-  },
-  {
-   "symbol": "SDEV",
-   "days_with_data": 83,
-   "news": "ok",
-   "learning": {
-    "trades": 17,
-    "win_rate": 41.18,
-    "avg_r": -0.1663,
-    "total_r": -2.827,
-    "avg_win_r": 1.216,
-    "avg_loss_r": -1.134,
-    "profit_factor": 0.751
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 29.4,
-   "target_rate": 17.6,
-   "avg_best_r": 1.03,
-   "note": "Breakouts have tended to fail",
-   "highlights": [
-    "Weakest time: 11:30\u20132:00 (midday) (-0.67R over 5)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T11:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 2.803501,
-     "exit": 3.275901,
-     "exit_reason": "end of session",
-     "r_multiple": 0.4845
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:25:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 2.102626,
-     "exit": 2.630377,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:00:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 1.897369,
-     "exit": 2.045966,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-25",
-     "entry_time": "2026-09-25T09:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 1.722151,
-     "exit": 1.673179,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
+     "r_multiple": 0.0586
     },
     {
      "date": "2026-09-24",
-     "entry_time": "2026-09-24T11:05:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 1.296619,
-     "exit": 1.228577,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    }
-   ]
-  },
-  {
-   "symbol": "SOAR",
-   "days_with_data": 83,
-   "news": "ok",
-   "learning": {
-    "trades": 69,
-    "win_rate": 31.88,
-    "avg_r": -0.1866,
-    "total_r": -12.874,
-    "avg_win_r": 1.652,
-    "avg_loss_r": -1.047,
-    "profit_factor": 0.738
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 58.0,
-   "target_rate": 20.3,
-   "avg_best_r": 0.988,
-   "note": "Breakouts have tended to fail",
-   "highlights": [
-    "Weakest setup: B \u2014 first VWAP/level retest (-0.42R over 24)",
-    "Best time: 9:30\u201310:30 (+0.04R over 13)",
-    "Weakest time: 10:30\u201311:30 (-0.26R over 17)",
-    "Weakest market mood: bearish (-0.32R over 11)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T13:45:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.348736,
-     "exit": 0.407977,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.330413,
-     "exit": 0.377069,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T10:30:00-04:00",
+     "entry_time": "2026-09-24T10:30:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 0.447659,
-     "exit": 0.378095,
+     "entry": 10.272829,
+     "exit": 10.247179,
+     "exit_reason": "stop",
+     "r_multiple": -2.8704
+    },
+    {
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T10:00:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 10.322891,
+     "exit": 10.255212,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
-     "date": "2026-09-18",
-     "entry_time": "2026-09-18T12:45:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "date": "2026-09-23",
+     "entry_time": "2026-09-23T10:05:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 0.186933,
-     "exit": 0.189163,
-     "exit_reason": "end of session",
-     "r_multiple": 0.3445
-    },
-    {
-     "date": "2026-09-16",
-     "entry_time": "2026-09-16T11:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.195544,
-     "exit": 0.19156,
-     "exit_reason": "end of session",
-     "r_multiple": -0.4743
+     "entry": 10.743417,
+     "exit": 10.553966,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
     }
    ]
   },
@@ -3042,17 +2823,101 @@
    ]
   },
   {
+   "symbol": "SOAR",
+   "days_with_data": 83,
+   "news": "ok",
+   "learning": {
+    "trades": 75,
+    "win_rate": 30.67,
+    "avg_r": -0.2263,
+    "total_r": -16.975,
+    "avg_win_r": 1.721,
+    "avg_loss_r": -1.088,
+    "profit_factor": 0.7
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 60.0,
+   "target_rate": 20.0,
+   "avg_best_r": 0.963,
+   "note": "Breakouts have tended to fail",
+   "highlights": [
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.55R over 24)",
+    "Weakest time: 2:00\u20133:30 (-0.41R over 18)",
+    "Weakest market mood: bearish (-0.41R over 10)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T14:40:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.37637,
+     "exit": 0.366841,
+     "exit_reason": "stop",
+     "r_multiple": -3.0802
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T13:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.384881,
+     "exit": 0.372134,
+     "exit_reason": "stop",
+     "r_multiple": -1.0506
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.37617,
+     "exit": 0.390112,
+     "exit_reason": "target",
+     "r_multiple": 2.5643
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.403204,
+     "exit": 0.372779,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:15:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.387284,
+     "exit": 0.420275,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    }
+   ]
+  },
+  {
    "symbol": "INTC",
    "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 58,
-    "win_rate": 37.93,
-    "avg_r": -0.2335,
-    "total_r": -13.545,
+    "trades": 57,
+    "win_rate": 38.6,
+    "avg_r": -0.2323,
+    "total_r": -13.24,
     "avg_win_r": 0.791,
-    "avg_loss_r": -0.86,
-    "profit_factor": 0.562
+    "avg_loss_r": -0.876,
+    "profit_factor": 0.568
    },
    "strict": {
     "trades": 1,
@@ -3065,13 +2930,13 @@
    },
    "portfolio_trades": 1,
    "portfolio_net_pl": -0.0881,
-   "stop_rate": 48.3,
-   "target_rate": 3.4,
-   "avg_best_r": 0.638,
+   "stop_rate": 49.1,
+   "target_rate": 3.5,
+   "avg_best_r": 0.639,
    "note": "Breakouts have tended to fail",
    "highlights": [
-    "Weakest setup: B \u2014 first VWAP/level retest (-0.27R over 41)",
-    "Weakest time: 10:30\u201311:30 (-0.45R over 16)",
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.27R over 40)",
+    "Weakest time: 10:30\u201311:30 (-0.46R over 15)",
     "Weakest market mood: mixed (-0.26R over 24)"
    ],
    "recent": [
@@ -3128,102 +2993,17 @@
    ]
   },
   {
-   "symbol": "SOXS",
-   "days_with_data": 83,
-   "news": "ok",
-   "learning": {
-    "trades": 92,
-    "win_rate": 29.35,
-    "avg_r": -0.252,
-    "total_r": -23.188,
-    "avg_win_r": 1.291,
-    "avg_loss_r": -0.893,
-    "profit_factor": 0.601
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 55.4,
-   "target_rate": 15.2,
-   "avg_best_r": 0.729,
-   "note": "Breakouts have tended to fail",
-   "highlights": [
-    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.26R over 49)",
-    "Best time: 10:30\u201311:30 (+0.07R over 16)",
-    "Weakest time: 9:30\u201310:30 (-0.42R over 36)",
-    "Weakest market mood: bearish (-0.27R over 47)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T10:10:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 34.573175,
-     "exit": 34.6067,
-     "exit_reason": "end of session",
-     "r_multiple": 0.0505
-    },
-    {
-     "date": "2026-09-23",
-     "entry_time": "2026-09-23T15:25:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 33.892325,
-     "exit": 33.8077,
-     "exit_reason": "stop",
-     "r_multiple": -1.8759
-    },
-    {
-     "date": "2026-09-23",
-     "entry_time": "2026-09-23T14:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 33.942388,
-     "exit": 33.83325,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-23",
-     "entry_time": "2026-09-23T14:45:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 33.977431,
-     "exit": 33.846214,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-23",
-     "entry_time": "2026-09-23T14:25:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 33.892325,
-     "exit": 33.8077,
-     "exit_reason": "stop",
-     "r_multiple": -1.7095
-    }
-   ]
-  },
-  {
    "symbol": "NU",
    "days_with_data": 83,
    "news": "ok",
    "learning": {
     "trades": 79,
-    "win_rate": 29.11,
-    "avg_r": -0.2853,
-    "total_r": -22.539,
-    "avg_win_r": 1.315,
-    "avg_loss_r": -0.943,
-    "profit_factor": 0.573
+    "win_rate": 30.38,
+    "avg_r": -0.2568,
+    "total_r": -20.284,
+    "avg_win_r": 1.313,
+    "avg_loss_r": -0.942,
+    "profit_factor": 0.608
    },
    "strict": {
     "trades": 1,
@@ -3236,17 +3016,27 @@
    },
    "portfolio_trades": 1,
    "portfolio_net_pl": -0.0656,
-   "stop_rate": 60.8,
+   "stop_rate": 59.5,
    "target_rate": 13.9,
-   "avg_best_r": 0.631,
+   "avg_best_r": 0.647,
    "note": "Breakouts have tended to fail",
    "highlights": [
-    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.43R over 28)",
+    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.37R over 29)",
     "Best time: 9:30\u201310:30 (+0.13R over 27)",
-    "Weakest time: 11:30\u20132:00 (midday) (-0.51R over 25)",
+    "Weakest time: 10:30\u201311:30 (-0.49R over 19)",
     "Weakest market mood: aligned (-0.32R over 22)"
    ],
    "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T14:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 12.51563,
+     "exit": 12.709099,
+     "exit_reason": "end of session",
+     "r_multiple": 1.2552
+    },
     {
      "date": "2026-09-29",
      "entry_time": "2026-09-29T14:40:00-04:00",
@@ -3286,31 +3076,21 @@
      "exit": 13.524655,
      "exit_reason": "stop",
      "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T11:00:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 13.902361,
-     "exit": 14.037437,
-     "exit_reason": "end of session",
-     "r_multiple": 1.2683
     }
    ]
   },
   {
-   "symbol": "SPCX",
-   "days_with_data": 75,
+   "symbol": "PACB",
+   "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 72,
-    "win_rate": 29.17,
-    "avg_r": -0.3279,
-    "total_r": -23.607,
-    "avg_win_r": 1.143,
-    "avg_loss_r": -0.933,
-    "profit_factor": 0.504
+    "trades": 80,
+    "win_rate": 26.25,
+    "avg_r": -0.2999,
+    "total_r": -23.996,
+    "avg_win_r": 1.56,
+    "avg_loss_r": -0.962,
+    "profit_factor": 0.577
    },
    "strict": {
     "trades": 0,
@@ -3321,17 +3101,142 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 61.1,
-   "target_rate": 11.1,
-   "avg_best_r": 0.659,
+   "stop_rate": 58.8,
+   "target_rate": 17.5,
+   "avg_best_r": 0.788,
    "note": "Breakouts have tended to fail",
    "highlights": [
-    "Weakest setup: B \u2014 first VWAP/level retest (-0.35R over 57)",
-    "Weakest time: 11:30\u20132:00 (midday) (-0.66R over 23)",
-    "Best market mood: bearish (+0.18R over 6)",
-    "Weakest market mood: mixed (-0.51R over 37)"
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.36R over 28)",
+    "Weakest time: 10:30\u201311:30 (-0.80R over 14)",
+    "Best market mood: bearish (+0.06R over 14)",
+    "Weakest market mood: aligned (-0.76R over 30)"
    ],
    "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T10:20:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 2.172713,
+     "exit": 2.406988,
+     "exit_reason": "end of session",
+     "r_multiple": 0.986
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T09:55:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 2.007507,
+     "exit": 2.168521,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    },
+    {
+     "date": "2026-09-29",
+     "entry_time": "2026-09-29T12:40:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 1.787232,
+     "exit": 1.822719,
+     "exit_reason": "end of session",
+     "r_multiple": 0.3143
+    },
+    {
+     "date": "2026-09-28",
+     "entry_time": "2026-09-28T11:15:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 1.737169,
+     "exit": 1.722844,
+     "exit_reason": "end of session",
+     "r_multiple": -0.132
+    },
+    {
+     "date": "2026-09-28",
+     "entry_time": "2026-09-28T10:05:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 1.652063,
+     "exit": 1.699332,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    }
+   ]
+  },
+  {
+   "symbol": "SPCX",
+   "days_with_data": 76,
+   "news": "ok",
+   "learning": {
+    "trades": 76,
+    "win_rate": 28.95,
+    "avg_r": -0.3153,
+    "total_r": -23.961,
+    "avg_win_r": 1.182,
+    "avg_loss_r": -0.925,
+    "profit_factor": 0.52
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 60.5,
+   "target_rate": 11.8,
+   "avg_best_r": 0.678,
+   "note": "Breakouts have tended to fail",
+   "highlights": [
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.36R over 58)",
+    "Weakest time: 11:30\u20132:00 (midday) (-0.54R over 25)",
+    "Best market mood: bearish (+0.18R over 6)",
+    "Weakest market mood: mixed (-0.52R over 39)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:20:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 151.749507,
+     "exit": 151.070982,
+     "exit_reason": "end of session",
+     "r_multiple": -0.3544
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:30:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 150.322725,
+     "exit": 151.355604,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T11:20:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 150.252638,
+     "exit": 149.646036,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T09:55:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 150.598069,
+     "exit": 149.560335,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
     {
      "date": "2026-09-29",
      "entry_time": "2026-09-29T14:40:00-04:00",
@@ -3341,61 +3246,21 @@
      "exit": 149.283219,
      "exit_reason": "end of session",
      "r_multiple": 0.9995
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T11:50:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 148.440374,
-     "exit": 147.360643,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T11:30:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 148.650637,
-     "exit": 147.37225,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T11:10:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 147.624355,
-     "exit": 148.983923,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 149.011087,
-     "exit": 147.035531,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
     }
    ]
   },
   {
-   "symbol": "NVD",
+   "symbol": "NVDA",
    "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 126,
-    "win_rate": 30.95,
-    "avg_r": -0.3369,
-    "total_r": -42.455,
-    "avg_win_r": 1.13,
-    "avg_loss_r": -0.994,
-    "profit_factor": 0.509
+    "trades": 84,
+    "win_rate": 26.19,
+    "avg_r": -0.3496,
+    "total_r": -29.368,
+    "avg_win_r": 1.197,
+    "avg_loss_r": -0.898,
+    "profit_factor": 0.473
    },
    "strict": {
     "trades": 0,
@@ -3406,9 +3271,94 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 60.3,
-   "target_rate": 12.7,
-   "avg_best_r": 0.59,
+   "stop_rate": 58.3,
+   "target_rate": 10.7,
+   "avg_best_r": 0.552,
+   "note": "Breakouts have tended to fail",
+   "highlights": [
+    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.44R over 26)",
+    "Best time: 10:30\u201311:30 (+0.05R over 16)",
+    "Weakest time: 9:30\u201310:30 (-0.54R over 26)",
+    "Weakest market mood: bearish (-0.77R over 6)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T10:05:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 231.699349,
+     "exit": 230.773941,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T12:25:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 223.569196,
+     "exit": 224.469147,
+     "exit_reason": "end of session",
+     "r_multiple": 0.6708
+    },
+    {
+     "date": "2026-09-22",
+     "entry_time": "2026-09-22T13:10:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 230.117374,
+     "exit": 228.803723,
+     "exit_reason": "end of session",
+     "r_multiple": -0.7563
+    },
+    {
+     "date": "2026-09-21",
+     "entry_time": "2026-09-21T14:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 227.393973,
+     "exit": 226.811216,
+     "exit_reason": "end of session",
+     "r_multiple": -0.1898
+    },
+    {
+     "date": "2026-09-21",
+     "entry_time": "2026-09-21T10:45:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 224.820759,
+     "exit": 227.339922,
+     "exit_reason": "target",
+     "r_multiple": 2.0
+    }
+   ]
+  },
+  {
+   "symbol": "NVD",
+   "days_with_data": 83,
+   "news": "ok",
+   "learning": {
+    "trades": 125,
+    "win_rate": 29.6,
+    "avg_r": -0.3511,
+    "total_r": -43.891,
+    "avg_win_r": 1.152,
+    "avg_loss_r": -0.983,
+    "profit_factor": 0.493
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 60.8,
+   "target_rate": 12.8,
+   "avg_best_r": 0.579,
    "note": "Breakouts have tended to fail",
    "highlights": [
     "Weakest setup: B \u2014 first VWAP/level retest (-0.46R over 75)",
@@ -3469,17 +3419,17 @@
    ]
   },
   {
-   "symbol": "NVDA",
+   "symbol": "CNTB",
    "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 84,
-    "win_rate": 26.19,
-    "avg_r": -0.3496,
-    "total_r": -29.368,
-    "avg_win_r": 1.197,
-    "avg_loss_r": -0.898,
-    "profit_factor": 0.473
+    "trades": 57,
+    "win_rate": 26.32,
+    "avg_r": -0.3584,
+    "total_r": -20.43,
+    "avg_win_r": 1.145,
+    "avg_loss_r": -0.895,
+    "profit_factor": 0.457
    },
    "strict": {
     "trades": 0,
@@ -3490,164 +3440,80 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 58.3,
-   "target_rate": 10.7,
-   "avg_best_r": 0.552,
+   "stop_rate": 49.1,
+   "target_rate": 8.8,
+   "avg_best_r": 0.722,
    "note": "Breakouts have tended to fail",
    "highlights": [
-    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.46R over 27)",
-    "Weakest time: 9:30\u201310:30 (-0.52R over 25)",
-    "Weakest market mood: bearish (-0.77R over 6)"
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.63R over 15)",
+    "Weakest time: 10:30\u201311:30 (-0.62R over 12)",
+    "Weakest market mood: aligned (-0.49R over 16)"
    ],
    "recent": [
     {
-     "date": "2026-09-24",
-     "entry_time": "2026-09-24T12:25:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 223.569196,
-     "exit": 224.469147,
-     "exit_reason": "end of session",
-     "r_multiple": 0.6708
-    },
-    {
-     "date": "2026-09-22",
-     "entry_time": "2026-09-22T13:10:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 230.117374,
-     "exit": 228.803723,
-     "exit_reason": "end of session",
-     "r_multiple": -0.7563
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T14:00:00-04:00",
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T10:50:00-04:00",
      "setup": "A \u2014 catalyst ORB second-bar hold",
      "strict": false,
-     "entry": 227.393973,
-     "exit": 226.811216,
+     "entry": 1.111388,
+     "exit": 1.083644,
+     "exit_reason": "stop",
+     "r_multiple": -1.1097
+    },
+    {
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T10:15:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 1.086357,
+     "exit": 1.093632,
      "exit_reason": "end of session",
-     "r_multiple": -0.1898
+     "r_multiple": 0.5974
     },
     {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T10:45:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T10:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
      "strict": false,
-     "entry": 224.820759,
-     "exit": 227.339922,
-     "exit_reason": "target",
-     "r_multiple": 2.0
-    },
-    {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T09:55:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 224.640534,
-     "exit": 223.545219,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    }
-   ]
-  },
-  {
-   "symbol": "GRAB",
-   "days_with_data": 83,
-   "news": "ok",
-   "learning": {
-    "trades": 72,
-    "win_rate": 27.78,
-    "avg_r": -0.4415,
-    "total_r": -31.79,
-    "avg_win_r": 0.87,
-    "avg_loss_r": -0.946,
-    "profit_factor": 0.354
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 58.3,
-   "target_rate": 4.2,
-   "avg_best_r": 0.586,
-   "note": "Breakouts have tended to fail",
-   "highlights": [
-    "Weakest setup: A \u2014 catalyst ORB second-bar hold (-0.65R over 16)",
-    "Weakest time: 11:30\u20132:00 (midday) (-0.53R over 18)",
-    "Weakest market mood: bearish (-0.76R over 17)"
-   ],
-   "recent": [
-    {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T11:40:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 3.133914,
-     "exit": 3.112195,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    },
-    {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T10:00:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 3.128907,
-     "exit": 3.104303,
+     "entry": 1.08135,
+     "exit": 1.074143,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
      "date": "2026-09-22",
-     "entry_time": "2026-09-22T11:25:00-04:00",
+     "entry_time": "2026-09-22T10:50:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 3.153939,
-     "exit": 3.161045,
-     "exit_reason": "end of session",
-     "r_multiple": 0.1995
-    },
-    {
-     "date": "2026-09-22",
-     "entry_time": "2026-09-22T09:55:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
-     "strict": false,
-     "entry": 3.153939,
-     "exit": 3.117126,
+     "entry": 1.271588,
+     "exit": 1.253764,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
-     "date": "2026-09-21",
-     "entry_time": "2026-09-21T14:00:00-04:00",
-     "setup": "B \u2014 first VWAP/level retest",
+     "date": "2026-09-22",
+     "entry_time": "2026-09-22T10:05:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
      "strict": false,
-     "entry": 2.873589,
-     "exit": 2.896376,
-     "exit_reason": "end of session",
-     "r_multiple": 0.5221
+     "entry": 1.271588,
+     "exit": 1.243444,
+     "exit_reason": "stop",
+     "r_multiple": -2.1157
     }
    ]
   },
   {
-   "symbol": "CCL",
-   "days_with_data": 83,
+   "symbol": "LESL",
+   "days_with_data": 82,
    "news": "ok",
    "learning": {
-    "trades": 72,
-    "win_rate": 12.5,
-    "avg_r": -0.5293,
-    "total_r": -38.11,
+    "trades": 39,
+    "win_rate": 28.21,
+    "avg_r": -0.4182,
+    "total_r": -16.309,
     "avg_win_r": 1.834,
-    "avg_loss_r": -0.867,
-    "profit_factor": 0.302
+    "avg_loss_r": -1.303,
+    "profit_factor": 0.553
    },
    "strict": {
     "trades": 0,
@@ -3658,65 +3524,234 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 69.4,
-   "target_rate": 9.7,
-   "avg_best_r": 0.449,
+   "stop_rate": 61.5,
+   "target_rate": 12.8,
+   "avg_best_r": 0.802,
    "note": "Breakouts have tended to fail",
    "highlights": [
-    "Weakest setup: B \u2014 first VWAP/level retest (-0.53R over 59)",
-    "Weakest time: 2:00\u20133:30 (-0.62R over 9)",
-    "Weakest market mood: mixed (-0.74R over 29)"
+    "Weakest setup: B \u2014 first VWAP/level retest (-1.57R over 9)",
+    "Best time: 2:00\u20133:30 (+0.65R over 9)",
+    "Weakest time: 10:30\u201311:30 (-1.48R over 7)",
+    "Weakest market mood: aligned (-0.75R over 11)"
    ],
    "recent": [
     {
      "date": "2026-09-29",
-     "entry_time": "2026-09-29T14:55:00-04:00",
+     "entry_time": "2026-09-29T12:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.237797,
+     "exit": 0.217128,
+     "exit_reason": "stop",
+     "r_multiple": -2.5165
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T11:50:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.321201,
+     "exit": 0.299141,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T10:20:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.297872,
+     "exit": 0.329588,
+     "exit_reason": "target",
+     "r_multiple": 2.2426
+    },
+    {
+     "date": "2026-09-18",
+     "entry_time": "2026-09-18T11:55:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 25.186453,
-     "exit": 25.133553,
+     "entry": 0.451864,
+     "exit": 0.442746,
+     "exit_reason": "stop",
+     "r_multiple": -2.1866
+    },
+    {
+     "date": "2026-09-17",
+     "entry_time": "2026-09-17T10:05:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.564104,
+     "exit": 0.562062,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    }
+   ]
+  },
+  {
+   "symbol": "BITO",
+   "days_with_data": 83,
+   "news": "ok",
+   "learning": {
+    "trades": 145,
+    "win_rate": 20.0,
+    "avg_r": -0.5971,
+    "total_r": -86.582,
+    "avg_win_r": 1.076,
+    "avg_loss_r": -1.015,
+    "profit_factor": 0.265
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 71.0,
+   "target_rate": 5.5,
+   "avg_best_r": 0.443,
+   "note": "Breakouts have tended to fail",
+   "highlights": [
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.64R over 120)",
+    "Weakest time: 2:00\u20133:30 (-0.94R over 21)",
+    "Weakest market mood: bearish (-0.63R over 21)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-28",
+     "entry_time": "2026-09-28T12:30:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 11.274079,
+     "exit": 11.161362,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T15:10:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 11.354179,
+     "exit": 11.330823,
      "exit_reason": "end of session",
-     "r_multiple": -0.1414
+     "r_multiple": -0.5093
     },
     {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T15:25:00-04:00",
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T14:55:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 22.347908,
-     "exit": 22.267961,
+     "entry": 11.344167,
+     "exit": 11.308204,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T14:35:00-04:00",
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T14:40:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 22.312865,
-     "exit": 22.240643,
+     "entry": 11.344167,
+     "exit": 11.307598,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T13:40:00-04:00",
+     "date": "2026-09-24",
+     "entry_time": "2026-09-24T14:30:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 22.317871,
-     "exit": 22.256482,
+     "entry": 11.344167,
+     "exit": 11.306973,
      "exit_reason": "stop",
      "r_multiple": -1.0
+    }
+   ]
+  },
+  {
+   "symbol": "WBD",
+   "days_with_data": 83,
+   "news": "ok",
+   "learning": {
+    "trades": 141,
+    "win_rate": 12.06,
+    "avg_r": -0.7923,
+    "total_r": -111.72,
+    "avg_win_r": 1.463,
+    "avg_loss_r": -1.101,
+    "profit_factor": 0.182
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 81.6,
+   "target_rate": 7.8,
+   "avg_best_r": 0.29,
+   "note": "Breakouts have tended to fail",
+   "highlights": [
+    "Weakest setup: B \u2014 first VWAP/level retest (-0.82R over 124)",
+    "Weakest time: 2:00\u20133:30 (-0.95R over 35)",
+    "Weakest market mood: aligned (-0.88R over 41)"
+   ],
+   "recent": [
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T15:25:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 30.888574,
+     "exit": 30.811449,
+     "exit_reason": "stop",
+     "r_multiple": -1.5716
     },
     {
-     "date": "2026-09-28",
-     "entry_time": "2026-09-28T13:15:00-04:00",
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T15:15:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 22.488083,
-     "exit": 22.2335,
+     "entry": 30.888574,
+     "exit": 30.811449,
      "exit_reason": "stop",
-     "r_multiple": -1.0
+     "r_multiple": -1.5693
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T15:05:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 30.883568,
+     "exit": 30.806455,
+     "exit_reason": "stop",
+     "r_multiple": -1.747
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T14:55:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 30.888574,
+     "exit": 30.811449,
+     "exit_reason": "stop",
+     "r_multiple": -1.5682
+    },
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T14:45:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 30.883568,
+     "exit": 30.806455,
+     "exit_reason": "stop",
+     "r_multiple": -1.7484
     }
    ]
   },
@@ -3725,12 +3760,12 @@
    "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 454,
-    "win_rate": 0.88,
-    "avg_r": -1.1899,
-    "total_r": -540.214,
+    "trades": 451,
+    "win_rate": 0.89,
+    "avg_r": -1.1922,
+    "total_r": -537.66,
     "avg_win_r": 0.286,
-    "avg_loss_r": -1.203,
+    "avg_loss_r": -1.205,
     "profit_factor": 0.002
    },
    "strict": {
@@ -3748,8 +3783,8 @@
    "note": "Breakouts have tended to fail",
    "highlights": [
     "Weakest setup: A \u2014 catalyst ORB second-bar hold (-1.39R over 47)",
-    "Weakest time: 2:00\u20133:30 (-1.21R over 91)",
-    "Weakest market mood: mixed (-1.20R over 232)"
+    "Weakest time: 10:30\u201311:30 (-1.21R over 113)",
+    "Weakest market mood: mixed (-1.21R over 231)"
    ],
    "recent": [
     {
@@ -3809,12 +3844,12 @@
    "days_with_data": 83,
    "news": "ok",
    "learning": {
-    "trades": 632,
+    "trades": 621,
     "win_rate": 0.0,
-    "avg_r": -1.431,
-    "total_r": -904.411,
+    "avg_r": -1.4294,
+    "total_r": -887.656,
     "avg_win_r": 0.0,
-    "avg_loss_r": -1.431,
+    "avg_loss_r": -1.429,
     "profit_factor": 0.0
    },
    "strict": {
@@ -3889,17 +3924,17 @@
    ]
   },
   {
-   "symbol": "SLND",
-   "days_with_data": 78,
+   "symbol": "TGE",
+   "days_with_data": 40,
    "news": "ok",
    "learning": {
     "trades": 6,
     "win_rate": 16.67,
-    "avg_r": -0.2013,
-    "total_r": -1.208,
-    "avg_win_r": 1.502,
-    "avg_loss_r": -0.542,
-    "profit_factor": 0.554
+    "avg_r": -0.8832,
+    "total_r": -5.299,
+    "avg_win_r": 0.325,
+    "avg_loss_r": -1.125,
+    "profit_factor": 0.058
    },
    "strict": {
     "trades": 0,
@@ -3910,151 +3945,141 @@
    },
    "portfolio_trades": 0,
    "portfolio_net_pl": 0,
-   "stop_rate": 33.3,
+   "stop_rate": 83.3,
    "target_rate": 0.0,
-   "avg_best_r": 0.361,
+   "avg_best_r": 0.686,
    "note": "Too few setups to judge",
    "highlights": [],
    "recent": [
     {
-     "date": "2026-08-24",
-     "entry_time": "2026-08-24T15:00:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.803103,
-     "exit": 0.773632,
-     "exit_reason": "data ended",
-     "r_multiple": -0.2928
-    },
-    {
-     "date": "2026-08-11",
-     "entry_time": "2026-08-11T12:45:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.730913,
-     "exit": 0.716603,
-     "exit_reason": "end of session",
-     "r_multiple": -0.1634
-    },
-    {
-     "date": "2026-07-31",
-     "entry_time": "2026-07-31T12:25:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.565206,
-     "exit": 0.563994,
-     "exit_reason": "data ended",
-     "r_multiple": -0.0321
-    },
-    {
-     "date": "2026-07-23",
-     "entry_time": "2026-07-23T12:55:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.636595,
-     "exit": 0.717902,
-     "exit_reason": "end of session",
-     "r_multiple": 1.5025
-    },
-    {
-     "date": "2026-07-17",
-     "entry_time": "2026-07-17T13:00:00-04:00",
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T15:00:00-04:00",
      "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 1.146432,
-     "exit": 1.055646,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    }
-   ]
-  },
-  {
-   "symbol": "BKYI",
-   "days_with_data": 21,
-   "news": "ok",
-   "learning": {
-    "trades": 1,
-    "win_rate": 0.0,
-    "avg_r": -1.0,
-    "total_r": -1.0,
-    "avg_win_r": 0.0,
-    "avg_loss_r": -1.0,
-    "profit_factor": 0.0
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 100.0,
-   "target_rate": 0.0,
-   "avg_best_r": 0.038,
-   "note": "Too few setups to judge",
-   "highlights": [],
-   "recent": [
-    {
-     "date": "2026-09-29",
-     "entry_time": "2026-09-29T10:05:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 4.305377,
-     "exit": 3.543981,
-     "exit_reason": "stop",
-     "r_multiple": -1.0
-    }
-   ]
-  },
-  {
-   "symbol": "CAPS",
-   "days_with_data": 67,
-   "news": "ok",
-   "learning": {
-    "trades": 2,
-    "win_rate": 0.0,
-    "avg_r": -1.0,
-    "total_r": -2.0,
-    "avg_win_r": 0.0,
-    "avg_loss_r": -1.0,
-    "profit_factor": 0.0
-   },
-   "strict": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "avg_r": 0.0,
-    "total_r": 0.0,
-    "profit_factor": null
-   },
-   "portfolio_trades": 0,
-   "portfolio_net_pl": 0,
-   "stop_rate": 100.0,
-   "target_rate": 0.0,
-   "avg_best_r": 0.131,
-   "note": "Too few setups to judge",
-   "highlights": [],
-   "recent": [
-    {
-     "date": "2026-09-24",
-     "entry_time": "2026-09-24T12:50:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
-     "strict": false,
-     "entry": 0.181627,
-     "exit": 0.174121,
+     "entry": 1.561951,
+     "exit": 1.497779,
      "exit_reason": "stop",
      "r_multiple": -1.0
     },
     {
-     "date": "2026-09-24",
-     "entry_time": "2026-09-24T10:15:00-04:00",
-     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T13:40:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
      "strict": false,
-     "entry": 0.175119,
-     "exit": 0.172067,
+     "entry": 1.561951,
+     "exit": 1.483893,
      "exit_reason": "stop",
      "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T12:05:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 1.561951,
+     "exit": 1.412571,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-09-30",
+     "entry_time": "2026-09-30T10:15:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 1.581976,
+     "exit": 1.417714,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-06-18",
+     "entry_time": "2026-06-18T10:45:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 1.171463,
+     "exit": 1.203494,
+     "exit_reason": "end of session",
+     "r_multiple": 0.3248
+    }
+   ]
+  },
+  {
+   "symbol": "NIVF",
+   "days_with_data": 76,
+   "news": "ok",
+   "learning": {
+    "trades": 5,
+    "win_rate": 0.0,
+    "avg_r": -1.2777,
+    "total_r": -6.388,
+    "avg_win_r": 0.0,
+    "avg_loss_r": -1.278,
+    "profit_factor": 0.0
+   },
+   "strict": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0,
+    "total_r": 0.0,
+    "profit_factor": null
+   },
+   "portfolio_trades": 0,
+   "portfolio_net_pl": 0,
+   "stop_rate": 80.0,
+   "target_rate": 0.0,
+   "avg_best_r": 1.092,
+   "note": "Too few setups to judge",
+   "highlights": [],
+   "recent": [
+    {
+     "date": "2026-09-25",
+     "entry_time": "2026-09-25T14:35:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.659423,
+     "exit": 0.5593,
+     "exit_reason": "end of session",
+     "r_multiple": -0.7685
+    },
+    {
+     "date": "2026-08-17",
+     "entry_time": "2026-08-17T11:45:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.663629,
+     "exit": 0.630311,
+     "exit_reason": "stop",
+     "r_multiple": -2.3167
+    },
+    {
+     "date": "2026-06-26",
+     "entry_time": "2026-06-26T10:35:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.561501,
+     "exit": 0.54372,
+     "exit_reason": "stop",
+     "r_multiple": -1.1689
+    },
+    {
+     "date": "2026-06-16",
+     "entry_time": "2026-06-16T11:35:00-04:00",
+     "setup": "B \u2014 first VWAP/level retest",
+     "strict": false,
+     "entry": 0.973816,
+     "exit": 0.808451,
+     "exit_reason": "stop",
+     "r_multiple": -1.0
+    },
+    {
+     "date": "2026-06-10",
+     "entry_time": "2026-06-10T14:00:00-04:00",
+     "setup": "A \u2014 catalyst ORB second-bar hold",
+     "strict": false,
+     "entry": 0.59294,
+     "exit": 0.51935,
+     "exit_reason": "stop",
+     "r_multiple": -1.1343
     }
    ]
   }
@@ -4288,10 +4313,27 @@
     "Opening gap: flat (\u00b11%)"
    ],
    "run": "study list"
+  },
+  {
+   "generated_at": "2026-10-01T00:34:34.753939+00:00",
+   "tickers": 20,
+   "learning_trades": 2240,
+   "learning_avg_r": -0.8193,
+   "portfolio_trades": 2,
+   "portfolio_win_rate": 0.0,
+   "portfolio_avg_r": -1.0,
+   "model_test_auc": 0.788,
+   "promising": [],
+   "avoid": [
+    "Share price: $50\u2013100",
+    "Stop distance: under 0.5%",
+    "Opening gap: flat (\u00b11%)"
+   ],
+   "run": "study list"
   }
  ],
  "errors": [
-  "NVDA: very busy news feed; catalysts checked from 2026-06-02 on"
+  "NVDA: very busy news feed; catalysts checked from 2026-06-03 on"
  ],
  "caveats": [
   "History uses Alpaca's free IEX feed, which is a slice of the full market. Volume and prices can differ from Robinhood.",
