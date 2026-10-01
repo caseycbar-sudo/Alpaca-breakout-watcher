@@ -64,7 +64,7 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          CRYPTO_BACKTEST_SPREAD_PCT: ${{ vars.CRYPTO_BACKTEST_SPREAD_PCT || '0.30' }}
+          CRYPTO_BACKTEST_SPREAD_PCT: ${{ vars.CRYPTO_BACKTEST_SPREAD_PCT || '1.90' }}
           INPUT_DAYS: ${{ github.event.inputs.days || '120' }}
         run: |
           if ! [[ "$INPUT_DAYS" =~ ^[0-9]+$ ]] || [ "$INPUT_DAYS" -lt 20 ] || [ "$INPUT_DAYS" -gt 400 ]; then

@@ -52,7 +52,7 @@ GROUPS = {
     },
     "crypto": {
         "label": "Crypto (watcher pairs)",
-        "spread_pct": 0.30,
+        "spread_pct": 1.90,
         "session_only": False,
         "entry": "the hourly auto-trader runs only: bars closing at :40, 9:40 a.m.–2:40 p.m. ET weekdays",
     },

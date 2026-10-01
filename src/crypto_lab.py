@@ -61,8 +61,9 @@ def _env_float(name: str, default: float) -> float:
 @dataclass(frozen=True)
 class CryptoLabConfig:
     lookback_days: int = 120
-    # Robinhood crypto spreads are wider than large-cap stock spreads.
-    spread_pct: float = field(default_factory=lambda: _env_float("CRYPTO_BACKTEST_SPREAD_PCT", 0.30))
+    # Robinhood crypto (market-maker routing) quoted ~1.9% between bid and ask on
+    # BTC, ETH, SOL, XRP and DOGE on 2026-09-30, so a round trip costs about that much.
+    spread_pct: float = field(default_factory=lambda: _env_float("CRYPTO_BACKTEST_SPREAD_PCT", 1.90))
     slippage_rate: float = SLIPPAGE_RATE
     stop_pct: float = 5.0
     target_pct: float = 10.0
