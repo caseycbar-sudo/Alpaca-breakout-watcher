@@ -1,6 +1,6 @@
 /* Driftline Backtest Lab: keeps the app usable without a connection. */
 const SHELL = "driftline-lab-shell-v1";
-const DATA = "driftline-lab-data-v1";
+const DATA = "driftline-lab-data-v2";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", event => {
@@ -21,16 +21,18 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
 
   // Results: always try the network, fall back to the last copy kept on this phone.
-  if (url.pathname.endsWith("backtest.json")) {
+  const dataFile = url.pathname.match(/\/(backtest|crypto_lab|sweep|live_trades)\.json$/);
+  if (dataFile) {
+    const key = dataFile[1] + ".json";
     event.respondWith(
       fetch(request)
         .then(response => {
           const copy = response.clone();
-          caches.open(DATA).then(c => c.put("latest.json", copy));
+          caches.open(DATA).then(c => c.put(key, copy));
           return response;
         })
         .catch(() => caches.open(DATA)
-          .then(c => c.match("latest.json"))
+          .then(c => c.match(key))
           .then(async hit => {
             if (!hit) throw new Error("offline");
             const headers = new Headers(hit.headers);

@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-10-01T02:29:38.442718+00:00",
+ "mode": "Real Robinhood trades placed by the auto-trader, recorded after the fact",
+ "summary": {
+  "all": {
+   "trades": 0,
+   "win_rate": 0.0,
+   "net_pl": 0.0,
+   "avg_return_pct": 0.0,
+   "profit_factor": null
+  },
+  "stocks": {
+   "trades": 0,
+   "win_rate": 0.0,
+   "net_pl": 0.0,
+   "avg_return_pct": 0.0,
+   "profit_factor": null
+  },
+  "crypto": {
+   "trades": 0,
+   "win_rate": 0.0,
+   "net_pl": 0.0,
+   "avg_return_pct": 0.0,
+   "profit_factor": null
+  },
+  "open": 0
+ },
+ "by_day": [],
+ "research": {
+  "stocks": {
+   "source": "Backtest Lab learning track",
+   "trades": 2240,
+   "win_rate": 14.51,
+   "avg_r": -0.8193
+  }
+ },
+ "open_trades": [],
+ "recent_trades": []
+}

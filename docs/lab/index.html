@@ -135,6 +135,11 @@ img{max-width:100%}
   <section class="stats" id="stats" aria-label="Headline numbers"></section>
 
   <section class="card">
+    <div class="section-head"><div><span class="eyebrow">Robinhood auto-trader</span><h2>Real trades vs the research</h2></div></div>
+    <div id="live"><p class="sub">Loading the trade journal…</p></div>
+  </section>
+
+  <section class="card">
     <div class="section-head"><div><span class="eyebrow">Held up on unseen days</span><h2>What has tended to work</h2></div></div>
     <div id="works"></div>
   </section>
@@ -164,6 +169,16 @@ img{max-width:100%}
   </section>
 
   <section class="card">
+    <div class="section-head"><div><span class="eyebrow">Hourly crypto rules, replayed</span><h2>Crypto lab</h2></div></div>
+    <div id="crypto"><p class="sub">Loading the crypto replay…</p></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><span class="eyebrow">vectorbt · stop, target and breakout grid</span><h2>Setting sweep</h2></div></div>
+    <div id="sweep"><p class="sub">Loading the setting sweep…</p></div>
+  </section>
+
+  <section class="card">
     <div class="section-head"><div><span class="eyebrow">Second opinion</span><h2>Learning model</h2></div></div>
     <p id="modelverdict" style="font-size:.88rem"></p>
     <div class="nums" id="modelnums" style="margin-top:10px"></div>
@@ -182,7 +197,7 @@ img{max-width:100%}
     <a href="https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/" target="_blank" rel="noreferrer"><span class="btn">Full command center<span aria-hidden="true">↗</span></span></a>
   </nav>
 
-  <p class="foot">Driftline Watcher. Research and paper simulation only, never financial advice. No order code exists in this project.</p>
+  <p class="foot">Driftline Watcher. Research and paper simulation only, never financial advice. No order code exists in this project; real trades are placed through Robinhood and only recorded here.</p>
 </div>
 
 <script>
@@ -329,6 +344,64 @@ img{max-width:100%}
     chip.textContent=(source==="live"?"checked "+stamp:"saved copy on this phone")+" · run "+day(d.generated_at);
   }
 
+  const pct=v=>(Number(v)>0?"+":"")+n(v)+"%";
+  const pf=v=>v==null?"—":n(v,2);
+
+  function liveTrades(d){
+    const s=d.summary||{},a=s.all||{},rs=d.research||{};
+    if(!a.trades&&!s.open) return '<p class="sub">No real trades recorded yet. Each trade the auto-trader closes is logged here next to what the research expected.</p>';
+    const row=(label,x)=>`<div class="pattern"><b>${esc(label)}</b><div class="nums"><i>${x.trades} trades</i><i>${n(x.win_rate,0)}% green</i><i>net <b class="${tone(x.net_pl)}">${money(x.net_pl)}</b></i><i>avg <b class="${tone(x.avg_return_pct)}">${pct(x.avg_return_pct)}</b></i></div></div>`;
+    let html=row("All real trades",a);
+    if((s.stocks||{}).trades) html+=row("Stocks",s.stocks);
+    if((s.crypto||{}).trades) html+=row("Crypto",s.crypto);
+    if(s.open) html+=`<p class="sub">${s.open} trade${s.open===1?"":"s"} still open.</p>`;
+    const exp=[];
+    if(rs.stocks) exp.push(`stocks ${n(rs.stocks.win_rate,0)}% green, ${R(rs.stocks.avg_r)} per trade`);
+    if(rs.crypto) exp.push(`crypto ${n(rs.crypto.win_rate,0)}% green, ${pct(rs.crypto.avg_return_pct)} per trade`);
+    if(exp.length) html+=`<p class="sub" style="margin-top:8px">The research expected: ${esc(exp.join(" · "))}.</p>`;
+    const recent=(d.recent_trades||[]).slice(0,8);
+    if(recent.length) html+=`<details class="more"><summary>Last ${recent.length} trades</summary>${recent.map(t=>`<div class="pattern"><b>${esc(t.symbol)} · ${esc(t.exit_reason)}</b><div class="nums"><i>${esc(day(t.closed_at))}</i><i>${esc(t.entry)} → ${esc(t.exit)}</i><i class="${tone(t.gross_pl)}">${money(t.gross_pl)}</i></div></div>`).join("")}</details>`;
+    return html;
+  }
+
+  function crypto(d){
+    const s=d.summary||{},a=s.all||{},tr=s.train||{},te=s.test||{};
+    const chip=s.status==="held up"?"live":"warn";
+    let html=`<p style="font-size:.88rem"><span class="chip ${chip}">${esc(s.status||"")}</span> ${esc(s.verdict||"")}</p>
+      <div class="nums" style="margin-top:10px"><i>${a.trades||0} trades</i><i>${n(a.win_rate,0)}% green</i><i>avg <b class="${tone(a.avg_return_pct)}">${pct(a.avg_return_pct)}</b></i>
+      <i>Learning days <b class="${tone(tr.avg_r)}">${R(tr.avg_r)}</b> · ${tr.trades||0}</i><i>Unseen days <b class="${tone(te.avg_r)}">${R(te.avg_r)}</b> · ${te.trades||0}</i></div>`;
+    const rows=(d.by_symbol||[]).slice(0,10);
+    if(rows.length) html+=`<details class="more"><summary>By pair</summary>${rows.map(r=>`<div class="pattern"><b>${esc(r.symbol)}</b><div class="nums"><i>${r.trades} trades</i><i>${n(r.win_rate,0)}% green</i><i class="${tone(r.avg_r)}">${R(r.avg_r)}</i></div></div>`).join("")}</details>`;
+    const rules=d.rules||{};
+    html+=`<p class="sub" style="margin-top:8px">${esc(rules.entry||"")}. ${esc(rules.exit||"")}. ${esc(rules.r_unit||"")}.</p>`;
+    return html;
+  }
+
+  function sweep(d){
+    const groups=d.groups||[];
+    if(!groups.length) return '<p class="sub">No sweep results yet.</p>';
+    const combo=r=>`${r.lookback}-bar breakout · stop ${n(r.stop_pct,0)}% · target ${n(r.target_pct,0)}%`;
+    const line=r=>`<div class="pattern"><b>${esc(combo(r))}${r.holds_up?' <span class="chip live">held up</span>':""}</b>
+      <div class="nums"><i>Learning <b class="${tone(r.train.avg_return_pct)}">${pct(r.train.avg_return_pct)}</b> · ${r.train.trades}</i>
+      <i>Unseen <b class="${tone(r.test.avg_return_pct)}">${pct(r.test.avg_return_pct)}</b> · ${r.test.trades}</i><i>PF ${pf(r.test.profit_factor)}</i></div></div>`;
+    return groups.map(g=>`<div style="margin-bottom:12px"><p style="font-size:.88rem"><b>${esc(g.label)}</b> — ${g.held_up||0} of ${g.combinations||0} held up. ${esc(g.verdict)}</p>
+      ${g.live_rule?`<p class="sub" style="margin-top:6px">Live rule:</p>${line(g.live_rule)}`:""}
+      ${(g.top||[]).length?`<details class="more"><summary>Best ${Math.min(5,g.top.length)} on the learning days</summary>${g.top.slice(0,5).map(line).join("")}</details>`:""}</div>`).join("")
+      +'<p class="sub">Many settings are tried at once, so a single winner can be luck.</p>';
+  }
+
+  async function side(name,el,fn){
+    const PAGE="../data/"+name+".json";
+    const RAWF="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/"+name+".json";
+    try{
+      let got;
+      try{got=await grab(PAGE)}catch(e){got=await grab(RAWF)}
+      $(el).innerHTML=fn(got.data);
+    }catch(e){
+      $(el).innerHTML='<p class="sub">Not available yet — it appears after the next nightly lab run.</p>';
+    }
+  }
+
   async function grab(url){
     const res=await fetch(url+"?v="+Date.now(),{cache:"no-store"});
     if(!res.ok) throw new Error(res.status);
@@ -348,9 +421,10 @@ img{max-width:100%}
       }
     }finally{btn.disabled=false;btn.textContent="Refresh"}
   }
-  $("refresh").addEventListener("click",load);
-  load();
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
+  const loadAll=()=>{load();side("live_trades","live",liveTrades);side("crypto_lab","crypto",crypto);side("sweep","sweep",sweep)};
+  $("refresh").addEventListener("click",loadAll);
+  loadAll();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadAll()});
   if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 })();
 </script>

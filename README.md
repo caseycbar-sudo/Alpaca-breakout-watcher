@@ -85,6 +85,45 @@ python -m src.backtest_lab
 python -m src.backtest_lab --symbols SOFI,PLTR --days 120 --report backtest.html
 ```
 
+### Crypto Lab and setting sweep
+
+The nightly workflow also runs two more research-only steps; each is allowed to fail without blocking the stock lab.
+
+- **Crypto Lab** (`src/crypto_lab.py` → `docs/data/crypto_lab.json`) replays the Robinhood auto-trader's crypto rules exactly as it trades them: it only looks on the hourly runs (9:40 a.m.–3:40 p.m. ET, weekdays), needs a one-hour breakout above the four-hour average with a +1% to +10% 24-hour move, checks the −5% stop and +10% target only on later hourly runs, and closes everything on the 3:40 p.m. run. It reports results on the older 70% of days and on the newest unseen 30%.
+- **Setting sweep** (`src/vbt_sweep.py` → `docs/data/sweep.json`) uses [vectorbt](https://github.com/polakowo/vectorbt) to try 48 combinations of breakout length, stop, and target on the lab's stock tickers and the watcher's crypto pairs, again scored on learning days and checked on unseen days. Many combinations are tried at once, so a lone winner can be luck. vectorbt is installed only for this step from `requirements-research.txt`; the watcher, Mac service, and Docker image do not need it.
+
+```bash
+python -m src.crypto_lab --days 120
+pip install -r requirements-research.txt
+python -m src.vbt_sweep --days 90
+```
+
+### Real-trade journal
+
+The Robinhood auto-trader runs outside this repository. Every trade it closes is recorded in `data/live_trades.csv`, and `docs/data/live_trades.json` puts the real results next to what the research expected. The **Backtest lab** page shows both. The journal only records trades; this repository still contains no order code.
+
+```bash
+python -m src.live_journal open --symbol SOFI --asset-class stock --quantity 3 --entry 14.20 --stop 13.49 --target 15.62 --order-id <id>
+python -m src.live_journal close --trade-id 20261001-SOFI-1 --exit 14.90 --reason target --order-id <id>
+python -m src.live_journal summary
+```
+
+### Keeping the five-minute scan on time
+
+GitHub runs scheduled workflows on a best-effort basis, and in practice the `*/5` scan has fired only a few times a day. Two things now start it on time:
+
+1. **The auto-trader** starts `scan.yml` at the beginning of each hourly run, so the roster is fresh when it makes a decision.
+2. **An outside scheduler (optional, for true five-minute scans).** Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) limited to this repository with **Actions: Read and write** and nothing else. On a free scheduler such as [cron-job.org](https://cron-job.org), add a job every 5 minutes, weekdays 4 a.m.–6 p.m. ET, that sends:
+
+   ```
+   POST https://api.github.com/repos/caseycbar-sudo/Alpaca-breakout-watcher/actions/workflows/scan.yml/dispatches
+   Authorization: Bearer <token>
+   Accept: application/vnd.github+json
+   Body: {"ref":"main"}
+   ```
+
+   The scan's own market clock still skips weekends, holidays, and closed hours, and overlapping runs wait their turn instead of colliding (GitHub keeps at most one waiting). Keep the token only in the scheduler; never commit it.
+
 ## Safety design
 
 - Use **Alpaca paper-account keys only**.

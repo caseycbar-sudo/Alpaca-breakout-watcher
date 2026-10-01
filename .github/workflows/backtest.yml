@@ -59,6 +59,34 @@ jobs:
             ARGS+=(--symbols "$INPUT_SYMBOLS")
           fi
           python -m src.backtest_lab "${ARGS[@]}"
+      - name: Replay the auto-trader's crypto rules
+        continue-on-error: true
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          CRYPTO_BACKTEST_SPREAD_PCT: ${{ vars.CRYPTO_BACKTEST_SPREAD_PCT || '0.30' }}
+          INPUT_DAYS: ${{ github.event.inputs.days || '120' }}
+        run: |
+          if ! [[ "$INPUT_DAYS" =~ ^[0-9]+$ ]] || [ "$INPUT_DAYS" -lt 20 ] || [ "$INPUT_DAYS" -gt 400 ]; then
+            INPUT_DAYS=120
+          fi
+          python -m src.crypto_lab --days "$INPUT_DAYS"
+      - name: Install research tools (vectorbt)
+        id: research_tools
+        continue-on-error: true
+        run: pip install -r requirements-research.txt
+      - name: Sweep stop, target and breakout settings
+        if: steps.research_tools.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_DATA_FEED: ${{ vars.ALPACA_DATA_FEED || 'iex' }}
+        run: python -m src.vbt_sweep --days 90
+      - name: Refresh the real-trade comparison
+        continue-on-error: true
+        run: python -m src.live_journal summary
       - name: Keep detailed spreadsheets for 30 days
         if: always()
         uses: actions/upload-artifact@v4
@@ -69,13 +97,13 @@ jobs:
           if-no-files-found: ignore
       - name: Save results for the Command Center
         run: |
-          if git diff --quiet -- docs/data/backtest.json data/backtest_history.json && \
-             [ -z "$(git ls-files --others --exclude-standard docs/data/backtest.json data/backtest_history.json)" ]; then
+          FILES="docs/data/backtest.json data/backtest_history.json docs/data/crypto_lab.json docs/data/sweep.json docs/data/live_trades.json"
+          if git diff --quiet -- $FILES && [ -z "$(git ls-files --others --exclude-standard $FILES)" ]; then
             exit 0
           fi
           git config user.name "alpaca-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/data/backtest.json data/backtest_history.json
+          for f in $FILES; do if [ -f "$f" ]; then git add "$f"; fi; done
           git commit -m "[skip ci] update backtest lab"
           for attempt in 1 2 3; do
             git pull --rebase origin main && git push && exit 0

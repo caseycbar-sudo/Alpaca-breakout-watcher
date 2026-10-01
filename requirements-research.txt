@@ -1,0 +1,4 @@
+# Extra research tools for the nightly lab only. The watcher, the Mac service and the
+# Docker image keep using requirements.txt and never need these.
+-r requirements.txt
+vectorbt==1.1.1

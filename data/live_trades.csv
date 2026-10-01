@@ -1,0 +1,1 @@
+trade_id,status,asset_class,symbol,setup,opened_at,closed_at,quantity,entry,stop,target,exit,exit_reason,gross_pl,return_pct,entry_order_id,exit_order_id,notes
