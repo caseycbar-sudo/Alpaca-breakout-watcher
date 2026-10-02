@@ -61,3 +61,23 @@ Unchanged hard limits:
 - Kill switch below $50 total value.
 
 `signal.py` prints today's state for both sleeves.
+
+## 24/7 watchdog in Google Sheets (`apps_script/Code.gs`)
+
+The Sheet is named "Driftline Swing Watchdog". Apps Script runs in it on Google's servers:
+
+- **Every hour:** logs both signals and emails when a signal flips or is within 1.5% of
+  flipping. It also emails once if a price source breaks.
+- **Every Sunday, learning:** scores every allowed average length three ways: the last
+  3 years, the last year, and forward (only days since the watchdog started).
+  - It never changes the live setting by itself.
+  - It emails a suggestion only when a length beats the current one by 0.15 Sharpe on at
+    least 180 forward days and also on the last year.
+- **Why suggest-only:** replaying 4 years of weekly auto-switching cut BTC from 34%/yr
+  (fixed 50-day) to 20%/yr and QQQ from 23.1% to 22.7%. Voting across all lengths was no
+  better than the fixed rule. Re-picking the recent winner chases noise, so only forward
+  evidence counts.
+- **Optional weekly note:** add an ANTHROPIC_API_KEY script property and Claude writes a
+  weekly note. It is commentary only.
+- **Connection to trading:** the Swing routine reads the Settings tab and passes the lengths
+  to `signal.py`. Lengths outside the tested ranges fall back to 200/50.
