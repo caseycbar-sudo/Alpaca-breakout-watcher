@@ -26,9 +26,33 @@ const bool = (v: unknown): boolean | null => (typeof v === "boolean" ? v : null)
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
+/**
+ * When a headline could first have been acted on, and whether that is even knowable.
+ * A story published before the scan is not the same as one the pipeline had in hand:
+ * availability is the later of publication and first sighting, and a headline stamped
+ * after the scan that carries it cannot have informed anything in that scan.
+ */
+function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null) {
+  const pub = published ? Date.parse(published) : NaN;
+  const seen = firstSeen ? Date.parse(firstSeen) : NaN;
+  const scan = scanAt ? Date.parse(scanAt) : NaN;
+  if (!Number.isFinite(pub) && !Number.isFinite(seen)) return { verdict: "UNKNOWN_TIME" as const, available_at: null, basis: "No readable time came with this headline." };
+  const availableMs = Math.max(Number.isFinite(pub) ? pub : -Infinity, Number.isFinite(seen) ? seen : -Infinity);
+  const available_at = new Date(availableMs).toISOString();
+  if (Number.isFinite(scan) && availableMs > scan) {
+    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "This headline is stamped after the scan that carries it, so it cannot have informed it." };
+  }
+  if (!Number.isFinite(seen)) {
+    return { verdict: "UNKNOWN_INGESTION" as const, available_at, basis: "Publication time only. When the watcher actually saw it was not recorded, so treat availability as a guess." };
+  }
+  return { verdict: "ok" as const, available_at, basis: "Available from the later of publication and first sighting." };
+}
+
 /** Only these fields are kept, whatever else arrives. Nothing about an account travels. */
-function candidate(raw: unknown) {
+function candidate(raw: unknown, scanAt: string | null) {
   const c = obj(raw);
+  const published = str(c.news_time, 60);
+  const firstSeen = str(c.news_first_seen, 60);
   return {
     symbol: str(c.symbol, 20),
     price: num(c.price),
@@ -46,8 +70,10 @@ function candidate(raw: unknown) {
     score: num(c.score),
     news: {
       headline: str(c.news_headline, 300),
-      at: str(c.news_time, 60),
+      published_at: published,
+      first_seen_at: firstSeen,
       url: str(c.news_url, 500),
+      ...newsTiming(published, firstSeen, scanAt),
     },
     checks: {
       halt: str(c.halt_check, 120),
@@ -90,7 +116,7 @@ export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
     },
     note: str(sys.note, 400),
     candidate_count: all.length,
-    candidates: all.slice(0, MAX_CANDIDATES).map(candidate).filter((c) => c.symbol),
+    candidates: all.slice(0, MAX_CANDIDATES).map((c) => candidate(c, str(d.generated_at, 60))).filter((c) => c.symbol),
     research_log: arr(d.research_log)
       .slice(0, MAX_LOG)
       .map((r) => {
@@ -193,6 +219,6 @@ export async function forAgent(env: Env, actor: Actor) {
   return {
     ...radar,
     how_to_use:
-      "This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
+"Each headline carries a timing verdict. Only \"ok\" means it was both published and seen before the scan; UNKNOWN_INGESTION means publication time only, so availability is a guess; FAIL_FUTURE_INFORMATION means it is stamped after the scan and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
   };
 }

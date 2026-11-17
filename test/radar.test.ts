@@ -18,6 +18,7 @@ const SCAN = {
       symbol: "ONFO", price: 1.23, spread_pct: 0.2, day_move_pct: 4.1, relative_volume: 2.2, rsi: 61,
       breakout_level: 1.2, technical_stop: 1.15, stage: "confirmed", setup: "A — catalyst ORB", market_context: "aligned",
       news_headline: "Contract award announced", news_time: "2026-11-17T13:05:00-05:00", news_url: "https://example.com/pr",
+      news_first_seen: "2026-11-17T13:06:00-05:00",
       risk_sources: ["Offering filed 2 days ago"], stocktwits_message_count_1h: 40, stocktwits_bullish_pct: 80,
       account_number: "977962828", api_key: "should never travel",
     },
@@ -50,7 +51,7 @@ describe("receiving a scan", () => {
     expect(found).not.toContain("977962828");
     expect(found).not.toContain("should never travel");
     expect(scan.candidates[0]).toMatchObject({ symbol: "ONFO", breakout_level: 1.2, technical_stop: 1.15 });
-    expect(scan.candidates[0].news).toMatchObject({ headline: "Contract award announced", at: "2026-11-17T13:05:00-05:00" });
+    expect(scan.candidates[0].news).toMatchObject({ headline: "Contract award announced", published_at: "2026-11-17T13:05:00-05:00" });
     expect(scan.candidates[0].checks.risk_sources).toEqual(["Offering filed 2 days ago"]);
     expect(scan.candidates[0].attention.note).toMatch(/never a catalyst/);
   });
@@ -109,5 +110,21 @@ describe("reading the radar", () => {
 
   it("needs read permission", async () => {
     await expect(radar.forAgent(base, { kind: "agent", id: "x", name: "X", scopes: [] })).rejects.toMatchObject({ code: "not_permitted" });
+  });
+
+  it("says whether a headline could have been known when the scan ran", () => {
+    const at = (iso: string, extra: Record<string, unknown> = {}) =>
+      radar.clean({ generated_at: "2026-11-17T18:30:00Z", candidates: [{ symbol: "X", news_headline: "h", news_time: iso, ...extra }] }, "posted by the watcher").candidates[0].news;
+
+    // Published and seen before the scan: usable as evidence.
+    expect(at("2026-11-17T18:00:00Z", { news_first_seen: "2026-11-17T18:05:00Z" })).toMatchObject({ verdict: "ok", available_at: "2026-11-17T18:05:00.000Z" });
+    // Stamped after the scan that carries it: it cannot have informed that scan.
+    expect(at("2026-11-17T18:45:00Z").verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // Seen after the scan even though published before it: still unusable.
+    expect(at("2026-11-17T18:00:00Z", { news_first_seen: "2026-11-17T18:45:00Z" }).verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // Publication time only, which is what the watcher reports today: availability is a guess.
+    expect(at("2026-11-17T18:00:00Z").verdict).toBe("UNKNOWN_INGESTION");
+    // Nothing readable at all is never quietly treated as fine.
+    expect(at("not a date").verdict).toBe("UNKNOWN_TIME");
   });
 });
