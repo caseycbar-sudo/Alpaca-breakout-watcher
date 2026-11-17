@@ -1,0 +1,25 @@
+{
+ "generated_at": "2026-11-17T18:59:25.648304+00:00",
+ "sleeves": [
+  {
+   "sleeve": "A",
+   "symbol": "QQQ",
+   "as_of": "2026-11-17",
+   "close": 654.135,
+   "length": 200,
+   "average": 681.5612,
+   "distance_pct": -4.02,
+   "signal": "CASH"
+  },
+  {
+   "sleeve": "B",
+   "symbol": "BTC-USD",
+   "as_of": "2026-11-17",
+   "close": 63703.75,
+   "length": 50,
+   "average": 78967.7998,
+   "distance_pct": -19.33,
+   "signal": "CASH"
+  }
+ ]
+}
