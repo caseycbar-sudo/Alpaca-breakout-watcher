@@ -300,6 +300,12 @@ export interface Summary {
   caveat: string;
 }
 
+function ageFields(generated: string | null, now: number) {
+  const ms = generated ? Date.parse(generated) : NaN;
+  const age_days = Number.isFinite(ms) ? Math.max(0, Math.floor((now - ms) / 86_400_000)) : null;
+  return { age_days, stale: age_days === null || age_days > STALE_AFTER_DAYS };
+}
+
 export function summarize(raw: unknown, now = Date.now()): Summary {
   const d = obj(raw);
   const summary = obj(d.summary);
@@ -308,8 +314,6 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
   const analytics = obj(d.analytics);
   const assume = obj(d.assumptions);
   const generated = str(d.generated_at) || null;
-  const ms = generated ? Date.parse(generated) : NaN;
-  const ageDays = Number.isFinite(ms) ? Math.floor((now - ms) / 86_400_000) : null;
   const loose = run(summary.learning);
   const strict = run(summary.strict_setups);
   const trading = num(w.trading_days);
@@ -317,8 +321,7 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
   return {
     source: LAB_URL,
     generated_at: generated,
-    age_days: ageDays,
-    stale: ageDays === null || ageDays > STALE_AFTER_DAYS,
+    ...ageFields(generated, now),
     window: { start: str(w.start) || null, end: str(w.end) || null, trading_days: trading },
     headline: headline(loose, strict, summary.validated === true, trading),
     every_signal: loose,
@@ -388,6 +391,14 @@ async function readHistory(): Promise<ReturnType<typeof trend>> {
   }
 }
 
+// Retaining a successful read must not freeze its freshness label at fetch time.
+// Keep fetched_at and findings intact; only the displayed age advances.
+function ageCached(cached: Cached, now: number): Cached {
+  return cached.summary
+    ? { ...cached, summary: { ...cached.summary, ...ageFields(cached.summary.generated_at, now) } }
+    : cached;
+}
+
 async function readLab(env: Env, now: number): Promise<Cached> {
   let problem = "The lab file could not be reached just now.";
   for (const url of [LAB_URL, LAB_URL_FALLBACK]) {
@@ -412,7 +423,7 @@ export async function getResearch(env: Env, opts: { refresh?: boolean } = {}): P
   if (!opts.refresh && stored) {
     try {
       const cached = JSON.parse(stored) as Cached;
-      if (now - cached.fetched_at < FRESH_FOR_MS) return { ...cached, from_cache: true };
+      if (now - cached.fetched_at < FRESH_FOR_MS) return { ...ageCached(cached, now), from_cache: true };
     } catch {
       // A damaged cache is not worth reporting; just read the lab again.
     }
@@ -422,7 +433,7 @@ export async function getResearch(env: Env, opts: { refresh?: boolean } = {}): P
   if (!fresh.summary && stored) {
     try {
       const cached = JSON.parse(stored) as Cached;
-      if (cached.summary) return { ...cached, problem: fresh.problem, from_cache: true };
+      if (cached.summary) return { ...ageCached(cached, now), problem: fresh.problem, from_cache: true };
     } catch {
       // fall through to the failure below
     }
