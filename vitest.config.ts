@@ -8,6 +8,8 @@ export default defineConfig({
       const migrations = await readD1Migrations(path.join(import.meta.dirname, "migrations"));
       return {
         wrangler: { configPath: "./wrangler.jsonc" },
+        // Tests never call Cloudflare's live AI service. The assistant is tested with a stand-in.
+        remoteBindings: false,
         miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
       };
     }),

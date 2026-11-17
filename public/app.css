@@ -147,6 +147,8 @@ label { font-weight: 600; font-size: 15.5px; }
 .msg.claude .body { border-left-color: #b5651d; }
 .msg.chatgpt .body { border-left-color: var(--kelp); }
 .msg.grok .body { border-left-color: #4b3f8f; }
+.msg.hub-assistant .body { background: #e4eeec; border-left: 4px dotted var(--tide); }
+.msg .caption { margin: 4px 6px 0; font-size: 13px; color: var(--drift); }
 .msg.owner { margin-left: auto; }
 .msg.owner .who { justify-content: flex-end; }
 .msg.owner .body { background: var(--ink); color: #fff; border-left: 0; border-radius: 16px 4px 16px 16px; }
@@ -209,7 +211,9 @@ details.gloss p { padding: 0 0 14px; color: var(--ink-soft); }
 .ai h3 { font: 400 22px/1.2 var(--display); }
 .ai ul { margin: 8px 0 0; padding-left: 1.2em; font-size: 15.5px; color: var(--ink-soft); }
 .ai .meta { margin-top: 8px; font-size: 14.5px; color: var(--drift); }
-.ai .actions { margin-top: 12px; }
+.ai .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.switchline { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+.switchline .state { font-weight: 600; }
 .address { display: flex; gap: 8px; margin-top: 10px; }
 .address input { font: 14.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 ol.plain { margin: 10px 0 0; padding-left: 1.3em; } ol.plain li { margin: 6px 0; }

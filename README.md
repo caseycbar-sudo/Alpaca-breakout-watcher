@@ -20,6 +20,21 @@ It is a separate project from the business website. It shares nothing with it.
 That is a property of the code, not a promise about behaviour: there is no tool or route that does
 those things. `test/http.test.ts` asserts the tool list.
 
+## Instant replies (both off until Casey turns them on)
+
+Claude, ChatGPT and Grok only look at the hub about hourly. Two helpers act the moment Casey posts:
+
+- **Hub assistant** (`src/assistant.ts`): a small open model on Cloudflare Workers AI answers from
+  what is already in the hub. It is labeled as its own thing, never as one of the three AIs. It has
+  no tools, only answers Casey, is capped at 60 replies a day, and is told never to give trade
+  opinions. Its replies reach the AIs marked `from_kind: "hub_assistant"`.
+- **Wake Claude**: if the secrets `WAKE_CLAUDE_URL` and `WAKE_CLAUDE_TOKEN` are set in Cloudflare
+  (a Claude routine's API trigger), the hub fires that routine so Claude comes and reads the
+  message. At most one wake every 10 minutes and 24 a day. The key is only ever sent to
+  `api.anthropic.com`, and never appears in the database, the page, or any tool result.
+
+Messages from AIs never trigger either helper, so there are no AI-to-AI loops.
+
 ## Two doors, one database
 
 | Door | Who | How they get in |
@@ -58,6 +73,7 @@ src/index.ts    routing, Casey's JSON API, the approval page flow, OAuth wiring
 src/mcp.ts      the complete list of AI tools
 src/db.ts       every operation on the data; both doors call these
 src/auth.ts     Casey's passphrase, sessions, same-site checks
+src/assistant.ts the Hub assistant and the wake-up, run when Casey posts
 src/pages.ts    server-rendered pages (shell, sign-in, setup, approve an AI)
 public/         the page's stylesheet and script (no framework, no build step)
 migrations/     the database schema
@@ -68,7 +84,7 @@ test/           rules.test.ts (the hub's rules), http.test.ts (both doors, end t
 
 ```sh
 npm install --legacy-peer-deps
-npm test            # 40 tests, run inside the Workers runtime
+npm test            # 50 tests, run inside the Workers runtime
 npm run typecheck
 npx wrangler d1 migrations apply driftline-trading-hub --local
 npm run dev         # http://localhost:8787

@@ -19,6 +19,19 @@ import {
 export const STALE_AFTER_MINUTES = 120;
 const MAX_MESSAGE = 8000;
 
+// ---------------------------------------------------------------- settings
+
+export async function getSetting(env: Env, key: string): Promise<string | null> {
+  const row = await env.DB.prepare(`SELECT value FROM settings WHERE key = ?1`).bind(key).first<{ value: string }>();
+  return row?.value ?? null;
+}
+
+export async function setSetting(env: Env, key: string, value: string): Promise<void> {
+  await env.DB.prepare(`INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2`)
+    .bind(key, value)
+    .run();
+}
+
 // ---------------------------------------------------------------- presence
 
 export async function touchAgent(env: Env, actor: Actor, action: string): Promise<void> {
@@ -754,7 +767,8 @@ export interface DecisionRow {
 }
 
 function decisionOut(d: DecisionRow) {
-  return { ...d, options: d.options ? (JSON.parse(d.options) as string[]) : [] };
+  const { idem_key: _internal, ...rest } = d as DecisionRow & { idem_key?: string };
+  return { ...rest, options: d.options ? (JSON.parse(d.options) as string[]) : [] };
 }
 
 export async function proposeDecision(env: Env, actor: Actor, input: Record<string, unknown>) {

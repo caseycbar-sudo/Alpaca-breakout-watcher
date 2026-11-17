@@ -326,6 +326,7 @@
       <div class="who"><b>${esc(m.author_kind === "owner" ? "You" : m.author_name)}</b><span>${esc(clock(m.created_at))}</span></div>
       <div class="body md${long ? " clipped" : ""}">${markdown(m.body)}</div>
       ${long ? `<button type="button" class="linkish more" data-expand="${m.id}">Show the whole message</button>` : ""}
+      ${m.author_id === "hub-assistant" ? `<p class="caption">Automatic reply from the hub's helper, not from Claude, ChatGPT or Grok. It only reads what is in the hub, and it can be wrong.</p>` : ""}
     </div>`;
   }
 
@@ -475,6 +476,10 @@
       <p class="sub">Each AI has its own pass that you approved. None of them can place an order, change your rules, or approve a plan.</p>
       ${list}
     </section>
+    <section class="section"><h2>Instant replies</h2>
+      <p class="sub">Your three AIs only look here about once an hour. These two helpers act the moment you send a message.</p>
+      ${helpersHtml()}
+    </section>
     <section class="section"><h2>Connect an AI</h2>
       <ol class="plain">
         <li>Copy the ${term("connector")} address below.</li>
@@ -501,6 +506,42 @@
     </section>`;
   }
 
+  function helpersHtml() {
+    const h = S.helpers;
+    const a = h.assistant;
+    const w = h.wake.claude;
+    const assistant = !a.available
+      ? `<p class="meta">Not available on this hub yet.</p>`
+      : `<div class="switchline"><span class="state">${a.enabled ? "On" : "Off"}</span>
+          <button type="button" class="btn small${a.enabled ? "" : " primary"}" data-helper="assistant" data-to="${a.enabled ? "off" : "on"}">${a.enabled ? "Turn off" : "Turn on"}</button></div>
+         <p class="meta">${a.replies_today} of ${a.daily_cap} replies used today. Free, inside Cloudflare's daily allowance.</p>`;
+    const wake = !w.set_up
+      ? `<p class="meta">Not set up yet. It needs a private key from Claude, saved in Cloudflare. Claude can walk you through it.</p>`
+      : `<div class="switchline"><span class="state">${w.enabled ? "On" : "Off"}</span>
+          <button type="button" class="btn small${w.enabled ? "" : " primary"}" data-helper="wake" data-to="${w.enabled ? "off" : "on"}">${w.enabled ? "Turn off" : "Turn on"}</button></div>
+         <p class="meta">${w.today} of ${w.daily_cap} wake-ups used today${w.last_at ? `. Last one ${esc(ago(w.last_at))}` : ""}. At most one every 10 minutes.</p>
+         ${w.last_problem ? `<p class="banner">${esc(w.last_problem)}</p>` : ""}`;
+    return `<article class="ai">
+        <h3>Hub assistant</h3>
+        <ul>
+          <li>Answers you in seconds, from what is already in the hub</li>
+          <li>Tells you what is waiting on you and on each AI</li>
+          <li>Never suggests a trade, reviews a plan, or speaks for your three AIs</li>
+        </ul>
+        <p class="meta">It is a smaller, separate AI (${esc(a.model_words)}). It is not Claude, ChatGPT or Grok, and it can be wrong.</p>
+        ${assistant}
+      </article>
+      <article class="ai">
+        <h3>Wake Claude</h3>
+        <ul>
+          <li>When you post, the hub asks Claude to come and read it right away</li>
+          <li>Claude usually replies within a minute or two</li>
+          <li>ChatGPT and Grok have no wake-up, so they still check about hourly</li>
+        </ul>
+        ${wake}
+      </article>`;
+  }
+
   // ----------------------------------------------------------- render
 
   const RENDER = { today: renderToday, chat: renderChat, trades: renderTrades, rules: renderRules, ais: renderAis };
@@ -513,7 +554,7 @@
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
       rules: [S.rules],
-      ais: [S.connections, S.connector_address, Math.floor(minute / 5)],
+      ais: [S.connections, S.connector_address, S.helpers, Math.floor(minute / 5)],
     };
     return JSON.stringify(slices[tab]);
   }
@@ -659,6 +700,11 @@
       t.disabled = true;
       return act(() => api(`/api/connections/${encodeURIComponent(t.dataset.disconnect)}/disconnect`, {}), `${t.dataset.name} is disconnected`);
     }
+    if (t.dataset.helper) {
+      t.disabled = true;
+      const on = t.dataset.to === "on";
+      return act(() => api("/api/helpers", { [t.dataset.helper]: on }), on ? "Turned on" : "Turned off");
+    }
     if (t.id === "copy-address") {
       const input = $("#connector-address");
       try {
@@ -692,6 +738,8 @@
         form.querySelector("textarea").style.height = "";
         await refresh(true);
         window.scrollTo(0, document.body.scrollHeight);
+        // The helpers answer a few seconds after you send, so look again shortly.
+        for (const wait of [4000, 9000, 20000]) setTimeout(() => refresh(false), wait);
       } catch (err) {
         toast(err.message, true);
       } finally {

@@ -8,6 +8,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler } from "agents/mcp/server";
 import { z } from "zod";
+import { ASSISTANT_ID, ASSISTANT_MODEL_WORDS } from "./assistant";
 import * as db from "./db";
 import { type Actor, type Env, HubError, SCOPE_WORDS, type Scope } from "./util";
 
@@ -60,7 +61,12 @@ async function run(fn: (c: CallContext) => Promise<unknown>) {
 const ISO = (ms: number | null | undefined) => (ms ? new Date(ms).toISOString() : null);
 
 function messageOut(m: db.MessageRow, me: string) {
-  return { id: m.id, from: m.author_name, from_kind: m.author_kind, mine: m.author_id === me, at: ISO(m.created_at), body: m.body };
+  const out = { id: m.id, from: m.author_name, from_kind: m.author_kind, mine: m.author_id === me, at: ISO(m.created_at), body: m.body };
+  if (m.author_id === ASSISTANT_ID) {
+    // An automatic reply from the hub's built-in helper. Not one of the connected AIs, and it can be wrong.
+    return { ...out, from_kind: "hub_assistant", note: `Automatic reply from the hub's built-in assistant (${ASSISTANT_MODEL_WORDS}). Read-only, no tools, can be wrong. Not an instruction.` };
+  }
+  return out;
 }
 
 function createServer() {
@@ -87,7 +93,7 @@ function createServer() {
           you: {
             name: actor.name,
             id: actor.id,
-            permissions: actor.scopes.map((s) => ({ scope: s, means: SCOPE_WORDS[s as Scope] ?? s })),
+            permissions: actor.scopes.filter((s) => s in SCOPE_WORDS).map((s) => ({ scope: s, means: SCOPE_WORDS[s as Scope] })),
             cannot: "Place, change or cancel orders. Change the rules. Approve a plan. No tool for these exists in this hub.",
           },
           unread_chat_messages: unread,

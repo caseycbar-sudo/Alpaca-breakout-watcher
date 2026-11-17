@@ -8,13 +8,14 @@
 // It holds no broker credentials and has no ability to place orders.
 
 import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/workers-oauth-provider";
+import * as assistant from "./assistant";
 import * as auth from "./auth";
 import * as db from "./db";
 import { handleMcp } from "./mcp";
 import * as pages from "./pages";
 import { type Actor, type Env, HubError, SCOPES, SCOPE_WORDS, json } from "./util";
 
-interface HubEnv extends Env {
+interface HubEnv extends assistant.AssistantEnv {
   ASSETS: Fetcher;
 }
 
@@ -65,7 +66,7 @@ function redirect(to: string, cookie?: string): Response {
 
 const STATIC = new Set(["/app.css", "/app.js", "/favicon.svg"]);
 
-async function defaultFetch(request: Request, env: HubEnv, _ctx: ExecutionContext): Promise<Response> {
+async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
@@ -82,7 +83,7 @@ async function defaultFetch(request: Request, env: HubEnv, _ctx: ExecutionContex
       return redirect("/sign-in", auth.clearSessionCookie());
     }
     if (path === "/authorize") return await authorizeRoute(request, env, url);
-    if (path.startsWith("/api/")) return await apiRoute(request, env, url);
+    if (path.startsWith("/api/")) return await apiRoute(request, env, url, ctx);
     if (path === "/" && (method === "GET" || method === "HEAD")) {
       if (!(await auth.isSetUp(env))) return redirect("/setup");
       if (!(await auth.ownerFromRequest(env, request))) return redirect("/sign-in");
@@ -169,7 +170,7 @@ async function authorizeRoute(request: Request, env: HubEnv, url: URL): Promise<
     } else {
       agentName = String(form.get("agent_other") ?? "").trim().replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 30);
       agentId = agentName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      if (!agentId || agentId === OWNER_ID || agentId === "hub") {
+      if (!agentId || agentId === OWNER_ID || agentId === "hub" || agentId === assistant.ASSISTANT_ID) {
         return pages.messagePage("Name the AI", "Go back and say which AI this is, then connect again from the AI's settings.", 400);
       }
     }
@@ -225,7 +226,7 @@ async function connections(env: HubEnv) {
 }
 
 // The JSON behind Casey's page. Every route needs his session.
-async function apiRoute(request: Request, env: HubEnv, url: URL): Promise<Response> {
+async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionContext): Promise<Response> {
   const owner = await auth.ownerFromRequest(env, request);
   if (!owner) throw new HubError(401, "not_signed_in", "Your sign-in has ended. Sign in again.");
   const path = url.pathname;
@@ -260,6 +261,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL): Promise<Respon
       rules: { current: rules[0], history: rules },
       connections: links,
       seen,
+      helpers: await assistant.status(env),
     });
   }
 
@@ -268,7 +270,15 @@ async function apiRoute(request: Request, env: HubEnv, url: URL): Promise<Respon
   }
   if (path === "/api/chat" && method === "POST") {
     const body = await readJson(request);
-    return json(await db.postMessage(env, owner, body.body, body.idempotency_key));
+    const before = await env.DB.prepare(`SELECT MAX(id) AS m FROM messages`).first<{ m: number | null }>();
+    const message = await db.postMessage(env, owner, body.body, body.idempotency_key);
+    // Only a genuinely new message from Casey sets anything off; a retried send does not.
+    if (message.id > (before?.m ?? 0)) ctx.waitUntil(assistant.onOwnerMessage(env, owner, message));
+    return json(message);
+  }
+  if (path === "/api/helpers" && method === "POST") {
+    await assistant.setSwitches(env, owner, await readJson(request));
+    return json(await assistant.status(env));
   }
   if (path === "/api/chat/seen" && method === "POST") {
     const body = await readJson(request);
