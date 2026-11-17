@@ -15,6 +15,7 @@ import { type Actor, type Env, HubError, requireScope } from "./util";
 // updates when a site deploy runs, so it is the fallback rather than the first choice.
 export const LAB_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/backtest.json";
 export const LAB_URL_FALLBACK = "https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/data/backtest.json";
+export const HISTORY_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/backtest_history.json";
 const CACHE_KEY = "research_summary";
 const FRESH_FOR_MS = 60 * 60_000; // re-read the lab at most once an hour
 const STALE_AFTER_DAYS = 14; // after this, say plainly that the lab has not run
@@ -85,6 +86,135 @@ function patternList(raw: unknown, limit: number) {
     .filter((p) => p.pattern !== "unnamed");
 }
 
+/** Hours of the session, worst first removed: which part of the day held up best. */
+function timeOfDay(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return { bucket: str(o.bucket), trades: num(o.trades), win_rate: round(num(o.win_rate), 1), avg_r: round(num(o.avg_r)), target_rate: round(num(o.target_rate), 1) };
+    })
+    .filter((x) => x.bucket && x.trades);
+}
+
+/** Conditions where having the thing and not having it gave clearly different results. */
+function swings(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      const yes = obj(o.yes);
+      const no = obj(o.no);
+      const a = num(yes.avg_r);
+      const b = num(no.avg_r);
+      return {
+        label: str(o.label) || str(o.key),
+        with_it: { trades: num(yes.trades), win_rate: round(num(yes.win_rate), 1), avg_r: round(a) },
+        without_it: { trades: num(no.trades), win_rate: round(num(no.win_rate), 1), avg_r: round(b) },
+        difference_r: a === null || b === null ? null : round(a - b),
+      };
+    })
+    .filter((x) => x.label && x.difference_r !== null)
+    .sort((x, y) => Math.abs(y.difference_r as number) - Math.abs(x.difference_r as number));
+}
+
+function outcomes(raw: unknown) {
+  const rows = arr(raw).map((x) => {
+    const o = obj(x);
+    return { label: str(o.label) || str(o.reason), trades: num(o.trades), avg_r: round(num(o.avg_r)) };
+  }).filter((x) => x.label && x.trades);
+  const total = rows.reduce((sum, r) => sum + (r.trades ?? 0), 0);
+  return rows.map((r) => ({ ...r, share_pct: total ? round(((r.trades as number) / total) * 100, 1) : null }));
+}
+
+function targetSweep(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return { target_pct: num(o.target_pct), trades: num(o.trades), win_rate: round(num(o.win_rate), 1), avg_r: round(num(o.avg_r)), target_hit_rate: round(num(o.target_hit_rate), 1) };
+    })
+    .filter((x) => x.target_pct !== null);
+}
+
+function dayShape(raw: unknown) {
+  const d = obj(raw);
+  const day = (v: unknown) => {
+    const o = obj(v);
+    return o.date ? { date: str(o.date), trades: num(o.trades), total_r: round(num(o.total_r)) } : null;
+  };
+  return {
+    trading_days: num(d.trading_days),
+    green_days: num(d.green_days),
+    red_days: num(d.red_days),
+    green_day_rate: round(num(d.green_day_rate), 1),
+    average_day_r: round(num(d.average_day_r)),
+    best_day: day(d.best_day),
+    worst_day: day(d.worst_day),
+  };
+}
+
+function factors(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return { factor: str(o.factor), effect: str(o.effect), weight: round(num(o.weight), 3) };
+    })
+    .filter((f) => f.factor)
+    .slice(0, 8);
+}
+
+/** Casey's own entry gates, and whether the trades that passed them actually did better. */
+function gates(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      const passed = obj(o.passed);
+      const failed = obj(o.failed);
+      return {
+        gate: str(o.gate),
+        verdict: str(o.verdict) || null,
+        passed: { trades: num(passed.n), avg_r: round(num(passed.avg_r)) },
+        failed: { trades: num(failed.n), avg_r: round(num(failed.avg_r)) },
+      };
+    })
+    .filter((g) => g.gate);
+}
+
+/** Symbols with enough trades to say anything, best first. */
+function symbols(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      const l = obj(o.learning);
+      return {
+        symbol: str(o.symbol),
+        trades: num(l.trades),
+        win_rate: round(num(l.win_rate), 1),
+        avg_r: round(num(l.avg_r)),
+        follow_through: str(o.note) || null,
+      };
+    })
+    .filter((t) => t.symbol && (t.trades ?? 0) >= 10 && t.avg_r !== null)
+    .sort((a, b) => (b.avg_r as number) - (a.avg_r as number))
+    .slice(0, 10);
+}
+
+/** How the lab's own conclusions have moved from run to run. */
+export function trend(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return {
+        at: str(o.generated_at).slice(0, 10),
+        trades: num(o.learning_trades),
+        avg_r: round(num(o.learning_avg_r)),
+        model_test_auc: round(num(o.model_test_auc), 3),
+        promising: arr(o.promising).map(str).filter(Boolean),
+        avoid_count: arr(o.avoid).length,
+      };
+    })
+    .filter((r) => r.at)
+    .slice(-20);
+}
+
 export interface Summary {
   source: string;
   generated_at: string | null;
@@ -97,6 +227,18 @@ export interface Summary {
   model: { status: string | null; verdict: string | null };
   stay_away_from: ReturnType<typeof patternList>;
   held_up: ReturnType<typeof patternList>;
+  best_times: ReturnType<typeof timeOfDay>;
+  what_moves_the_odds: ReturnType<typeof swings>;
+  how_trades_ended: ReturnType<typeof outcomes>;
+  target_sweep: ReturnType<typeof targetSweep>;
+  day_shape: ReturnType<typeof dayShape>;
+  model_factors: ReturnType<typeof factors>;
+  your_gates: ReturnType<typeof gates>;
+  symbols: ReturnType<typeof symbols>;
+  assumptions: { entry: string | null; exit: string | null; spread_pct: number | null; slippage_pct: number | null; reward_to_risk: number | null };
+  symbols_studied: number | null;
+  caveats: string[];
+  trend: ReturnType<typeof trend>;
   caveat: string;
 }
 
@@ -105,6 +247,8 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
   const summary = obj(d.summary);
   const patterns = obj(d.patterns);
   const w = obj(d.window);
+  const analytics = obj(d.analytics);
+  const assume = obj(d.assumptions);
   const generated = str(d.generated_at) || null;
   const ms = generated ? Date.parse(generated) : NaN;
   const ageDays = Number.isFinite(ms) ? Math.floor((now - ms) / 86_400_000) : null;
@@ -123,6 +267,24 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
     model: { status: str(obj(d.model).status) || null, verdict: str(obj(d.model).verdict) || null },
     stay_away_from: patternList(patterns.avoid, 8),
     held_up: patternList(patterns.promising, 8),
+    best_times: timeOfDay(analytics.time_of_day),
+    what_moves_the_odds: swings(analytics.follow_through).slice(0, 6),
+    how_trades_ended: outcomes(analytics.outcomes),
+    target_sweep: targetSweep(analytics.target_sweep),
+    day_shape: dayShape(analytics.days),
+    model_factors: factors(obj(d.model).factors),
+    your_gates: gates(patterns.gate_review),
+    symbols: symbols(d.tickers),
+    assumptions: {
+      entry: str(assume.entry) || null,
+      exit: str(assume.exit) || null,
+      spread_pct: num(assume.modeled_spread_pct),
+      slippage_pct: num(assume.slippage_pct),
+      reward_to_risk: num(assume.reward_to_risk),
+    },
+    symbols_studied: arr(d.study_list).length || null,
+    caveats: arr(d.caveats).map(str).filter(Boolean).slice(0, 8),
+    trend: [],
     caveat:
       "These are backtested results from Casey's own lab, with modeled spread and slippage. They describe what the rules would have done, not what any trade will do. The hub cannot place orders, and nothing here is advice.",
   };
@@ -134,12 +296,25 @@ interface Cached {
   problem?: string;
 }
 
+async function readHistory(): Promise<ReturnType<typeof trend>> {
+  try {
+    const res = await fetch(HISTORY_URL, { headers: { accept: "application/json" } });
+    return res.ok ? trend(await res.json()) : [];
+  } catch (error) {
+    console.error("lab history fetch failed", String(error));
+    return [];
+  }
+}
+
 async function readLab(env: Env, now: number): Promise<Cached> {
   let problem = "The lab file could not be reached just now.";
   for (const url of [LAB_URL, LAB_URL_FALLBACK]) {
     try {
       const res = await fetch(url, { headers: { accept: "application/json" } });
-      if (res.ok) return { fetched_at: now, summary: { ...summarize(await res.json(), now), source: url } };
+      if (res.ok) {
+        const [body, history] = await Promise.all([res.json(), readHistory()]);
+        return { fetched_at: now, summary: { ...summarize(body, now), source: url, trend: history } };
+      }
       problem = `The lab file answered ${res.status}.`;
     } catch (error) {
       console.error("lab fetch failed", url, String(error));

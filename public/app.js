@@ -648,6 +648,13 @@
     </section>`;
   }
 
+  function labTable(rows, cols) {
+    return `<div class="plan-table"><table><thead><tr>${cols.map((c) => `<th>${esc(c[0])}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${esc(c[1](r))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+  const rTxt = (v) => (v === null || v === undefined ? "–" : `${v}R`);
+  const pcTxt = (v) => (v === null || v === undefined ? "–" : `${v}%`);
+
   function renderResearch() {
     const r = S.research;
     if (!r || r.unavailable) {
@@ -671,10 +678,51 @@
       ${r.model?.verdict ? `<section class="section"><h2>Can it be predicted?</h2>
         <p class="sub">The lab also trains a model to guess which breakouts work.</p>
         <p class="lead">${esc(r.model.verdict)}</p></section>` : ""}
+      ${r.what_moves_the_odds?.length ? `<section class="section"><h2>What actually changed the odds</h2>
+        <p class="sub">The lab split every trade by one condition and compared the two halves. The bigger the gap, the more that condition mattered.</p>
+        ${r.what_moves_the_odds.map((x) => `<article class="ai"><h3>${esc(x.label)}</h3>
+          <ul><li>When it was true: <strong>${pcTxt(x.with_it.win_rate)}</strong> won, average ${rTxt(x.with_it.avg_r)} over ${x.with_it.trades} trades</li>
+          <li>When it was not: <strong>${pcTxt(x.without_it.win_rate)}</strong> won, average ${rTxt(x.without_it.avg_r)} over ${x.without_it.trades} trades</li></ul>
+          <p class="meta">Gap of ${rTxt(x.difference_r)} a trade.</p></article>`).join("")}
+      </section>` : ""}
+      ${r.best_times?.length ? `<section class="section"><h2>Time of day</h2>
+        <p class="sub">Same rules, split by when the trade started.</p>
+        ${labTable(r.best_times, [["When", (x) => x.bucket], ["Trades", (x) => x.trades], ["Won", (x) => pcTxt(x.win_rate)], ["Average", (x) => rTxt(x.avg_r)]])}
+      </section>` : ""}
+      ${r.day_shape?.trading_days ? `<section class="section"><h2>What a day looked like</h2>
+        <p class="lead">${r.day_shape.green_days} days up, ${r.day_shape.red_days} down, out of ${r.day_shape.trading_days}. The average day came to ${rTxt(r.day_shape.average_day_r)}.</p>
+        <p class="meta">Best day ${esc(r.day_shape.best_day?.date || "unknown")} at ${rTxt(r.day_shape.best_day?.total_r)} on ${r.day_shape.best_day?.trades ?? "?"} trades. Worst day ${esc(r.day_shape.worst_day?.date || "unknown")} at ${rTxt(r.day_shape.worst_day?.total_r)} on ${r.day_shape.worst_day?.trades ?? "?"} trades.</p>
+        <p class="meta">This is the loose version taking every signal, which is why the totals are large next to your real position sizes.</p>
+      </section>` : ""}
+      ${r.how_trades_ended?.length ? `<section class="section"><h2>How trades ended</h2>
+        ${labTable(r.how_trades_ended, [["Ending", (x) => x.label], ["Trades", (x) => x.trades], ["Share", (x) => pcTxt(x.share_pct)], ["Average", (x) => rTxt(x.avg_r)]])}
+      </section>` : ""}
+      ${r.target_sweep?.length ? `<section class="section"><h2>Where to put the target</h2>
+        <p class="sub">The same trades replayed with different profit targets, to see which one the market actually paid.</p>
+        ${labTable(r.target_sweep, [["Target", (x) => x.target_pct + "%"], ["Won", (x) => pcTxt(x.win_rate)], ["Hit target", (x) => pcTxt(x.target_hit_rate)], ["Average", (x) => rTxt(x.avg_r)]])}
+      </section>` : ""}
+      ${r.your_gates?.length ? `<section class="section"><h2>Do your entry gates earn their keep?</h2>
+        <p class="sub">Each gate compared against the trades that failed it. If passing is no better than failing, the gate is not doing much.</p>
+        ${labTable(r.your_gates, [["Gate", (x) => x.gate], ["Passed", (x) => `${rTxt(x.passed.avg_r)} (${x.passed.trades})`], ["Failed", (x) => `${rTxt(x.failed.avg_r)} (${x.failed.trades})`], ["Verdict", (x) => x.verdict || "–"]])}
+      </section>` : ""}
+      ${r.model_factors?.length ? `<section class="section"><h2>What the model leans on</h2>
+        <p class="sub">The strongest things it uses to tell winners from losers.</p>
+        <ul class="plain">${r.model_factors.map((f) => `<li>${esc(f.effect || f.factor)}</li>`).join("")}</ul>
+      </section>` : ""}
+      ${r.symbols?.length ? `<section class="section"><h2>Best behaved symbols</h2>
+        <p class="sub">Of the ${r.symbols_studied ?? "studied"} it watched, these had at least 10 trades. A good average here is still a small sample, not a shopping list.</p>
+        ${labTable(r.symbols, [["Symbol", (x) => x.symbol], ["Trades", (x) => x.trades], ["Won", (x) => pcTxt(x.win_rate)], ["Average", (x) => rTxt(x.avg_r)]])}
+      </section>` : ""}
+      ${r.trend?.length > 1 ? `<section class="section"><h2>Has the answer been steady?</h2>
+        <p class="sub">Every lab run since it started keeping score. If the conclusion jumps around, no single run means much.</p>
+        ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Held up", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
+      </section>` : ""}
       ${patternBlock("Stay away from these", "Conditions the lab found did worse, and kept doing worse when checked again on days it had not seen.", r.stay_away_from)}
       ${patternBlock("These held up", "Conditions that looked good and still looked good on fresh days. Rare, and worth little on their own.", r.held_up)}
       <section class="section"><h2>Read this before you lean on it</h2>
         <p class="meta">${esc(r.caveat)}</p>
+        ${r.assumptions?.entry ? `<p class="meta">Entry: ${esc(r.assumptions.entry)}. Exit: ${esc(r.assumptions.exit || "not stated")}. Every fill pays a modeled ${r.assumptions.spread_pct}% spread and ${r.assumptions.slippage_pct}% slippage, aiming at ${r.assumptions.reward_to_risk} times the risk.</p>` : ""}
+        ${r.caveats?.length ? `<ul class="plain">${r.caveats.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
         <p class="meta">Claude, ChatGPT and Grok can read all of this too, and are asked to quote it when they write or review a plan.</p>
       </section>`;
   }

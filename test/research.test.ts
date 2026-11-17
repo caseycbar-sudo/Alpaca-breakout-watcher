@@ -37,6 +37,29 @@ describe("reading the lab", () => {
     expect(s.stay_away_from[0]).toMatchObject({ pattern: "Stop distance: under 0.5%", avg_r: -1.3, trades_checked: 160 });
   });
 
+  it("pulls out the conditions that changed the odds, biggest gap first", () => {
+    const s = research.summarize({
+      ...LAB,
+      analytics: {
+        follow_through: [
+          { key: "a", label: "Small thing", yes: { trades: 10, win_rate: 30, avg_r: -0.4 }, no: { trades: 10, win_rate: 28, avg_r: -0.5 } },
+          { key: "b", label: "Second candle green", yes: { trades: 429, win_rate: 40.79, avg_r: -0.087 }, no: { trades: 629, win_rate: 19.4, avg_r: -0.68 } },
+        ],
+        outcomes: [{ reason: "target", label: "Target hit", trades: 112, avg_r: 2.1 }, { reason: "stop", label: "Stopped out", trades: 623, avg_r: -1 }],
+        days: { trading_days: 85, green_days: 17, red_days: 68, average_day_r: -5.483, best_day: { date: "2026-08-03", trades: 14, total_r: 14.35 } },
+      },
+      tickers: [
+        { symbol: "CYAB", learning: { trades: 15, win_rate: 46.67, avg_r: 0.4989 }, note: "Breakouts have tended to follow through" },
+        { symbol: "THIN", learning: { trades: 3, win_rate: 100, avg_r: 2 } },
+      ],
+    }, Date.now());
+    expect(s.what_moves_the_odds[0].label).toBe("Second candle green");
+    expect(s.what_moves_the_odds[0].difference_r).toBe(0.59);
+    expect(s.how_trades_ended[1]).toMatchObject({ label: "Stopped out", trades: 623, share_pct: 84.8 });
+    expect(s.day_shape.best_day).toEqual({ date: "2026-08-03", trades: 14, total_r: 14.35 });
+    expect(s.symbols.map((t) => t.symbol)).toEqual(["CYAB"]); // THIN had too few trades to count
+  });
+
   it("says plainly when the lab has not run in weeks", () => {
     expect(research.summarize(LAB, Date.parse("2026-12-20T00:00:00Z")).stale).toBe(true);
     expect(research.summarize({}, Date.now()).stale).toBe(true); // nothing readable is stale too, never silently fresh
@@ -52,7 +75,7 @@ describe("reading the lab", () => {
 
   it("caches the read, and refreshes only when asked", async () => {
     let reads = 0;
-    const fakeFetch = async () => { reads++; return new Response(JSON.stringify(LAB)); };
+    const fakeFetch = async (url: string) => { if (url === research.HISTORY_URL) return new Response("[]"); reads++; return new Response(JSON.stringify(LAB)); };
     const original = globalThis.fetch;
     globalThis.fetch = fakeFetch as unknown as typeof fetch;
     try {
@@ -73,11 +96,12 @@ describe("reading the lab", () => {
     const original = globalThis.fetch;
     globalThis.fetch = (async (url: string) => {
       tried.push(url);
+      if (url === research.HISTORY_URL) return new Response("[]");
       return url === research.LAB_URL ? new Response("nope", { status: 404 }) : new Response(JSON.stringify(LAB));
     }) as unknown as typeof fetch;
     try {
       const result = await research.getResearch(env, { refresh: true });
-      expect(tried).toEqual([research.LAB_URL, research.LAB_URL_FALLBACK]);
+      expect(tried.filter((u) => u !== research.HISTORY_URL)).toEqual([research.LAB_URL, research.LAB_URL_FALLBACK]);
       expect(result.summary?.source).toBe(research.LAB_URL_FALLBACK);
       expect(result.summary?.every_signal.trades).toBe(1187);
     } finally {

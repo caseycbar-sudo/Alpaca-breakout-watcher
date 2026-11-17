@@ -216,6 +216,7 @@ details.gloss p { padding: 0 0 14px; color: var(--ink-soft); }
 .switchline .state { font-weight: 600; }
 .address { display: flex; gap: 8px; margin-top: 10px; }
 .address input { font: 14.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+ul.plain { margin: 10px 0 0; padding-left: 1.2em; } ul.plain li { margin: 6px 0; }
 ol.plain { margin: 10px 0 0; padding-left: 1.3em; } ol.plain li { margin: 6px 0; }
 
 /* ---------- sheet (plain explanations) ---------- */
@@ -377,3 +378,10 @@ label { font-size:12px; color:#b0c4d5; }
   .door { margin:20px 12px; }.sheet-card { max-height:88vh; }
 }
 @media(prefers-reduced-motion:no-preference) { .team-tile,.job-card,.btn { transition:background .18s,border-color .18s,transform .18s; }.team-tile:hover { border-color:#5d8d97; transform:translateY(-2px); }.btn:hover:not([disabled]) { border-color:#79cbbd; }@keyframes desk-in{from{opacity:.5;transform:translateY(7px)}to{opacity:1;transform:none}} }
+
+/* Lab result tables: dense numbers that still read on a phone. */
+.plan-table { overflow-x: auto; margin-top: 12px; -webkit-overflow-scrolling: touch; }
+.plan-table table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.plan-table th, .plan-table td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line, rgba(14,58,74,.12)); white-space: nowrap; }
+.plan-table th { font-weight: 600; color: var(--drift); font-size: 13px; }
+.plan-table tr:last-child td { border-bottom: 0; }
