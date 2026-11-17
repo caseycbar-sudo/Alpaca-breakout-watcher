@@ -54,10 +54,27 @@ describe("reading the lab", () => {
       ],
     }, Date.now());
     expect(s.what_moves_the_odds[0].label).toBe("Second candle green");
+    expect(s.what_moves_the_odds[0].knowable_at_entry).toBe(true); // key "b" is not a known after-entry field
     expect(s.what_moves_the_odds[0].difference_r).toBe(0.59);
     expect(s.how_trades_ended[1]).toMatchObject({ label: "Stopped out", trades: 623, share_pct: 84.8 });
     expect(s.day_shape.best_day).toEqual({ date: "2026-08-03", trades: 14, total_r: 14.35 });
     expect(s.symbols.map((t) => t.symbol)).toEqual(["CYAB"]); // THIN had too few trades to count
+  });
+
+  it("marks the conditions that are only known after entry, and warns about them", () => {
+    const s = research.summarize({
+      analytics: {
+        follow_through: [
+          { key: "held_breakout", label: "Entry bar held breakout level", yes: { trades: 907, win_rate: 30.65, avg_r: -0.303 }, no: { trades: 151, win_rate: 12.58, avg_r: -1.2665 } },
+          { key: "spy_aligned", label: "SPY and QQQ aligned", yes: { trades: 400, win_rate: 33, avg_r: -0.2 }, no: { trades: 400, win_rate: 25, avg_r: -0.5 } },
+        ],
+      },
+    }, Date.now());
+    const byLabel = Object.fromEntries(s.what_moves_the_odds.map((x) => [x.label, x.knowable_at_entry]));
+    expect(byLabel["Entry bar held breakout level"]).toBe(false);
+    expect(byLabel["SPY and QQQ aligned"]).toBe(true);
+    expect(s.lookahead_warning).toMatch(/not known when the decision is made/);
+    expect(research.summarize({ analytics: { follow_through: [{ key: "spy_aligned", label: "x", yes: { trades: 1, avg_r: 1 }, no: { trades: 1, avg_r: 0 } }] } }, Date.now()).lookahead_warning).toBeNull();
   });
 
   it("says plainly when the lab has not run in weeks", () => {

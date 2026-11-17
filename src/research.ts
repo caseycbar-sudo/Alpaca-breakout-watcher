@@ -96,6 +96,14 @@ function timeOfDay(raw: unknown) {
     .filter((x) => x.bucket && x.trades);
 }
 
+// Conditions the lab measures from the entry bar's own close, or a later bar. The
+// backtest enters at that bar's OPEN and starts simulating the exit on that same
+// bar, so none of these is known when the decision is made. They describe how a
+// trade went, not how to pick one, and a trade stopped out on the entry bar will
+// almost always show up on the wrong side of them. Checked against the producer:
+// src/backtest.py builds them from second_bar (index i+1) and the bar after it.
+const AFTER_ENTRY = new Set(["held_breakout", "second_bar_green", "next_candle_green", "successful_retest"]);
+
 /** Conditions where having the thing and not having it gave clearly different results. */
 function swings(raw: unknown) {
   return arr(raw)
@@ -105,8 +113,10 @@ function swings(raw: unknown) {
       const no = obj(o.no);
       const a = num(yes.avg_r);
       const b = num(no.avg_r);
+      const key = str(o.key);
       return {
-        label: str(o.label) || str(o.key),
+        label: str(o.label) || key,
+        knowable_at_entry: !AFTER_ENTRY.has(key),
         with_it: { trades: num(yes.trades), win_rate: round(num(yes.win_rate), 1), avg_r: round(a) },
         without_it: { trades: num(no.trades), win_rate: round(num(no.win_rate), 1), avg_r: round(b) },
         difference_r: a === null || b === null ? null : round(a - b),
@@ -229,6 +239,7 @@ export interface Summary {
   held_up: ReturnType<typeof patternList>;
   best_times: ReturnType<typeof timeOfDay>;
   what_moves_the_odds: ReturnType<typeof swings>;
+  lookahead_warning: string | null;
   how_trades_ended: ReturnType<typeof outcomes>;
   target_sweep: ReturnType<typeof targetSweep>;
   day_shape: ReturnType<typeof dayShape>;
@@ -255,6 +266,7 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
   const loose = run(summary.learning);
   const strict = run(summary.strict_setups);
   const trading = num(w.trading_days);
+  const whatMoved = swings(analytics.follow_through).slice(0, 6);
   return {
     source: LAB_URL,
     generated_at: generated,
@@ -268,7 +280,10 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
     stay_away_from: patternList(patterns.avoid, 8),
     held_up: patternList(patterns.promising, 8),
     best_times: timeOfDay(analytics.time_of_day),
-    what_moves_the_odds: swings(analytics.follow_through).slice(0, 6),
+    what_moves_the_odds: whatMoved,
+    lookahead_warning: whatMoved.some((x) => !x.knowable_at_entry)
+      ? "Some of these are measured from the entry bar's own close or a later bar. The backtest enters at that bar's open and starts the exit on the same bar, so they are not known when the decision is made. A trade stopped out on the entry bar lands on the losing side of them almost by definition. Read them as how a trade went, never as a filter for picking one."
+      : null,
     how_trades_ended: outcomes(analytics.outcomes),
     target_sweep: targetSweep(analytics.target_sweep),
     day_shape: dayShape(analytics.days),
@@ -357,7 +372,7 @@ export async function forAgent(env: Env, actor: Actor, opts: { refresh?: boolean
     ...result.summary,
     read_at: new Date(result.fetched_at).toISOString(),
     how_to_use:
-      "Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade.",
+      "Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade. In what_moves_the_odds, use only entries with knowable_at_entry true as a reason to take or skip a trade; the rest describe what happened after the entry and cannot be used to choose one.",
     ...(result.problem ? { note: `Showing the last good read. ${result.problem}` } : {}),
   };
 }

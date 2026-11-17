@@ -678,9 +678,11 @@
       ${r.model?.verdict ? `<section class="section"><h2>Can it be predicted?</h2>
         <p class="sub">The lab also trains a model to guess which breakouts work.</p>
         <p class="lead">${esc(r.model.verdict)}</p></section>` : ""}
-      ${r.what_moves_the_odds?.length ? `<section class="section"><h2>What actually changed the odds</h2>
-        <p class="sub">The lab split every trade by one condition and compared the two halves. The bigger the gap, the more that condition mattered.</p>
+      ${r.what_moves_the_odds?.length ? `<section class="section"><h2>How trades went, split by condition</h2>
+        <p class="sub">The lab split every trade by one condition and compared the two halves.</p>
+        ${r.lookahead_warning ? `<p class="banner">${esc(r.lookahead_warning)}</p>` : ""}
         ${r.what_moves_the_odds.map((x) => `<article class="ai"><h3>${esc(x.label)}</h3>
+          <p class="meta">${x.knowable_at_entry === false ? "⚠ Not known until after you are already in. Cannot be used to pick a trade." : "Known before you enter, so this one could be used as a filter."}</p>
           <ul><li>When it was true: <strong>${pcTxt(x.with_it.win_rate)}</strong> won, average ${rTxt(x.with_it.avg_r)} over ${x.with_it.trades} trades</li>
           <li>When it was not: <strong>${pcTxt(x.without_it.win_rate)}</strong> won, average ${rTxt(x.without_it.avg_r)} over ${x.without_it.trades} trades</li></ul>
           <p class="meta">Gap of ${rTxt(x.difference_r)} a trade.</p></article>`).join("")}
