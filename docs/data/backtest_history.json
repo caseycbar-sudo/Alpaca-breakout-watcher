@@ -1,0 +1,559 @@
+[
+ {
+  "generated_at": "2026-10-01T07:27:07.267684+00:00",
+  "tickers": 20,
+  "learning_trades": 2240,
+  "learning_avg_r": -0.8193,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.778,
+  "promising": [
+   "Signal-bar move: 2%+"
+  ],
+  "avoid": [
+   "Share price: $50\u2013100",
+   "Stop distance: under 0.5%",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-02T00:49:15.514029+00:00",
+  "tickers": 20,
+  "learning_trades": 2247,
+  "learning_avg_r": -0.833,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.734,
+  "promising": [],
+  "avoid": [
+   "Share price: $50\u2013100",
+   "Stop distance: under 0.5%",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-03T00:31:49.933222+00:00",
+  "tickers": 20,
+  "learning_trades": 1756,
+  "learning_avg_r": -0.7107,
+  "portfolio_trades": 4,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.68,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Share price: $50\u2013100",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-06T01:46:40.115342+00:00",
+  "tickers": 20,
+  "learning_trades": 1409,
+  "learning_avg_r": -0.4184,
+  "portfolio_trades": 4,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.605,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP",
+   "Distance above VWAP: 0.5\u20131 ATR + Opening gap: gap up 1\u20133%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-07T00:44:50.755126+00:00",
+  "tickers": 20,
+  "learning_trades": 1111,
+  "learning_avg_r": -0.3315,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.628,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP",
+   "Setup: A \u2014 catalyst ORB second-bar hold + Distance above VWAP: below VWAP"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-08T01:02:08.569364+00:00",
+  "tickers": 20,
+  "learning_trades": 999,
+  "learning_avg_r": -0.3036,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.625,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-09T01:14:43.183813+00:00",
+  "tickers": 20,
+  "learning_trades": 1487,
+  "learning_avg_r": -0.4627,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.643,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP",
+   "Relative volume: under 1x + Distance above VWAP: below VWAP"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-10T00:53:46.223670+00:00",
+  "tickers": 20,
+  "learning_trades": 1241,
+  "learning_avg_r": -0.3422,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.597,
+  "promising": [
+   "Stop distance: 2\u20134%",
+   "Share price: under $2"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Share price: $20\u201350",
+   "Distance above VWAP: below VWAP + SPY/QQQ mood: mixed"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-13T02:35:44.905209+00:00",
+  "tickers": 20,
+  "learning_trades": 1009,
+  "learning_avg_r": -0.3486,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.657,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Relative volume: under 1x + Opening gap: gap down"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-14T00:19:29.723696+00:00",
+  "tickers": 20,
+  "learning_trades": 1839,
+  "learning_avg_r": -0.7234,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.721,
+  "promising": [],
+  "avoid": [
+   "Share price: $50\u2013100",
+   "Stop distance: under 0.5%",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-14T23:56:56.219163+00:00",
+  "tickers": 20,
+  "learning_trades": 1064,
+  "learning_avg_r": -0.3722,
+  "portfolio_trades": 4,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.558,
+  "promising": [],
+  "avoid": [
+   "Distance above VWAP: 0\u20130.5 ATR"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-15T23:42:48.370809+00:00",
+  "tickers": 20,
+  "learning_trades": 1466,
+  "learning_avg_r": -0.4907,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.608,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Share price: $50\u2013100",
+   "Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-16T23:37:53.672379+00:00",
+  "tickers": 20,
+  "learning_trades": 1245,
+  "learning_avg_r": -0.3545,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.606,
+  "promising": [
+   "Stop distance: 4%+",
+   "5-min RSI: over 78 + Distance above VWAP: 2+ ATR"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: 0\u20130.5 ATR",
+   "Distance above VWAP: below VWAP"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-20T00:22:28.458594+00:00",
+  "tickers": 20,
+  "learning_trades": 1061,
+  "learning_avg_r": -0.2749,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.54,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-20T23:54:38.316028+00:00",
+  "tickers": 20,
+  "learning_trades": 1182,
+  "learning_avg_r": -0.2862,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.551,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-22T00:01:37.535885+00:00",
+  "tickers": 20,
+  "learning_trades": 1170,
+  "learning_avg_r": -0.2967,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 33.33,
+  "portfolio_avg_r": 0.0,
+  "model_test_auc": 0.526,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "5-min RSI: under 52",
+   "Move vs. prior close: down"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-23T00:00:03.436893+00:00",
+  "tickers": 20,
+  "learning_trades": 1213,
+  "learning_avg_r": -0.3443,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.545,
+  "promising": [
+   "5-min RSI: over 78",
+   "5-min RSI: over 78 + Distance above VWAP: 2+ ATR",
+   "5-min RSI: over 78 + SPY/QQQ mood: aligned"
+  ],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-23T23:52:38.212712+00:00",
+  "tickers": 20,
+  "learning_trades": 1379,
+  "learning_avg_r": -0.3283,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.591,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP",
+   "5-min RSI: 52\u201355"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-27T00:27:34.419427+00:00",
+  "tickers": 20,
+  "learning_trades": 1201,
+  "learning_avg_r": -0.3078,
+  "portfolio_trades": 4,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.639,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-28T00:32:37.147657+00:00",
+  "tickers": 20,
+  "learning_trades": 1170,
+  "learning_avg_r": -0.2852,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.538,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-29T00:59:27.556987+00:00",
+  "tickers": 20,
+  "learning_trades": 1331,
+  "learning_avg_r": -0.3248,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.586,
+  "promising": [
+   "5-min RSI: 72\u201378 + Distance above VWAP: 2+ ATR",
+   "Setup: A \u2014 catalyst ORB second-bar hold + 5-min RSI: 72\u201378"
+  ],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-30T01:02:24.805609+00:00",
+  "tickers": 20,
+  "learning_trades": 1529,
+  "learning_avg_r": -0.4302,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.647,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Distance above VWAP: below VWAP",
+   "5-min RSI: under 52"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-10-31T00:48:59.477478+00:00",
+  "tickers": 20,
+  "learning_trades": 1320,
+  "learning_avg_r": -0.3599,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.589,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-03T02:56:29.764529+00:00",
+  "tickers": 20,
+  "learning_trades": 1350,
+  "learning_avg_r": -0.4317,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.653,
+  "promising": [
+   "5-min RSI: over 78 + Distance above VWAP: 2+ ATR"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Share price: $5\u201320",
+   "Distance above VWAP: below VWAP"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-04T01:24:22.914592+00:00",
+  "tickers": 20,
+  "learning_trades": 1089,
+  "learning_avg_r": -0.2994,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.559,
+  "promising": [],
+  "avoid": [
+   "Stop distance: under 0.5%"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-05T01:28:32.591247+00:00",
+  "tickers": 20,
+  "learning_trades": 1413,
+  "learning_avg_r": -0.4609,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.572,
+  "promising": [
+   "5-min RSI: over 78 + Distance above VWAP: 2+ ATR"
+  ],
+  "avoid": [
+   "Distance above VWAP: 0\u20130.5 ATR + SPY/QQQ mood: mixed",
+   "Relative volume: under 1x + Distance above VWAP: below VWAP",
+   "Distance above VWAP: below VWAP + Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-06T01:35:05.892961+00:00",
+  "tickers": 20,
+  "learning_trades": 1245,
+  "learning_avg_r": -0.3562,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.618,
+  "promising": [
+   "Relative volume: 3\u20136x"
+  ],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-07T00:58:03.883823+00:00",
+  "tickers": 20,
+  "learning_trades": 1206,
+  "learning_avg_r": -0.3623,
+  "portfolio_trades": 4,
+  "portfolio_win_rate": 50.0,
+  "portfolio_avg_r": 0.5,
+  "model_test_auc": 0.618,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-10T03:35:38.650871+00:00",
+  "tickers": 20,
+  "learning_trades": 1190,
+  "learning_avg_r": -0.3398,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.564,
+  "promising": [
+   "Relative volume: 3\u20136x"
+  ],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-11T01:15:36.194673+00:00",
+  "tickers": 20,
+  "learning_trades": 1543,
+  "learning_avg_r": -0.4883,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 50.0,
+  "portfolio_avg_r": 0.5,
+  "model_test_auc": 0.66,
+  "promising": [
+   "Relative volume: 3\u20136x"
+  ],
+  "avoid": [
+   "5-min RSI: under 52 + Opening gap: flat (\u00b11%)",
+   "Relative volume: 1.5\u20133x + Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-12T02:16:43.467445+00:00",
+  "tickers": 20,
+  "learning_trades": 787,
+  "learning_avg_r": -0.2966,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.528,
+  "promising": [
+   "Relative volume: 3\u20136x",
+   "Distance above VWAP: 2+ ATR + Opening gap: gap down"
+  ],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-13T01:51:22.266251+00:00",
+  "tickers": 20,
+  "learning_trades": 1230,
+  "learning_avg_r": -0.5472,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 33.33,
+  "portfolio_avg_r": 0.0,
+  "model_test_auc": 0.704,
+  "promising": [
+   "5-min RSI: 55\u201365 + Opening gap: gap down"
+  ],
+  "avoid": [
+   "Stop distance: under 0.5%",
+   "Opening gap: flat (\u00b11%)",
+   "Share price: $20\u201350"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-14T01:28:22.748229+00:00",
+  "tickers": 20,
+  "learning_trades": 1187,
+  "learning_avg_r": -0.3495,
+  "portfolio_trades": 3,
+  "portfolio_win_rate": 33.33,
+  "portfolio_avg_r": 0.0,
+  "model_test_auc": 0.547,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-17T03:55:29.854878+00:00",
+  "tickers": 20,
+  "learning_trades": 1058,
+  "learning_avg_r": -0.4405,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 50.0,
+  "portfolio_avg_r": 0.5,
+  "model_test_auc": 0.598,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
+ }
+]
