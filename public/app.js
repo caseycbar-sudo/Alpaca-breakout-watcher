@@ -509,6 +509,11 @@
   function helpersHtml() {
     const h = S.helpers;
     const a = h.assistant;
+    const assistant = !a.available
+      ? `<p class="meta">Not available on this hub yet.</p>`
+      : `<div class="switchline"><span class="state">${a.enabled ? "On" : "Off"}</span>
+          <button type="button" class="btn small${a.enabled ? "" : " primary"}" data-helper="assistant" data-to="${a.enabled ? "off" : "on"}">${a.enabled ? "Turn off" : "Turn on"}</button></div>
+         <p class="meta">${a.replies_today} of ${a.daily_cap} replies used today. Free, inside Cloudflare's daily allowance.</p>`;
     const w = h.wake;
     const any = w.claude.set_up || w.grok.set_up;
     const line = (name, x) => !x.set_up
