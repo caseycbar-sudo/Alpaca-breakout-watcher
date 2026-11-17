@@ -10,7 +10,11 @@
 import * as db from "./db";
 import { type Actor, type Env, HubError, requireScope } from "./util";
 
-export const LAB_URL = "https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/data/backtest.json";
+// The lab itself runs in Casey's private watcher repo and copies its result into the
+// public one. The raw file updates the moment that copy lands; the Pages copy only
+// updates when a site deploy runs, so it is the fallback rather than the first choice.
+export const LAB_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/backtest.json";
+export const LAB_URL_FALLBACK = "https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/data/backtest.json";
 const CACHE_KEY = "research_summary";
 const FRESH_FOR_MS = 60 * 60_000; // re-read the lab at most once an hour
 const STALE_AFTER_DAYS = 14; // after this, say plainly that the lab has not run
@@ -131,14 +135,17 @@ interface Cached {
 }
 
 async function readLab(env: Env, now: number): Promise<Cached> {
-  try {
-    const res = await fetch(LAB_URL, { headers: { accept: "application/json" } });
-    if (!res.ok) return { fetched_at: now, problem: `The lab page answered ${res.status}.` };
-    return { fetched_at: now, summary: summarize(await res.json(), now) };
-  } catch (error) {
-    console.error("lab fetch failed", String(error));
-    return { fetched_at: now, problem: "The lab page could not be reached just now." };
+  let problem = "The lab file could not be reached just now.";
+  for (const url of [LAB_URL, LAB_URL_FALLBACK]) {
+    try {
+      const res = await fetch(url, { headers: { accept: "application/json" } });
+      if (res.ok) return { fetched_at: now, summary: { ...summarize(await res.json(), now), source: url } };
+      problem = `The lab file answered ${res.status}.`;
+    } catch (error) {
+      console.error("lab fetch failed", url, String(error));
+    }
   }
+  return { fetched_at: now, problem };
 }
 
 /** The lab's findings, re-read at most once an hour unless you ask for fresh. */

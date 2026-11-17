@@ -68,6 +68,23 @@ describe("reading the lab", () => {
     }
   });
 
+  it("falls back to the published page when the raw file is missing", async () => {
+    const tried: string[] = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = (async (url: string) => {
+      tried.push(url);
+      return url === research.LAB_URL ? new Response("nope", { status: 404 }) : new Response(JSON.stringify(LAB));
+    }) as unknown as typeof fetch;
+    try {
+      const result = await research.getResearch(env, { refresh: true });
+      expect(tried).toEqual([research.LAB_URL, research.LAB_URL_FALLBACK]);
+      expect(result.summary?.source).toBe(research.LAB_URL_FALLBACK);
+      expect(result.summary?.every_signal.trades).toBe(1187);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
   it("keeps the last good findings when the lab page is down", async () => {
     const original = globalThis.fetch;
     globalThis.fetch = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
@@ -82,7 +99,7 @@ describe("reading the lab", () => {
 
   it("needs read permission, like everything else here", async () => {
     await expect(research.forAgent(env, nosy)).rejects.toMatchObject({ code: "not_permitted" });
-    await expect(research.forAgent(env, claude)).resolves.toMatchObject({ source: research.LAB_URL });
+    expect([research.LAB_URL, research.LAB_URL_FALLBACK]).toContain((await research.forAgent(env, claude)).source);
   });
 
   it("tells an AI how to use it, and that it is not permission to trade", async () => {
