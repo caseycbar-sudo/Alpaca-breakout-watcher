@@ -655,16 +655,51 @@
   const rTxt = (v) => (v === null || v === undefined ? "–" : `${v}R`);
   const pcTxt = (v) => (v === null || v === undefined ? "–" : `${v}%`);
 
+  function radarPanel() {
+    const v = S.radar;
+    if (!v) return `<section class="section"><h2>Live radar</h2>
+      <p class="sub">What your watcher last saw in the market.</p>
+      <p class="meta">No scan has reached the hub yet.</p></section>`;
+    const when = v.age_minutes === null ? "at an unknown time" : v.age_minutes < 1 ? "less than a minute ago" : v.age_minutes === 1 ? "a minute ago" : v.age_minutes < 90 ? `${v.age_minutes} minutes ago` : `${Math.round(v.age_minutes / 60)} hours ago`;
+    const phase = v.market?.phase ? esc(v.market.phase) : "unknown";
+    const head = v.candidate_count === 0
+      ? `Nothing passed your gates in that scan. That is the usual answer, and it is the rules working rather than failing.`
+      : `${v.candidate_count} ${v.candidate_count === 1 ? "name" : "names"} passed your gates in that scan.`;
+    const cards = (v.candidates || []).map((c) => `<article class="ai">
+        <h3>${esc(c.symbol)}${c.price === null ? "" : ` · ${price(c.price)}`}</h3>
+        <p class="meta">${[c.stage, c.setup, c.confirmation].filter(Boolean).map(esc).join(" · ") || "No stage reported."}</p>
+        <ul>
+          ${c.breakout_level === null ? "" : `<li>Breakout level ${price(c.breakout_level)}${c.technical_stop === null ? "" : `, stop would sit near ${price(c.technical_stop)}`}</li>`}
+          ${c.day_move_pct === null ? "" : `<li>Up ${c.day_move_pct}% on the day</li>`}
+          ${c.relative_volume === null ? "" : `<li>${c.relative_volume}x its usual volume</li>`}
+          ${c.spread_pct === null ? "" : `<li>Spread ${c.spread_pct}%</li>`}
+          ${c.rsi === null ? "" : `<li>RSI ${c.rsi}</li>`}
+        </ul>
+        ${c.news?.headline ? `<p class="meta">Headline${c.news.at ? ` at ${esc(c.news.at)}` : ""}: ${c.news.url ? `<a href="${esc(c.news.url)}" rel="noopener noreferrer" target="_blank">${esc(c.news.headline)}</a>` : esc(c.news.headline)}</p>` : `<p class="meta">No headline found beside this one.</p>`}
+        ${(c.checks?.risk_sources || []).length ? `<p class="banner">${c.checks.risk_sources.map(esc).join(" · ")}</p>` : ""}
+      </article>`).join("");
+    return `<section class="section"><h2>Live radar</h2>
+        <p class="sub">What your watcher saw in the market, ${esc(when)}. Market was ${phase}.</p>
+        <p class="lead">${head}</p>
+        ${v.stale ? `<p class="banner">This scan is ${esc(when)}, so it is history rather than what is happening now.</p>` : ""}
+        ${v.note ? `<p class="meta">${esc(v.note)}</p>` : ""}
+        ${cards}
+        ${(v.gates || []).length ? `<details><summary>The gates a name has to pass</summary>
+          ${labTable(v.gates, [["Gate", (g) => g.label], ["Rule", (g) => g.rule || "–"]])}</details>` : ""}
+        <p class="meta">Sources: ${[v.sources?.market_data && `market data ${v.sources.market_data}`, v.sources?.halts && `halts ${v.sources.halts}`, v.sources?.sec_edgar && `SEC ${v.sources.sec_edgar}`].filter(Boolean).map(esc).join(" · ") || "not reported"}. Arrived ${esc(v.arrived_via)}.</p>
+      </section>`;
+  }
+
   function renderResearch() {
     const r = S.research;
     if (!r || r.unavailable) {
-      return `<section class="section"><h2>Your breakout lab</h2>
+      return radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
         <p class="sub">The hub reads the results your watcher publishes, so every trade idea here can be checked against your own history.</p>
         <p class="banner">${esc(r?.unavailable || "Not read yet.")}</p>
         <div class="actions"><button type="button" class="btn" id="lab-refresh">Try again</button></div></section>`;
     }
     const age = r.age_days === null ? "" : r.age_days === 0 ? "today" : r.age_days === 1 ? "yesterday" : `${r.age_days} days ago`;
-    return `<section class="section"><h2>Your breakout lab</h2>
+    return radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
         <p class="sub">What your own rules actually did, replayed over past market days. This is where a trade idea gets checked against evidence instead of opinion.</p>
         <p class="lead">${esc(r.headline)}</p>
         ${r.stale ? `<p class="banner">The lab last ran ${esc(age)}. These findings are getting old, so the market it studied may not be the one you are trading.</p>` : ""}
@@ -739,7 +774,7 @@
       today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
-      research: [S.research, Math.floor(minute / 5)],
+      research: [S.research, S.radar, Math.floor(minute / 5)],
       rules: [S.rules],
       ais: [S.connections, S.connector_address, S.helpers, Math.floor(minute / 5)],
     };

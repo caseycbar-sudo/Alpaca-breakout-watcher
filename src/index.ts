@@ -11,6 +11,7 @@ import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/w
 import * as assistant from "./assistant";
 import * as auth from "./auth";
 import * as db from "./db";
+import * as radar from "./radar";
 import * as research from "./research";
 import { handleMcp } from "./mcp";
 import * as pages from "./pages";
@@ -19,6 +20,8 @@ import { type Actor, type Env, HubError, SCOPES, SCOPE_WORDS, json , ownerOnly }
 
 interface HubEnv extends assistant.AssistantEnv {
   ASSETS: Fetcher;
+  /** Set as a Cloudflare secret. The watcher sends it when it posts a live scan. */
+  RADAR_TOKEN?: string;
 }
 
 const OWNER_ID = "casey";
@@ -74,6 +77,15 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
   const method = request.method;
 
   if (STATIC.has(path) && (method === "GET" || method === "HEAD")) return env.ASSETS.fetch(request);
+  if (path === "/api/radar" && request.method === "POST") {
+    try {
+      const scan = await radar.receive(env, request);
+      return json({ ok: true, candidates: scan.candidate_count, generated_at: scan.generated_at });
+    } catch (error) {
+      if (error instanceof HubError) return json({ error: error.code, message: error.message }, error.status);
+      throw error;
+    }
+  }
   if (path === "/healthz") {
     // Yes or no only: whether each wake-up's keys are present. Never the keys themselves.
     const wake_keys = {
@@ -249,7 +261,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   }
 
   if (path === "/api/state" && method === "GET") {
-    const [board, chat, open, answered, plans, rules, links, seen, lab] = await Promise.all([
+    const [board, chat, open, answered, plans, rules, links, seen, lab, scan] = await Promise.all([
       db.buildBoard(env),
       db.readChat(env, owner, { limit: 40, mark_read: false }),
       db.listDecisions(env, owner, { status: "open" }),
@@ -259,6 +271,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       connections(env),
       db.agentsSeen(env),
       research.getResearch(env).catch(() => null),
+      radar.current(env).catch(() => null),
     ]);
     return json({
       server_time: Date.now(),
@@ -272,6 +285,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       connections: links,
       seen,
       helpers: await assistant.status(env),
+      radar: scan,
       research: lab && lab.summary ? { ...lab.summary, read_at: lab.fetched_at, problem: lab.problem ?? null } : { unavailable: lab?.problem ?? "The lab's results have not been read yet." },
       jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
