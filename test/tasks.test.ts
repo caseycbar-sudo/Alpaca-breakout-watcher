@@ -136,3 +136,35 @@ describe('job commands in chat', () => {
     expect(await jobs.runCommand(env, claude, jobs.parseCommand('/job 9999 accept\nnote')!)).toMatch(/#9999/);
   });
 });
+
+// Staleness has to measure movement, not activity.
+describe('a job that is parked', () => {
+  it('still looks stale after a check-in that changed nothing', async () => {
+    const t = await create({ owner_id: 'claude', reviewer_id: 'chatgpt' });
+    await jobs.updateTask(env, claude, { id: t.id, expected_version: t.version, action: 'accept', note: 'Taking it.' });
+    const started = await update({ id: t.id, version: t.version + 1 }, 'start', claude);
+
+    // Backdate the move so it is a day old, the way a parked job would be.
+    const old = Date.now() - 30 * 3600 * 1000;
+    await env.DB.prepare('UPDATE tasks SET status_changed_at=?2, updated_at=?2 WHERE id=?1').bind(t.id, old).run();
+    expect((await jobs.getTask(env, claude, t.id)).task.stale).toBe(true);
+
+    // A progress note is activity, not movement: the status is unchanged.
+    await update({ id: t.id, version: started.version }, 'progress', claude);
+    const after = (await jobs.getTask(env, claude, t.id)).task;
+    expect(after.status).toBe('in_progress');
+    expect(after.stale).toBe(true);
+    expect(after.updated_at).toBeGreaterThan(old); // it was touched
+    expect(after.status_changed_at).toBe(old); // but it did not move
+  });
+
+  it('stops being stale once the status actually changes', async () => {
+    const t = await create({ owner_id: 'claude', reviewer_id: 'chatgpt' });
+    await jobs.updateTask(env, claude, { id: t.id, expected_version: t.version, action: 'accept', note: 'Taking it.' });
+    await env.DB.prepare('UPDATE tasks SET status_changed_at=?2, updated_at=?2 WHERE id=?1').bind(t.id, Date.now() - 30 * 3600 * 1000).run();
+    const stale = (await jobs.getTask(env, claude, t.id)).task;
+    expect(stale.stale).toBe(true);
+    await update({ id: t.id, version: stale.version }, 'start', claude);
+    expect((await jobs.getTask(env, claude, t.id)).task.stale).toBe(false);
+  });
+});

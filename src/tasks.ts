@@ -9,7 +9,7 @@ export interface Task {
   id: number; project: string; title: string; description: string; acceptance: string;
   owner_id: string; reviewer_id: string; priority: string; status: Status;
   next_action: string; blocker: string; evidence: string; dependencies: string;
-  created_by: string; created_at: number; updated_at: number; version: number; idem_key?: string;
+  created_by: string; created_at: number; updated_at: number; status_changed_at?: number; version: number; idem_key?: string;
 }
 function bad(message: string): never { throw new HubError(400,'bad_task',message); }
 function text(value: unknown, name: string, max: number, required = false): string {
@@ -30,7 +30,10 @@ function integer(value: unknown, name: string): number {
 }
 function out(row: Task) {
   const { idem_key: _, dependencies, ...rest } = row;
-  return { ...rest, dependencies: JSON.parse(dependencies) as number[], assignment_confirmed: !['proposed','canceled'].includes(row.status), stale: !['done','canceled'].includes(row.status) && Date.now()-row.updated_at > 24*3600000 };
+  // Stale means the job has not MOVED in a day, not that nobody has written to it.
+  // A daily check-in on work that is going nowhere must not reset this.
+  const movedAt = row.status_changed_at || row.updated_at;
+  return { ...rest, dependencies: JSON.parse(dependencies) as number[], assignment_confirmed: !['proposed','canceled'].includes(row.status), stale: !['done','canceled'].includes(row.status) && Date.now()-movedAt > 24*3600000, status_changed_at: movedAt };
 }
 async function row(env: Env, id: number): Promise<Task> {
   const r = await env.DB.prepare('SELECT * FROM tasks WHERE id=?1').bind(id).first<Task>();
@@ -75,8 +78,8 @@ export async function createTask(env: Env, actor: Actor, input: Record<string,un
   const values = [text(input.project ?? 'Hub improvements','Project',120,true),text(input.title,'Title',180,true),text(input.description,'Description',4000,true),text(input.acceptance,'Acceptance criteria',2000,true),owner,reviewer,String(priority),owner === actor.id ? 'ready' : 'proposed',text(input.next_action,'Next action',1000,true),JSON.stringify([...new Set(dependencies as number[])]),actor.id,Date.now(),key];
   // Creation + audit are atomic; the unique retry key also protects concurrent retries.
   const result = await env.DB.batch([
-    env.DB.prepare(`INSERT INTO tasks(project,title,description,acceptance,owner_id,reviewer_id,priority,status,next_action,dependencies,created_by,created_at,updated_at,idem_key)
-    VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?12,?13) ON CONFLICT(idem_key) DO NOTHING`).bind(...values),
+    env.DB.prepare(`INSERT INTO tasks(project,title,description,acceptance,owner_id,reviewer_id,priority,status,next_action,dependencies,created_by,created_at,updated_at,status_changed_at,idem_key)
+    VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?12,?12,?13) ON CONFLICT(idem_key) DO NOTHING`).bind(...values),
     env.DB.prepare(`INSERT INTO task_events(task_id,version,actor_id,actor_name,at,action,detail)
     SELECT id,1,?2,?3,created_at,'created',?4 FROM tasks WHERE idem_key=?1 ON CONFLICT(task_id,version) DO NOTHING`).bind(key,actor.id,actor.name,'Project assignment; not authorization for external actions.'),
   ]);
@@ -136,7 +139,11 @@ export async function updateTask(env: Env, actor: Actor, input: Record<string,un
   const time = Date.now();
   // Compare-and-swap and audit share a transaction. The event is inserted only if this request won.
   const result = await env.DB.batch([
-    env.DB.prepare(`UPDATE tasks SET owner_id=?3,status=?4,next_action=?5,blocker=?6,evidence=?7,updated_at=?8,version=version+1 WHERE id=?1 AND version=?2`)
+    // status_changed_at only moves when the status itself does, so a check-in that
+    // changes nothing cannot make parked work look alive. SQLite evaluates the CASE
+    // against the row as it stands, so `status` here is the old value and ?4 the new one.
+    env.DB.prepare(`UPDATE tasks SET owner_id=?3,status=?4,next_action=?5,blocker=?6,evidence=?7,updated_at=?8,
+      status_changed_at=CASE WHEN status=?4 THEN status_changed_at ELSE ?8 END,version=version+1 WHERE id=?1 AND version=?2`)
       .bind(id,expected,owner,status,next,blocker,evidence,time),
     env.DB.prepare(`INSERT INTO task_events(task_id,version,actor_id,actor_name,at,action,detail)
       SELECT id,version,?3,?4,?5,?6,?7 FROM tasks WHERE id=?1 AND version=?2 AND changes()=1`)
