@@ -842,6 +842,8 @@ export async function exportAll(env: Env, actor: Actor) {
   return {
     exported_at: new Date().toISOString(),
     note: "Driftline Trading Hub export. Contains no passwords, sign-in tokens or broker credentials.",
+    tasks: await all(`SELECT * FROM tasks ORDER BY id`),
+    task_events: await all(`SELECT * FROM task_events ORDER BY id`),
     rules: await all(`SELECT * FROM rules ORDER BY version`),
     messages: await all(`SELECT id, author_kind, author_id, author_name, body, created_at FROM messages ORDER BY id`),
     plans: await all(`SELECT * FROM plans ORDER BY created_at`),

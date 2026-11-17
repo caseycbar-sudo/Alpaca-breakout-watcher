@@ -13,9 +13,9 @@ export type Scope = (typeof SCOPES)[number];
 
 /** What each permission means, in the words shown on the approval page. */
 export const SCOPE_WORDS: Record<Scope, string> = {
-  "hub:read": "Read the board, chat, trade plans and rules",
+  "hub:read": "Read project jobs, the board, chat, trade plans and rules",
   "hub:chat": "Post messages in the chat",
-  "hub:log": "Add and update trade plans, review plans, and ask you questions",
+  "hub:log": "Manage project jobs, add and update trade plans, review plans, and ask you questions",
   "hub:snapshot": "Report account snapshots to the board",
 };
 

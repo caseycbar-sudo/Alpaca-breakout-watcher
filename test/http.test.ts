@@ -199,6 +199,23 @@ describe("the AI door", () => {
     expect(names.some((n: string) => /order|trade|buy|sell|cancel|approve|authorize|rule_change|set_rules/.test(n))).toBe(false);
   });
 
+  it("shares project jobs through both authenticated doors", async () => {
+    const job = await tool(grok, "create_task", { title: "Inspect mobile layout", description: "Review the Hub jobs page.", acceptance: "Record concrete defects or verified behavior.", owner_id: "grok", reviewer_id: "chatgpt", next_action: "Open the jobs page.", idempotency_key: "http-job" });
+    expect(job.isError).toBe(false);
+    const id = job.data.task.id;
+    const state = await (await call("/api/state", {headers: asCasey()})).json() as any;
+    expect(state.jobs.tasks.some((t:any)=>t.id===id)).toBe(true);
+    expect((await call(`/api/tasks/${id}`)).status).toBe(401);
+    expect((await post(`/api/tasks/${id}`, {action:"cancel",expected_version:1,note:"test"},{Origin:"https://evil.example"})).status).toBe(403);
+    const started = await tool(grok, "update_task", {id,expected_version:1,action:"start",note:"Read the implementation.",next_action:"Test the phone layout."});
+    expect(started.data.task.status).toBe("in_progress");
+    const listed = await tool(grok, "list_tasks", {owner_id:"grok"});
+    expect(listed.data.tasks.some((t:any)=>t.id===id)).toBe(true);
+    expect((await tool(grok,"get_task",{id})).data.history).toHaveLength(2);
+    const canceled = await post(`/api/tasks/${id}`, {action:"cancel",expected_version:2,note:"HTTP integration test completed."});
+    expect(canceled.status).toBe(200);
+  });
+
   it("lets a connected AI read, post, report and plan under its own name", async () => {
     const chat = await tool(grok, "read_chat");
     expect(chat.data.messages.some((m: any) => m.body === "hello agents" && m.from === "Casey")).toBe(true);
@@ -262,6 +279,7 @@ describe("the AI door", () => {
     const target = state.connections.find((c: any) => c.agent_id === "grok");
     expect((await post(`/api/connections/${target.grant_id}/disconnect`, {})).status).toBe(200);
     expect((await mcp(grok, "tools/list")).status).toBe(401);
+    expect((await tool(readOnly, "create_task", {title:"No access",description:"Test",acceptance:"Test",next_action:"Test",idempotency_key:"readonly-job"})).isError).toBe(true);
     expect((await mcp(readOnly, "tools/list")).status).toBe(200); // the others are untouched
   });
 

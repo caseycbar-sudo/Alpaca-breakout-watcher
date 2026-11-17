@@ -10,10 +10,10 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-  const TABS = ["today", "chat", "trades", "rules", "ais"];
+  const TABS = ["today", "jobs", "chat", "trades", "rules", "ais"];
 
   let S = null; // latest state from the server
-  let tab = TABS.includes(sessionStorage.getItem("tab")) ? sessionStorage.getItem("tab") : "today";
+  let tab = TABS.includes(sessionStorage.getItem("tab")) ? sessionStorage.getItem("tab") : "jobs";
   let olderChat = []; // pages loaded with "Show earlier messages"
   let hasOlder = false;
   let lastRendered = { key: "", tab: "" };
@@ -168,6 +168,85 @@
   const AGENT_COLORS = { claude: "#b5651d", chatgpt: "#2a6a4c", grok: "#4b3f8f" };
   const colorFor = (id) => AGENT_COLORS[id] || "#1b6e8c";
 
+  // ------------------------------------------------------------ project jobs
+  let jobOwner = "all", jobStatus = "active", extraJobs = [], jobsCursor = null, jobsPaged = false;
+  const people = { "": "Unassigned", casey: "Casey", chatgpt: "ChatGPT", claude: "Claude", grok: "Grok" };
+  const jobStates = { proposed: "Proposed", ready: "Ready", in_progress: "In progress", blocked: "Blocked", review: "Needs review", done: "Done", canceled: "Canceled" };
+  function options(values, selected) { return Object.entries(values).map(([id,label]) => `<option value="${esc(id)}"${id === selected ? " selected" : ""}>${esc(label)}</option>`).join(""); }
+  function allJobs() { return [...new Map([...extraJobs, ...(S.jobs?.tasks || [])].map(t=>[t.id,t])).values()]; }
+  function jobStats() {
+    const c = S.jobs?.counts || {};
+    return `<div class="job-stats"><div><strong>${c.in_progress || 0}</strong>in progress</div><div><strong>${c.blocked || 0}</strong>blocked</div><div><strong>${c.review || 0}</strong>need review</div></div>`;
+  }
+  function jobCard(t) {
+    const actions = { handoff: "Propose a handoff", cancel: "Cancel task" };
+    if (t.status === "proposed" && (!t.owner_id || t.owner_id === "casey")) actions.accept = "Accept this task myself";
+    if (t.owner_id === "casey") {
+      if (["ready","blocked"].includes(t.status)) actions.start = "Start work";
+      if (t.status === "in_progress") { actions.progress = "Record progress"; actions.submit = "Submit evidence for review"; }
+      if (["ready","in_progress","blocked"].includes(t.status)) actions.block = "Record a blocker";
+    }
+    if (t.status === "review" && t.owner_id !== "casey") { actions.complete = "Review and mark done"; actions.rework = "Request changes"; }
+    const closed = ["done","canceled"].includes(t.status);
+    return `<article class="job-card" data-status="${esc(t.status)}" id="job-${t.id}">
+      <div class="job-card-top"><span class="job-tag">#${t.id} · ${esc(t.project)}</span><span class="priority ${esc(t.priority)}">${esc(t.priority)}</span></div>
+      <h3>${esc(t.title)}</h3><p class="meta"><strong class="status-pill ${esc(t.status)}">${esc(jobStates[t.status])}</strong> · ${esc(people[t.owner_id] || t.owner_id)}${t.status === "proposed" ? " (not yet accepted)" : ""} · Reviewer: ${esc(people[t.reviewer_id] || "Casey")}</p>
+      <p class="job-copy">${esc(t.description)}</p>
+      <p class="job-copy"><strong>Next:</strong> ${esc(t.next_action)}</p>
+      ${t.blocker ? `<p class="banner job-copy"><strong>Blocked:</strong> ${esc(t.blocker)}</p>` : ""}
+      ${t.stale ? `<p class="meta">No update in over 24 hours. Check whether the owner can continue.</p>` : ""}
+      <details><summary>Acceptance criteria${t.dependencies.length ? " and dependencies" : ""}</summary><p class="job-copy">${esc(t.acceptance)}</p>${t.dependencies.length ? `<p>Depends on: ${t.dependencies.map(id=>`#${id}`).join(", ")}</p>` : ""}${t.evidence ? `<p class="job-copy"><strong>Submitted evidence:</strong> ${esc(t.evidence)}</p>` : ""}</details>
+      ${!closed ? `<details><summary>Update or hand off</summary>
+        <form class="formgrid" data-job-update="${t.id}" data-version="${t.version}">
+          <label>Action<select name="action">${options(actions, t.status === "review" && t.owner_id !== "casey" ? "complete" : t.status === "proposed" && (!t.owner_id || t.owner_id === "casey") ? "accept" : "handoff")}</select></label>
+          <label>Progress or review note<textarea name="note" maxlength="2000" required rows="2"></textarea></label>
+          <label>Next action (needed except accepting, completing or canceling)<textarea name="next_action" maxlength="1000" rows="2"></textarea></label>
+          <label>Blocker (when blocking)<textarea name="blocker" maxlength="2000" rows="2"></textarea></label>
+          <label>Evidence (when submitting for review)<textarea name="evidence" maxlength="4000" rows="2" placeholder="Commit, test results, observed behavior, and any limits"></textarea></label>
+          <label>New owner (handoffs only)<select name="owner_id">${options(people, "")}</select></label>
+          <button class="btn primary" type="submit">Save task update</button>
+        </form></details>` : ""}
+      <p class="meta">Updated ${esc(ago(t.updated_at))} · version ${t.version} · <button type="button" class="linkish" data-job-history="${t.id}">View history</button></p>
+    </article>`;
+  }
+  function workloadHtml() {
+    return `<div class="team-grid">${["chatgpt","claude","grok"].map(id=>{
+      const assigned=allJobs().filter(t=>t.owner_id===id && !["done","canceled"].includes(t.status));
+      const accepted=assigned.filter(t=>t.status!=="proposed");
+      const seen=S.connections.find(c=>c.agent_id===id);
+      return `<button type="button" class="team-tile" data-job-owner="${id}" aria-label="Show ${people[id]} jobs">
+        <span class="agent-avatar ${id}">${id==="chatgpt"?"Ch":id==="claude"?"Cl":"G"}</span>
+        <span class="team-name">${people[id]}<small>${seen?.last_seen ? `Last seen ${esc(ago(seen.last_seen))}` : "Not checked in recently"}</small></span>
+        <span class="team-load"><b>${accepted.length}</b> accepted <span>· ${assigned.length-accepted.length} proposed</span></span>
+      </button>`;
+    }).join("")}</div>`;
+  }
+  function renderJobs() {
+    const all = allJobs().sort((a,b)=>({high:0,normal:1,low:2}[a.priority]-{high:0,normal:1,low:2}[b.priority]) || a.id-b.id);
+    const jobs = all.filter(t=>(jobOwner === "all" || t.owner_id === jobOwner) && (jobStatus === "all" || (jobStatus === "active" ? !["done","canceled"].includes(t.status) : t.status === jobStatus)));
+    return `<section class="section jobs-section"><div class="job-hero"><span class="eyebrow">THE SHARED WORKSPACE</span><h1>Good ideas.<br><em>Visible progress.</em></h1>
+      <p class="sub">The job list for your whole team. Know who owns the next move.</p>${jobStats()}</div>
+      <div class="section-heading"><div><span class="eyebrow">PEOPLE & AGENTS</span><h2>Your team’s work</h2></div><span class="quiet small-copy">Tap a teammate to filter</span></div>
+      ${workloadHtml()}
+      <details class="gloss workflow-note"><summary>How work moves</summary><p>Propose → accept → work → review → done. An assignment becomes a commitment when its owner accepts. Completed work needs evidence and an independent review. Agents work when their sessions run; the queue does not keep them online or grant permission for external actions.</p></details>
+      <details class="gloss job-create"><summary><span aria-hidden="true">＋</span> Create a job</summary><form id="job-form" class="formgrid">
+        <label>Job title<input name="title" maxlength="180" required></label>
+        <label>Project<input name="project" maxlength="120" value="Hub improvements" required></label>
+        <label>What needs doing<textarea name="description" maxlength="4000" rows="3" required></textarea></label>
+        <label>How we will know it is done<textarea name="acceptance" maxlength="2000" rows="3" required></textarea></label>
+        <div class="pair"><label>Proposed owner<select name="owner_id">${options(people, "")}</select></label><label>Independent reviewer<select name="reviewer_id">${options({"":"Casey",chatgpt:"ChatGPT",claude:"Claude",grok:"Grok"}, "")}</select></label></div>
+        <label>Priority<select name="priority">${options({high:"High",normal:"Normal",low:"Low"}, "normal")}</select></label>
+        <label>Next concrete action<textarea name="next_action" maxlength="1000" rows="2" required></textarea></label>
+        <label>Dependency task numbers, separated by commas<input name="dependencies" inputmode="numeric" placeholder="For example: 1, 2"></label>
+        <button class="btn primary" type="submit">Create job proposal</button>
+      </form></details>
+      <div class="job-toolbar"><label>Owner<select id="job-owner">${options({all:"Everyone",...people}, jobOwner)}</select></label><label>Status<select id="job-status">${options({active:"Open work",all:"All statuses",...jobStates}, jobStatus)}</select></label></div>
+      <div class="jobs-grid">${jobs.length ? jobs.map(jobCard).join("") : `<div class="empty">No jobs match this view.${S.jobs?.has_more ? " Load more jobs to include the rest of the queue." : ""}</div>`}</div>
+      ${(jobsPaged ? jobsCursor : S.jobs?.next_after_id) ? `<button class="btn" id="load-jobs" type="button">Load more jobs</button>` : ""}
+      <p class="meta">Showing ${jobs.length} matching jobs from ${all.length} loaded records. All changes stay in each job’s history.</p>
+    </section>`;
+  }
+
   // ------------------------------------------------------------ today
 
   function needsYou() {
@@ -303,6 +382,7 @@
     const r = S.board.rules;
     return `<section class="notice ${cls}"><h1>${esc(head)}</h1><p>${stops.length ? esc(sub) : sub}</p></section>
       ${driftline()}
+      <section class="section"><h2>Project work</h2>${jobStats()}<button type="button" class="btn" data-tab-link="jobs">Open jobs and next actions</button></section>
       ${need.total ? `<section class="section"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>` : ""}
       <section class="section"><h2>Your account</h2>${ledger()}</section>
       <section class="section"><h2>Flags</h2>
@@ -543,13 +623,14 @@
 
   // ----------------------------------------------------------- render
 
-  const RENDER = { today: renderToday, chat: renderChat, trades: renderTrades, rules: renderRules, ais: renderAis };
+  const RENDER = { jobs: renderJobs, today: renderToday, chat: renderChat, trades: renderTrades, rules: renderRules, ais: renderAis };
 
   function sliceKey() {
     if (!S) return "";
     const minute = Math.floor(S.server_time / 60000);
     const slices = {
-      today: [S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, minute],
+      jobs: [S.jobs, extraJobs, jobOwner, jobStatus, jobsCursor, minute],
+      today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
       rules: [S.rules],
@@ -566,10 +647,11 @@
       el.textContent = n > 99 ? "99+" : String(n);
     };
     set("badge-today", need);
+    set("badge-jobs", S ? ((S.jobs?.counts.blocked || 0) + (S.jobs?.counts.review || 0)) : 0);
     set("badge-chat", tab === "chat" ? 0 : S ? S.unread : 0);
     set("badge-trades", S ? S.plans.filter((p) => p.review_state === "reviewed").length : 0);
     document.querySelectorAll(".tabs button").forEach((b) => (b.dataset.tab === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
-    $("#top-note").textContent = S ? "No orders can be placed here" : "";
+    $("#top-note").textContent = S ? "Workspace synced · " + clock(S.server_time) : "Connecting…";
   }
 
   function typing() {
@@ -605,9 +687,20 @@
   async function refresh(force) {
     try {
       S = await api("/api/state");
+      if (jobsPaged) {
+        // Refresh every page already opened, so a remote handoff cannot stay hidden in a stale card.
+        const through = Math.max(0, ...extraJobs.map(t=>t.id));
+        const updated = []; let cursor = S.jobs.next_after_id;
+        while (cursor && cursor < through) {
+          const page = await api(`/api/tasks?after=${cursor}`);
+          updated.push(...page.tasks); cursor = page.next_after_id;
+        }
+        extraJobs = updated; jobsCursor = cursor;
+      }
       document.getElementById("app").dataset.state = "ready";
       render(force);
     } catch (e) {
+      $("#top-note").textContent = "Update failed · showing last loaded data";
       if (!S) view.innerHTML = `<p class="pad">The hub could not load. Check your connection and <button type="button" class="linkish" id="retry">try again</button>.</p>`;
     }
   }
@@ -632,6 +725,23 @@
   view.addEventListener("click", async (e) => {
     const t = e.target.closest("button, a");
     if (!t) return;
+    if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
+    if (t.dataset.jobHistory) {
+      try {
+        const result = await api(`/api/tasks/${t.dataset.jobHistory}`);
+        return openSheet(`Job #${result.task.id} history`, `<ul class="history-list">${result.history.map(h=>`<li><strong>${esc(h.actor_name)}</strong> · ${esc(h.action)} · ${esc(clock(h.at))}<p>${esc(h.detail)}</p></li>`).join("")}</ul>`);
+      } catch (err) { return toast(err.message, true); }
+    }
+    if (t.id === "load-jobs") {
+      try {
+        const page = await api(`/api/tasks?after=${jobsCursor || S.jobs.next_after_id}`);
+        extraJobs = extraJobs.concat(page.tasks);
+        jobsCursor = page.next_after_id;
+        jobsPaged = true;
+
+        return render(true);
+      } catch (err) { return toast(err.message, true); }
+    }
     if (t.dataset.term) {
       const [title, text] = GLOSSARY[t.dataset.term];
       return openSheet(title, `<p>${esc(text)}</p>`);
@@ -722,6 +832,28 @@
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
     const button = form.querySelector('button[type="submit"]');
+    if (form.id === "job-form") {
+      const dependencies = String(data.dependencies || "").trim();
+      const ids = dependencies ? dependencies.split(",").map(v=>Number(v.trim())) : [];
+      if (ids.some(n=>!Number.isSafeInteger(n) || n < 1)) return toast("Use positive task numbers separated by commas", true);
+      button.disabled = true;
+      form.dataset.retryKey ||= crypto.randomUUID();
+      try {
+        await api("/api/tasks", { ...data, dependencies: ids, idempotency_key: form.dataset.retryKey });
+        form.reset(); delete form.dataset.retryKey;
+        await refresh(true); toast("Job created");
+      } catch (err) { toast(err.message, true); button.disabled = false; }
+      return;
+    }
+    if (form.dataset.jobUpdate) {
+      button.disabled = true;
+      try {
+        const result = await api(`/api/tasks/${form.dataset.jobUpdate}`, { ...data, expected_version: Number(form.dataset.version) });
+        extraJobs = extraJobs.map(t=>t.id === result.task.id ? result.task : t);
+        await refresh(true); toast("Job updated");
+      } catch (err) { toast(err.message, true); button.disabled = false; }
+      return;
+    }
     if (form.dataset.answerForm) {
       if (!String(data.answer || "").trim()) return toast("Type an answer first", true);
       button.disabled = true;
@@ -754,6 +886,11 @@
       button.disabled = true;
       return act(() => api("/api/passphrase", data), "Passphrase changed");
     }
+  });
+
+  view.addEventListener("change", e => {
+    if (e.target.id === "job-owner") { jobOwner = e.target.value; render(true); }
+    if (e.target.id === "job-status") { jobStatus = e.target.value; render(true); }
   });
 
   view.addEventListener("input", (e) => {

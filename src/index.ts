@@ -13,6 +13,7 @@ import * as auth from "./auth";
 import * as db from "./db";
 import { handleMcp } from "./mcp";
 import * as pages from "./pages";
+import * as tasks from "./tasks";
 import { type Actor, type Env, HubError, SCOPES, SCOPE_WORDS, json } from "./util";
 
 interface HubEnv extends assistant.AssistantEnv {
@@ -78,7 +79,7 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
       claude: !!(env.WAKE_CLAUDE_URL && env.WAKE_CLAUDE_TOKEN),
       grok: !!(env.WAKE_GROK_URL && env.WAKE_GROK_SECRET),
     };
-    return json({ ok: true, broker_connection: "none", engine: "none", orders_enabled: false, assistant: !!env.AI, wake_keys });
+    return json({ ok: true, project_jobs: true, broker_connection: "none", engine: "none", orders_enabled: false, assistant: !!env.AI, wake_keys });
   }
 
   try {
@@ -269,8 +270,20 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       connections: links,
       seen,
       helpers: await assistant.status(env),
+      jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
   }
+
+  if (path === "/api/tasks" && method === "GET") {
+    return json(await tasks.listTasks(env, owner, {
+      status: url.searchParams.get("status") ?? "all", limit: 100,
+      ...(url.searchParams.has("after") ? { after_id: Number(url.searchParams.get("after")) } : {}),
+    }));
+  }
+  if (path === "/api/tasks" && method === "POST") return json(await tasks.createTask(env, owner, await readJson(request)));
+  const taskMatch = path.match(/^\/api\/tasks\/(\d+)$/);
+  if (taskMatch && method === "GET") return json(await tasks.getTask(env, owner, Number(taskMatch[1])));
+  if (taskMatch && method === "POST") return json(await tasks.updateTask(env, owner, { ...await readJson(request), id: Number(taskMatch[1]) }));
 
   if (path === "/api/chat" && method === "GET") {
     return json(await db.readChat(env, owner, { before_id: url.searchParams.get("before"), limit: 40, mark_read: false }));
