@@ -127,4 +127,22 @@ describe("reading the radar", () => {
     // Nothing readable at all is never quietly treated as fine.
     expect(at("not a date").verdict).toBe("UNKNOWN_TIME");
   });
+
+  // ChatGPT found all three of these passing as "ok" in the first version. Each one
+  // let an unanswerable question through as proof that a candidate had a catalyst.
+  it("fails closed when a time is missing, unzoned or uncheckable", () => {
+    const news = (candidate: Record<string, unknown>, scan: unknown = "2026-11-17T18:30:00Z") =>
+      radar.clean({ generated_at: scan, candidates: [{ symbol: "X", news_headline: "h", ...candidate }] }, "posted by the watcher").candidates[0].news;
+
+    // A sighting with no publication time says when we saw it, not when it was news.
+    expect(news({ news_first_seen: "2026-11-17T18:05:00Z" })).toMatchObject({ verdict: "UNKNOWN_TIME", available_at: null });
+    // With no readable scan time there is nothing to compare against.
+    expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z" }, null).verdict).toBe("UNKNOWN_TIME");
+    // A bare local time is not proof of anything, however much it looks like a timestamp.
+    expect(news({ news_time: "2026-11-17T18:00:00", news_first_seen: "2026-11-17T18:05:00" }).verdict).toBe("UNKNOWN_TIME");
+    // And the offset forms that ARE valid still work.
+    expect(news({ news_time: "2026-11-17T13:00:00-05:00", news_first_seen: "2026-11-17T13:05:00-05:00" }).verdict).toBe("ok");
+    // A mangled sighting time is no better than a missing one: not "ok" either way.
+    expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T1805:00Z" }).verdict).toBe("UNKNOWN_INGESTION");
+  });
 });

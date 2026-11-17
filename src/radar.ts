@@ -27,25 +27,45 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
 /**
+ * A time is only usable if it says which time it is. Date.parse accepts a bare
+ * "2026-11-17T18:00:00" and quietly reads it in the runtime's own zone, which turns
+ * an unanswerable question into a confident wrong answer. Require an explicit offset.
+ */
+function instant(value: string | null): number | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}[Tt ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?([Zz]|[+-]\d{2}:?\d{2})$/.test(value.trim())) return null;
+  const ms = Date.parse(value.trim().replace(" ", "T"));
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
  * When a headline could first have been acted on, and whether that is even knowable.
  * A story published before the scan is not the same as one the pipeline had in hand:
- * availability is the later of publication and first sighting, and a headline stamped
- * after the scan that carries it cannot have informed anything in that scan.
+ * availability is the later of publication and first sighting.
+ *
+ * This fails closed. Anything missing, unzoned or unreadable is UNKNOWN, never "ok",
+ * because "ok" is read elsewhere as proof that a candidate had a catalyst in time.
  */
 function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null) {
-  const pub = published ? Date.parse(published) : NaN;
-  const seen = firstSeen ? Date.parse(firstSeen) : NaN;
-  const scan = scanAt ? Date.parse(scanAt) : NaN;
-  if (!Number.isFinite(pub) && !Number.isFinite(seen)) return { verdict: "UNKNOWN_TIME" as const, available_at: null, basis: "No readable time came with this headline." };
-  const availableMs = Math.max(Number.isFinite(pub) ? pub : -Infinity, Number.isFinite(seen) ? seen : -Infinity);
+  const pub = instant(published);
+  const seen = instant(firstSeen);
+  const scan = instant(scanAt);
+  const unknown = (basis: string) => ({ verdict: "UNKNOWN_TIME" as const, available_at: null, basis });
+
+  if (pub === null && seen === null) return unknown("No readable, time-zoned time came with this headline.");
+  // A sighting alone cannot be checked against publication, and publication alone
+  // cannot be checked against when the watcher actually had it. Neither is proof.
+  if (pub === null) return unknown("This headline has a sighting time but no readable publication time, so when it became news is unknown.");
+  if (scan === null) return unknown("The scan carrying this headline has no readable time, so nothing can be compared against it.");
+
+  const availableMs = seen === null ? pub : Math.max(pub, seen);
   const available_at = new Date(availableMs).toISOString();
-  if (Number.isFinite(scan) && availableMs > scan) {
-    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "This headline is stamped after the scan that carries it, so it cannot have informed it." };
+  if (availableMs > scan) {
+    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "This headline was not available until after the scan that carries it, so it cannot have informed it." };
   }
-  if (!Number.isFinite(seen)) {
+  if (seen === null) {
     return { verdict: "UNKNOWN_INGESTION" as const, available_at, basis: "Publication time only. When the watcher actually saw it was not recorded, so treat availability as a guess." };
   }
-  return { verdict: "ok" as const, available_at, basis: "Available from the later of publication and first sighting." };
+  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan ran." };
 }
 
 /** Only these fields are kept, whatever else arrives. Nothing about an account travels. */
