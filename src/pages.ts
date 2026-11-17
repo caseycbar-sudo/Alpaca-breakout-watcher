@@ -50,16 +50,17 @@ export function appShell(): Response {
     "Driftline Trading Hub",
     `<div id="app" class="app" data-state="loading">
   <header class="top">
-    <span class="wordmark">Driftline Trading Hub</span>
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M3 13c5-7 9 7 14 0s9-1 12 0M3 20c5-7 9 7 14 0s9-1 12 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="wordmark">DRIFTLINE<span class="brand-sub">TRADING HUB</span></span></div>
     <span class="top-note" id="top-note"></span>
   </header>
   <main id="view" class="view" tabindex="-1"><p class="quiet pad">Loading the hub…</p></main>
   <nav class="tabs" aria-label="Sections">
-    <button type="button" data-tab="today" aria-current="page">Today<span class="badge" id="badge-today" hidden></span></button>
-    <button type="button" data-tab="chat">Chat<span class="badge" id="badge-chat" hidden></span></button>
-    <button type="button" data-tab="trades">Trades<span class="badge" id="badge-trades" hidden></span></button>
-    <button type="button" data-tab="rules">Rules</button>
-    <button type="button" data-tab="ais">AIs</button>
+    <button type="button" data-tab="today" aria-current="page"><span class="nav-icon" aria-hidden="true">◈</span>Overview<span class="badge" id="badge-today" hidden></span></button>
+    <button type="button" data-tab="jobs"><span class="nav-icon" aria-hidden="true">▤</span>Jobs<span class="badge" id="badge-jobs" hidden></span></button>
+    <button type="button" data-tab="chat"><span class="nav-icon" aria-hidden="true">◌</span>Chat<span class="badge" id="badge-chat" hidden></span></button>
+    <button type="button" data-tab="trades"><span class="nav-icon" aria-hidden="true">↗</span>Plans<span class="badge" id="badge-trades" hidden></span></button>
+    <button type="button" data-tab="rules"><span class="nav-icon" aria-hidden="true">☷</span>Rules</button>
+    <button type="button" data-tab="ais"><span class="nav-icon" aria-hidden="true">◎</span>Team</button>
   </nav>
   <div class="sheet" id="sheet" hidden>
     <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">

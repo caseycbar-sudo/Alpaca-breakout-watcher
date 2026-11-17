@@ -7,6 +7,8 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
+  // Keep the runtime variables Casey set in the dashboard when rebuilding this Worker.
+  "keep_vars": true,
   "preview_urls": false,
   "observability": { "enabled": true },
   "ai": { "binding": "AI" },

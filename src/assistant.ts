@@ -11,6 +11,7 @@
 // Both are off until Casey turns them on, and both have daily limits.
 
 import * as db from "./db";
+import * as tasks from "./tasks";
 import { type Actor, type Env, ownerOnly } from "./util";
 
 export const ASSISTANT_ID = "hub-assistant";
@@ -146,6 +147,9 @@ export async function buildContext(env: AssistantEnv, owner: Actor, wakeNote: st
   lines.push(
     `AIs last seen: ${seen.map((a) => `${a.agent_name} ${db.describeAge(Math.round((Date.now() - a.last_seen) / 60_000))} ago`).join("; ") || "none yet"}`,
   );
+  const jobs = await tasks.listTasks(env, owner, { limit: 30 });
+  lines.push(`Project jobs (first ${jobs.tasks.length} open records; more: ${jobs.has_more}): ${JSON.stringify(jobs.tasks.map(t=>({id:t.id,title:t.title,owner:t.owner_id,status:t.status,next:t.next_action,blocker:t.blocker})))}`);
+  lines.push("Proposed assignments are not confirmed commitments. You cannot accept or change jobs. The task queue does not keep agents continuously running.");
   lines.push(`Wake-ups: ${wakeNote}`);
   lines.push("Recent chat, oldest first:");
   for (const m of chat.messages) lines.push(`- ${m.author_name}: ${clip(m.body, 500)}`);
