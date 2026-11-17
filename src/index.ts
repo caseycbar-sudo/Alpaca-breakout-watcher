@@ -72,7 +72,14 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
   const method = request.method;
 
   if (STATIC.has(path) && (method === "GET" || method === "HEAD")) return env.ASSETS.fetch(request);
-  if (path === "/healthz") return json({ ok: true, broker_connection: "none", engine: "none", orders_enabled: false });
+  if (path === "/healthz") {
+    // Yes or no only: whether each wake-up's keys are present. Never the keys themselves.
+    const wake_keys = {
+      claude: !!(env.WAKE_CLAUDE_URL && env.WAKE_CLAUDE_TOKEN),
+      grok: !!(env.WAKE_GROK_URL && env.WAKE_GROK_SECRET),
+    };
+    return json({ ok: true, broker_connection: "none", engine: "none", orders_enabled: false, assistant: !!env.AI, wake_keys });
+  }
 
   try {
     if (path === "/setup") return await setupRoute(request, env);
