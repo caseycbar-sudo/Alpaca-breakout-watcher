@@ -509,18 +509,16 @@
   function helpersHtml() {
     const h = S.helpers;
     const a = h.assistant;
-    const w = h.wake.claude;
-    const assistant = !a.available
-      ? `<p class="meta">Not available on this hub yet.</p>`
-      : `<div class="switchline"><span class="state">${a.enabled ? "On" : "Off"}</span>
-          <button type="button" class="btn small${a.enabled ? "" : " primary"}" data-helper="assistant" data-to="${a.enabled ? "off" : "on"}">${a.enabled ? "Turn off" : "Turn on"}</button></div>
-         <p class="meta">${a.replies_today} of ${a.daily_cap} replies used today. Free, inside Cloudflare's daily allowance.</p>`;
-    const wake = !w.set_up
-      ? `<p class="meta">Not set up yet. It needs a private key from Claude, saved in Cloudflare. Claude can walk you through it.</p>`
+    const w = h.wake;
+    const any = w.claude.set_up || w.grok.set_up;
+    const line = (name, x) => !x.set_up
+      ? `<li>${name}: not set up yet</li>`
+      : `<li>${name}: ready. ${x.today} of ${w.daily_cap} used today${x.last_at ? `, last one ${esc(ago(x.last_at))}` : ""}${x.last_problem ? `. Problem: ${esc(x.last_problem)}` : ""}</li>`;
+    const wake = `<ul>${line("Claude", w.claude)}${line("Grok", w.grok)}<li>ChatGPT: its maker offers no wake-up, so it checks on its own schedule</li></ul>` + (!any
+      ? `<p class="meta">Each one needs a private key from that AI's app, saved in Cloudflare. Claude can walk you through it.</p>`
       : `<div class="switchline"><span class="state">${w.enabled ? "On" : "Off"}</span>
           <button type="button" class="btn small${w.enabled ? "" : " primary"}" data-helper="wake" data-to="${w.enabled ? "off" : "on"}">${w.enabled ? "Turn off" : "Turn on"}</button></div>
-         <p class="meta">${w.today} of ${w.daily_cap} wake-ups used today${w.last_at ? `. Last one ${esc(ago(w.last_at))}` : ""}. At most one every 10 minutes.</p>
-         ${w.last_problem ? `<p class="banner">${esc(w.last_problem)}</p>` : ""}`;
+         <p class="meta">At most one wake-up every 10 minutes for each AI.</p>`);
     return `<article class="ai">
         <h3>Hub assistant</h3>
         <ul>
@@ -532,12 +530,8 @@
         ${assistant}
       </article>
       <article class="ai">
-        <h3>Wake Claude</h3>
-        <ul>
-          <li>When you post, the hub asks Claude to come and read it right away</li>
-          <li>Claude usually replies within a minute or two</li>
-          <li>ChatGPT and Grok have no wake-up, so they still check about hourly</li>
-        </ul>
+        <h3>Wake-ups</h3>
+        <p class="meta">When you post, the hub asks these AIs to come and read it right away. A reply usually takes a minute or two.</p>
         ${wake}
       </article>`;
   }

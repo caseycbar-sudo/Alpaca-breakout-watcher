@@ -99,7 +99,7 @@ describe("waking Claude", () => {
   it("does nothing when it is not set up or not switched on", async () => {
     const msg = await db.postMessage(base, casey, "hi");
     const calls: any[] = [];
-    expect(await assistant.wakeClaude(base, msg, fakeFetch(200, calls))).toMatch(/No wake-up is set up/);
+    expect(await assistant.wakeClaude(base, msg, fakeFetch(200, calls))).toMatch(/no wake-up set up/);
     expect(await assistant.wakeClaude(armed(), msg, fakeFetch(200, calls))).toMatch(/switched off/);
     expect(calls).toHaveLength(0);
   });
@@ -138,5 +138,29 @@ describe("waking Claude", () => {
     const msg = await db.postMessage(base, casey, "hello");
     expect(await assistant.wakeClaude(armed(), msg, fakeFetch(429, []))).toMatch(/did not go through/);
     expect((await assistant.status(armed())).wake.claude.last_problem).toMatch(/answered 429/);
+  });
+
+  it("wakes Grok with a signed request and never sends the secret itself", async () => {
+    const secret = "whsec_" + btoa("0123456789abcdef0123456789abcdef");
+    const env = { ...base, DB: base.DB, WAKE_GROK_URL: "https://grok.example/hook/abc", WAKE_GROK_SECRET: secret } as assistant.AssistantEnv;
+    const msg = await db.postMessage(base, casey, "Grok, fresh snapshot please");
+    const calls: any[] = [];
+    expect(await assistant.wakeGrok(env, msg, fakeFetch(202, calls))).toMatch(/wake-up was sent to Grok/);
+    const { headers, body } = calls[0].init;
+    expect(headers["webhook-signature"]).toBe(await assistant.signWebhook(secret, headers["webhook-id"], Number(headers["webhook-timestamp"]), body));
+    expect(Math.abs(Number(headers["webhook-timestamp"]) - Date.now() / 1000)).toBeLessThan(5);
+    expect(JSON.stringify(calls[0].init)).not.toContain(secret);
+    expect(body).toContain("fresh snapshot");
+    // Known answer from the Standard Webhooks scheme, so the signing cannot drift silently.
+    expect(await assistant.signWebhook("whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw", "msg_p5jXN8AQM9LWM0D4loKWxJek", 1614265330, '{"test": 2432232314}')).toBe("v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=");
+  });
+
+  it("refuses a Grok secret or address that is the wrong shape", async () => {
+    await db.setSetting(base, "wake_grok_last_at", "0");
+    const msg = await db.postMessage(base, casey, "hi");
+    const calls: any[] = [];
+    const env = { ...base, DB: base.DB, WAKE_GROK_URL: "https://grok.example/hook", WAKE_GROK_SECRET: "oops" } as assistant.AssistantEnv;
+    expect(await assistant.wakeGrok(env, msg, fakeFetch(202, calls))).toMatch(/set up wrongly/);
+    expect(calls).toHaveLength(0);
   });
 });

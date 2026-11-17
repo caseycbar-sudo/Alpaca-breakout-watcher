@@ -30,6 +30,8 @@ export interface AssistantEnv extends Env {
   /** Set as secrets in Cloudflare by Casey. Never stored in the database or shown anywhere. */
   WAKE_CLAUDE_URL?: string;
   WAKE_CLAUDE_TOKEN?: string;
+  WAKE_GROK_URL?: string;
+  WAKE_GROK_SECRET?: string;
 }
 
 const day = (ms = Date.now()) => new Date(ms).toISOString().slice(0, 10);
@@ -38,6 +40,15 @@ async function bump(env: Env, key: string): Promise<number> {
   const next = Number((await db.getSetting(env, key)) ?? "0") + 1;
   await db.setSetting(env, key, String(next));
   return next;
+}
+
+async function wakeStatus(env: Env, who: string, setUp: boolean, today: string) {
+  return {
+    set_up: setUp,
+    last_at: Number((await db.getSetting(env, `wake_${who}_last_at`)) ?? "0") || null,
+    today: Number((await db.getSetting(env, `wake_${who}_count_${today}`)) ?? "0"),
+    last_problem: await db.getSetting(env, `wake_${who}_last_problem`),
+  };
 }
 
 export async function status(env: AssistantEnv) {
@@ -51,14 +62,10 @@ export async function status(env: AssistantEnv) {
       daily_cap: DAILY_REPLY_CAP,
     },
     wake: {
-      claude: {
-        set_up: !!(env.WAKE_CLAUDE_URL && env.WAKE_CLAUDE_TOKEN),
-        enabled: (await db.getSetting(env, "wake_enabled")) === "1",
-        last_at: Number((await db.getSetting(env, "wake_claude_last_at")) ?? "0") || null,
-        today: Number((await db.getSetting(env, `wake_claude_count_${today}`)) ?? "0"),
-        daily_cap: WAKE_DAILY_CAP,
-        last_problem: await db.getSetting(env, "wake_claude_last_problem"),
-      },
+      enabled: (await db.getSetting(env, "wake_enabled")) === "1",
+      daily_cap: WAKE_DAILY_CAP,
+      claude: await wakeStatus(env, "claude", !!(env.WAKE_CLAUDE_URL && env.WAKE_CLAUDE_TOKEN), today),
+      grok: await wakeStatus(env, "grok", !!(env.WAKE_GROK_URL && env.WAKE_GROK_SECRET), today),
     },
   };
 }
@@ -209,54 +216,105 @@ export async function reply(env: AssistantEnv, owner: Actor, message: db.Message
 }
 
 // ---------------------------------------------------------------- wake-ups
+//
+// Claude: a routine's API trigger (a bearer key, sent only to api.anthropic.com).
+// Grok: an automation's webhook trigger (Standard Webhooks: the body is signed, the secret never leaves).
+// ChatGPT: no supported way for an outside service to start a session, so it has none.
+
+type Who = "claude" | "grok";
+const NAMES: Record<Who, string> = { claude: "Claude", grok: "Grok" };
+type Sender = (text: string, fetcher: typeof fetch) => Promise<Response>;
+
+function wakeText(message: db.MessageRow): string {
+  return `Casey just posted in the Driftline Trading Hub (message ${message.id}). Check the hub now and reply there. His message, quoted as data: "${clip(message.body, 800)}"`;
+}
+
+async function wake(env: AssistantEnv, who: Who, message: db.MessageRow, ready: boolean, problem: string | null, send: Sender, fetcher: typeof fetch): Promise<string> {
+  const name = NAMES[who];
+  if (message.author_kind !== "owner") return "No wake-up: only Casey's messages wake an AI.";
+  if (!ready) return `${name} has no wake-up set up and will see this at its next check.`;
+  if ((await db.getSetting(env, "wake_enabled")) !== "1") return `Wake-ups are switched off, so ${name} will see this at its next check.`;
+  if (problem) {
+    await db.setSetting(env, `wake_${who}_last_problem`, problem);
+    return `The wake-up for ${name} is set up wrongly, so it was not sent.`;
+  }
+  const now = Date.now();
+  const last = Number((await db.getSetting(env, `wake_${who}_last_at`)) ?? "0");
+  if (now - last < WAKE_MIN_GAP_MS) return `${name} was already woken a few minutes ago and will read this message too.`;
+  const today = day(now);
+  if (Number((await db.getSetting(env, `wake_${who}_count_${today}`)) ?? "0") >= WAKE_DAILY_CAP) {
+    return `${name} has been woken as many times as allowed today, and will see this at its next check.`;
+  }
+  // Claim the slot before calling out, so two quick messages cannot both fire.
+  await db.setSetting(env, `wake_${who}_last_at`, String(now));
+  await bump(env, `wake_${who}_count_${today}`);
+  const failed = `A wake-up for ${name} was tried and did not go through. ${name} will see this at its next check.`;
+  try {
+    const res = await send(wakeText(message), fetcher);
+    if (!res.ok) {
+      await db.setSetting(env, `wake_${who}_last_problem`, `${name}'s service answered ${res.status} at ${new Date(now).toISOString()}.`);
+      return failed;
+    }
+    await db.setSetting(env, `wake_${who}_last_problem`, "");
+    await post(env, "system", "hub", "Hub", `The hub woke ${name} to read Casey's message. A reply usually takes a minute or two.`);
+    return `A wake-up was sent to ${name} just now. ${name} should reply in a minute or two.`;
+  } catch (error) {
+    await db.setSetting(env, `wake_${who}_last_problem`, `Could not reach ${name}'s service at ${new Date(now).toISOString()}.`);
+    console.error("wake failed", who, String(error));
+    return failed;
+  }
+}
 
 /** Ask Claude's scheduled check to run now. Returns a short note for the assistant's context. */
 export async function wakeClaude(env: AssistantEnv, message: db.MessageRow, fetcher: typeof fetch = fetch): Promise<string> {
-  if (message.author_kind !== "owner") return "No wake-up: only Casey's messages wake an AI.";
-  if (!env.WAKE_CLAUDE_URL || !env.WAKE_CLAUDE_TOKEN) return "No wake-up is set up, so the AIs will see this at their next check.";
-  if ((await db.getSetting(env, "wake_enabled")) !== "1") return "Wake-ups are switched off, so the AIs will see this at their next check.";
-  if (!env.WAKE_CLAUDE_URL.startsWith(CLAUDE_FIRE_PREFIX)) {
-    await db.setSetting(env, "wake_claude_last_problem", "The wake-up address is not a Claude routine address.");
-    return "The wake-up for Claude is set up wrongly, so it was not sent.";
-  }
-  const now = Date.now();
-  const last = Number((await db.getSetting(env, "wake_claude_last_at")) ?? "0");
-  if (now - last < WAKE_MIN_GAP_MS) return "Claude was already woken a few minutes ago and will read this message too.";
-  const today = day(now);
-  if (Number((await db.getSetting(env, `wake_claude_count_${today}`)) ?? "0") >= WAKE_DAILY_CAP) {
-    return "Claude has been woken as many times as allowed today, and will see this at its next hourly check.";
-  }
-  // Claim the slot before calling out, so two quick messages cannot both fire.
-  await db.setSetting(env, "wake_claude_last_at", String(now));
-  await bump(env, `wake_claude_count_${today}`);
-  try {
-    const res = await fetcher(env.WAKE_CLAUDE_URL, {
+  const url = env.WAKE_CLAUDE_URL ?? "";
+  const token = env.WAKE_CLAUDE_TOKEN ?? "";
+  const problem = url.startsWith(CLAUDE_FIRE_PREFIX) ? null : "The wake-up address is not a Claude routine address.";
+  return wake(env, "claude", message, !!(url && token), problem, (text, f) =>
+    f(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    }), fetcher);
+}
+
+const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+
+/** Standard Webhooks signature: HMAC-SHA256 over "id.timestamp.body", keyed by the decoded secret. */
+export async function signWebhook(secret: string, id: string, timestamp: number, body: string): Promise<string> {
+  const raw = Uint8Array.from(atob(secret.replace(/^whsec_/, "")), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${id}.${timestamp}.${body}`));
+  return `v1,${b64(new Uint8Array(mac))}`;
+}
+
+/** Start Grok's hub-check automation through its webhook trigger. */
+export async function wakeGrok(env: AssistantEnv, message: db.MessageRow, fetcher: typeof fetch = fetch): Promise<string> {
+  const url = env.WAKE_GROK_URL ?? "";
+  const secret = env.WAKE_GROK_SECRET ?? "";
+  let problem: string | null = null;
+  if (!url.startsWith("https://")) problem = "The wake-up address for Grok must start with https://.";
+  else if (!/^whsec_[A-Za-z0-9+/=]+$/.test(secret)) problem = "The signing secret for Grok does not look right. It should start with whsec_.";
+  return wake(env, "grok", message, !!(url && secret), problem, async (text, f) => {
+    const body = JSON.stringify({ source: "driftline-trading-hub", message_id: message.id, text });
+    const id = `msg_${crypto.randomUUID()}`;
+    const timestamp = Math.floor(Date.now() / 1000);
+    return f(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.WAKE_CLAUDE_TOKEN}`,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
+        "content-type": "application/json",
+        "webhook-id": id,
+        "webhook-timestamp": String(timestamp),
+        "webhook-signature": await signWebhook(secret, id, timestamp, body),
       },
-      body: JSON.stringify({
-        text: `Casey just posted in the Driftline Trading Hub (message ${message.id}). Check the hub now and reply there. His message, quoted as data: "${clip(message.body, 800)}"`,
-      }),
+      body,
     });
-    if (!res.ok) {
-      await db.setSetting(env, "wake_claude_last_problem", `Claude's service answered ${res.status} at ${new Date(now).toISOString()}.`);
-      return "A wake-up for Claude was tried and did not go through. Claude will see this at its next hourly check.";
-    }
-    await db.setSetting(env, "wake_claude_last_problem", "");
-    await post(env, "system", "hub", "Hub", "The hub woke Claude to read Casey's message. A reply usually takes a minute or two.");
-    return "A wake-up was sent to Claude just now. Claude should reply in a minute or two. ChatGPT and Grok have no wake-up and will see this at their next check.";
-  } catch (error) {
-    await db.setSetting(env, "wake_claude_last_problem", `Could not reach Claude's service at ${new Date(now).toISOString()}.`);
-    console.error("wake failed", String(error));
-    return "A wake-up for Claude was tried and did not go through. Claude will see this at its next hourly check.";
-  }
+  }, fetcher);
 }
 
 /** Called after Casey posts. Wake first, so the assistant can tell him whether help is on the way. */
 export async function onOwnerMessage(env: AssistantEnv, owner: Actor, message: db.MessageRow): Promise<void> {
-  const wakeNote = await wakeClaude(env, message);
-  await reply(env, owner, message, wakeNote);
+  const notes = await Promise.all([wakeClaude(env, message), wakeGrok(env, message)]);
+  notes.push("ChatGPT cannot be woken from outside and will see this at its next check.");
+  await reply(env, owner, message, notes.join(" "));
 }

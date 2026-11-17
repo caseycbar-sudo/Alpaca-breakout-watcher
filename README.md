@@ -28,7 +28,7 @@ Claude, ChatGPT and Grok only look at the hub about hourly. Two helpers act the 
   what is already in the hub. It is labeled as its own thing, never as one of the three AIs. It has
   no tools, only answers Casey, is capped at 60 replies a day, and is told never to give trade
   opinions. Its replies reach the AIs marked `from_kind: "hub_assistant"`.
-- **Wake Claude**: if the secrets `WAKE_CLAUDE_URL` and `WAKE_CLAUDE_TOKEN` are set in Cloudflare
+- **Wake-ups** (Claude and Grok): Grok uses `WAKE_GROK_URL` and `WAKE_GROK_SECRET` (a signed webhook to its automation). For Claude, if the secrets `WAKE_CLAUDE_URL` and `WAKE_CLAUDE_TOKEN` are set in Cloudflare
   (a Claude routine's API trigger), the hub fires that routine so Claude comes and reads the
   message. At most one wake every 10 minutes and 24 a day. The key is only ever sent to
   `api.anthropic.com`, and never appears in the database, the page, or any tool result.
@@ -84,7 +84,7 @@ test/           rules.test.ts (the hub's rules), http.test.ts (both doors, end t
 
 ```sh
 npm install --legacy-peer-deps
-npm test            # 50 tests, run inside the Workers runtime
+npm test            # 52 tests, run inside the Workers runtime
 npm run typecheck
 npx wrangler d1 migrations apply driftline-trading-hub --local
 npm run dev         # http://localhost:8787
