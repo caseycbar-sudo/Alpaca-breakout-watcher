@@ -145,3 +145,56 @@ export async function updateTask(env: Env, actor: Actor, input: Record<string,un
   if (!result[0].meta.changes) throw new HubError(409,'task_changed','Someone updated this task. Read it again before changing it.');
   return getTask(env,actor,id);
 }
+
+// ---------------------------------------------------------------- chat commands
+//
+// Some AI clients cache the hub's tool list and so cannot see update_task even
+// after it ships. Every client can post a chat message, so a job can also be moved
+// by writing a command as the first line of one. Same permissions, same checks:
+// this is another doorway into updateTask, not a way around it.
+
+const FIELDS = ['next_action','blocker','evidence','owner_id'] as const;
+
+export const COMMAND_HELP =
+  'Write "/job <number> <action>" on the first line, then your note on the lines below. ' +
+  `Actions: ${TASK_ACTIONS.join(', ')}. ` +
+  'Add "next_action: ...", "blocker: ...", "evidence: ..." or "owner_id: ..." on their own lines when the action needs them.';
+
+/** Pull a job command out of a chat message, or return null if it is an ordinary message. */
+export function parseCommand(body: string): { id: number; action: string; note: string; fields: Record<string,string> } | null {
+  const lines = body.replace(/\r/g,'').split('\n');
+  const head = /^\s*\/job\s+#?(\d+)\s+([a-z_]+)\s*$/i.exec(lines[0] ?? '');
+  if (!head) return null;
+  const fields: Record<string,string> = {};
+  const noteLines: string[] = [];
+  for (const line of lines.slice(1)) {
+    const field = /^\s*([a-z_]+)\s*:\s*(.*)$/i.exec(line);
+    const key = field?.[1]?.toLowerCase();
+    if (key && (FIELDS as readonly string[]).includes(key)) fields[key] = (field![2] ?? '').trim();
+    else noteLines.push(line);
+  }
+  return { id: Number(head[1]), action: head[2].toLowerCase(), note: noteLines.join('\n').trim(), fields };
+}
+
+/** Run a parsed command and return one plain sentence describing what happened. */
+export async function runCommand(env: Env, actor: Actor, command: NonNullable<ReturnType<typeof parseCommand>>): Promise<string> {
+  const who = actor.name;
+  if (!command.note) return `${who} wrote a job command with no note, so nothing changed. Put the note on the lines under the command.`;
+  if (!(TASK_ACTIONS as readonly string[]).includes(command.action)) {
+    return `${who} asked for "${command.action}", which is not a job action. ${COMMAND_HELP}`;
+  }
+  let task;
+  try {
+    task = (await getTask(env, actor, command.id)).task;
+  } catch (error) {
+    return `${who} aimed a job command at #${command.id}: ${error instanceof HubError ? error.message : 'that job could not be read.'}`;
+  }
+  try {
+    const after = await updateTask(env, actor, {
+      ...command.fields, id: command.id, expected_version: task.version, action: command.action, note: command.note,
+    });
+    return `${who} ran "${command.action}" on job #${command.id} (${task.title}). It is now ${after.task.status}, owned by ${after.task.owner_id || 'nobody'}.`;
+  } catch (error) {
+    return `${who} tried "${command.action}" on job #${command.id} and the hub refused: ${error instanceof HubError ? error.message : 'something went wrong.'}`;
+  }
+}

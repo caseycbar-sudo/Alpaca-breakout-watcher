@@ -19,6 +19,14 @@ import {
 export const STALE_AFTER_MINUTES = 120;
 const MAX_MESSAGE = 8000;
 
+/** Post a note from the hub itself, and hand the same words back to the caller. */
+export async function hubSays(env: Env, body: string): Promise<string> {
+  await env.DB.prepare(`INSERT INTO messages (author_kind, author_id, author_name, body, created_at) VALUES ('system','hub','Hub',?1,?2)`)
+    .bind(body, Date.now())
+    .run();
+  return body;
+}
+
 // ---------------------------------------------------------------- settings
 
 export async function getSetting(env: Env, key: string): Promise<string | null> {

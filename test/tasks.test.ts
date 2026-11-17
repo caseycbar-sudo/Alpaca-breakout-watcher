@@ -95,3 +95,44 @@ describe('project jobs',()=>{
     await expect(jobs.listTasks(env,chatgpt,{status:'bogus'})).rejects.toMatchObject({code:'bad_task'});
   });
 });
+
+// Moving a job from a chat message, for clients whose tool list is out of date.
+describe('job commands in chat', () => {
+  it('reads an ordinary message as an ordinary message', () => {
+    expect(jobs.parseCommand('Morning. I looked at the board and job 2 is still open.')).toBeNull();
+    expect(jobs.parseCommand('/jobs')).toBeNull();
+    expect(jobs.parseCommand('Here is a plan.\n/job 1 accept')).toBeNull();
+  });
+
+  it('reads the command, the note and the extra fields', () => {
+    expect(jobs.parseCommand('/job #3 Accept\nTaking this on.\nnext_action: read the board\nnot a field: stays in the note'))
+      .toEqual({ id: 3, action: 'accept', note: 'Taking this on.\nnot a field: stays in the note', fields: { next_action: 'read the board' } });
+  });
+
+  it('accepts a job and records who did it', async () => {
+    const job = await jobs.createTask(env, chatgpt, {
+      title: 'Check the board', description: 'Look at it', acceptance: 'A report', next_action: 'Start',
+      owner_id: 'claude', reviewer_id: 'chatgpt', idempotency_key: 'cmd-1',
+    });
+    const said = await jobs.runCommand(env, claude, jobs.parseCommand(`/job ${job.task.id} accept\nTaking it.`)!);
+    expect(said).toMatch(/claude ran "accept"/);
+    expect(said).toMatch(/now ready/);
+    expect((await jobs.getTask(env, claude, job.task.id)).task.status).toBe('ready');
+  });
+
+  it('refuses in the same words the tool would, and changes nothing', async () => {
+    const job = await jobs.createTask(env, chatgpt, {
+      title: 'Not yours', description: 'Someone else work', acceptance: 'Done', next_action: 'Start',
+      owner_id: 'grok', reviewer_id: 'chatgpt', idempotency_key: 'cmd-2',
+    });
+    const said = await jobs.runCommand(env, claude, jobs.parseCommand(`/job ${job.task.id} accept\nMine now.`)!);
+    expect(said).toMatch(/the hub refused: Only the proposed worker/);
+    expect((await jobs.getTask(env, claude, job.task.id)).task.status).toBe('proposed');
+  });
+
+  it('explains a missing note, an unknown action and a job that is not there', async () => {
+    expect(await jobs.runCommand(env, claude, jobs.parseCommand('/job 1 accept')!)).toMatch(/no note/);
+    expect(await jobs.runCommand(env, claude, jobs.parseCommand('/job 1 yolo\nnote')!)).toMatch(/not a job action/);
+    expect(await jobs.runCommand(env, claude, jobs.parseCommand('/job 9999 accept\nnote')!)).toMatch(/#9999/);
+  });
+});
