@@ -16,6 +16,8 @@ import { type Actor, type Env, HubError, requireScope } from "./util";
 export const LAB_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/backtest.json";
 export const LAB_URL_FALLBACK = "https://caseycbar-sudo.github.io/Alpaca-breakout-watcher/data/backtest.json";
 export const HISTORY_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/backtest_history.json";
+export const SWING_RESULTS_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_lab.json";
+export const SWING_SIGNAL_URL = "https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_signal.json";
 const CACHE_KEY = "research_summary";
 const FRESH_FOR_MS = 60 * 60_000; // re-read the lab at most once an hour
 const STALE_AFTER_DAYS = 14; // after this, say plainly that the lab has not run
@@ -225,6 +227,50 @@ export function trend(raw: unknown) {
     .slice(-20);
 }
 
+// The second lab. Twenty years of daily bars with real costs, testing slow and
+// well-known strategies rather than intraday breakouts. Its two live rules are
+// simple trend filters, so a nightly reading is as current as they ever need to be.
+export function strategies(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return {
+        name: str(o.name),
+        since: str(o.start) || null,
+        cagr: round(num(o.cagr), 1),
+        worst_drawdown: round(num(o.maxdd), 1),
+        sharpe: round(num(o.sharpe), 2),
+        trades_per_year: round(num(o.trades_per_yr), 1),
+        last_3_years: round(num(o.last3y), 1),
+      };
+    })
+    .filter((x) => x.name && x.cagr !== null)
+    .sort((a, b) => (b.sharpe ?? -99) - (a.sharpe ?? -99))
+    .slice(0, 20);
+}
+
+export function sleeves(raw: unknown) {
+  const d = obj(raw);
+  return {
+    read_at: str(d.generated_at) || null,
+    sleeves: arr(d.sleeves)
+      .map((x) => {
+        const o = obj(x);
+        const signal = str(o.signal).toUpperCase();
+        return {
+          symbol: str(o.symbol).slice(0, 20),
+          rule: num(o.length) === null ? null : `hold while above its ${o.length}-day average`,
+          as_of: str(o.as_of).slice(0, 20) || null,
+          close: round(num(o.close)),
+          average: round(num(o.average)),
+          distance_pct: round(num(o.distance_pct), 2),
+          signal: signal === "HOLD" || signal === "CASH" ? signal : null,
+        };
+      })
+      .filter((x) => x.symbol && x.signal),
+  };
+}
+
 export interface Summary {
   source: string;
   generated_at: string | null;
@@ -250,6 +296,7 @@ export interface Summary {
   symbols_studied: number | null;
   caveats: string[];
   trend: ReturnType<typeof trend>;
+  swing: { strategies: ReturnType<typeof strategies>; signals: ReturnType<typeof sleeves> | null } | null;
   caveat: string;
 }
 
@@ -300,6 +347,7 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
     symbols_studied: arr(d.study_list).length || null,
     caveats: arr(d.caveats).map(str).filter(Boolean).slice(0, 8),
     trend: [],
+    swing: null,
     caveat:
       "These are backtested results from Casey's own lab, with modeled spread and slippage. They describe what the rules would have done, not what any trade will do. The hub cannot place orders, and nothing here is advice.",
   };
@@ -309,6 +357,25 @@ interface Cached {
   fetched_at: number;
   summary?: Summary;
   problem?: string;
+}
+
+async function readJson(url: string): Promise<unknown | null> {
+  try {
+    const res = await fetch(url, { headers: { accept: "application/json" } });
+    return res.ok ? await res.json() : null;
+  } catch (error) {
+    console.error("lab file fetch failed", url, String(error));
+    return null;
+  }
+}
+
+/** The swing lab's table and its two trend readings, if they have been published. */
+async function readSwing(): Promise<Summary["swing"]> {
+  const [results, signal] = await Promise.all([readJson(SWING_RESULTS_URL), readJson(SWING_SIGNAL_URL)]);
+  if (!results && !signal) return null;
+  const table = strategies(results);
+  if (!table.length && !signal) return null;
+  return { strategies: table, signals: signal ? sleeves(signal) : null };
 }
 
 async function readHistory(): Promise<ReturnType<typeof trend>> {
@@ -327,8 +394,8 @@ async function readLab(env: Env, now: number): Promise<Cached> {
     try {
       const res = await fetch(url, { headers: { accept: "application/json" } });
       if (res.ok) {
-        const [body, history] = await Promise.all([res.json(), readHistory()]);
-        return { fetched_at: now, summary: { ...summarize(body, now), source: url, trend: history } };
+        const [body, history, swing] = await Promise.all([res.json(), readHistory(), readSwing()]);
+        return { fetched_at: now, summary: { ...summarize(body, now), source: url, trend: history, swing } };
       }
       problem = `The lab file answered ${res.status}.`;
     } catch (error) {
@@ -372,7 +439,7 @@ export async function forAgent(env: Env, actor: Actor, opts: { refresh?: boolean
     ...result.summary,
     read_at: new Date(result.fetched_at).toISOString(),
     how_to_use:
-      "Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade. In what_moves_the_odds, use only entries with knowable_at_entry true as a reason to take or skip a trade; the rest describe what happened after the entry and cannot be used to choose one.",
+      "swing holds a second, separate study: twenty years of daily bars testing slow strategies, with its two trend readings. Treat it as the better-evidenced of the two labs and say which one a number came from. Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade. In what_moves_the_odds, use only entries with knowable_at_entry true as a reason to take or skip a trade; the rest describe what happened after the entry and cannot be used to choose one.",
     ...(result.problem ? { note: `Showing the last good read. ${result.problem}` } : {}),
   };
 }

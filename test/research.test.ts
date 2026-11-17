@@ -92,7 +92,8 @@ describe("reading the lab", () => {
 
   it("caches the read, and refreshes only when asked", async () => {
     let reads = 0;
-    const fakeFetch = async (url: string) => { if (url === research.HISTORY_URL) return new Response("[]"); reads++; return new Response(JSON.stringify(LAB)); };
+    const extras = [research.HISTORY_URL, research.SWING_RESULTS_URL, research.SWING_SIGNAL_URL];
+    const fakeFetch = async (url: string) => { if (extras.includes(url)) return new Response("[]"); reads++; return new Response(JSON.stringify(LAB)); };
     const original = globalThis.fetch;
     globalThis.fetch = fakeFetch as unknown as typeof fetch;
     try {
@@ -113,12 +114,13 @@ describe("reading the lab", () => {
     const original = globalThis.fetch;
     globalThis.fetch = (async (url: string) => {
       tried.push(url);
-      if (url === research.HISTORY_URL) return new Response("[]");
+      if ([research.HISTORY_URL, research.SWING_RESULTS_URL, research.SWING_SIGNAL_URL].includes(url)) return new Response("[]");
       return url === research.LAB_URL ? new Response("nope", { status: 404 }) : new Response(JSON.stringify(LAB));
     }) as unknown as typeof fetch;
     try {
       const result = await research.getResearch(env, { refresh: true });
-      expect(tried.filter((u) => u !== research.HISTORY_URL)).toEqual([research.LAB_URL, research.LAB_URL_FALLBACK]);
+      const extra = [research.HISTORY_URL, research.SWING_RESULTS_URL, research.SWING_SIGNAL_URL];
+      expect(tried.filter((u) => !extra.includes(u))).toEqual([research.LAB_URL, research.LAB_URL_FALLBACK]);
       expect(result.summary?.source).toBe(research.LAB_URL_FALLBACK);
       expect(result.summary?.every_signal.trades).toBe(1187);
     } finally {
@@ -147,5 +149,33 @@ describe("reading the lab", () => {
     const out = await research.forAgent(env, claude);
     expect(out.how_to_use).toMatch(/never treat a finding as permission to trade/i);
     expect(out.caveat).toMatch(/cannot place orders/);
+  });
+});
+
+// The second lab: slow strategies on twenty years of daily bars.
+describe("the swing lab", () => {
+  it("ranks strategies by Sharpe and keeps the losers visible", () => {
+    const table = research.strategies([
+      { name: "SPY buy & hold", start: "2006-10-03", cagr: 11.2, maxdd: -55.2, sharpe: 0.64, trades_per_yr: 0, last3y: 23.2 },
+      { name: "QQQ 200d trend filter", cagr: 11.2, maxdd: -26.2, sharpe: 0.76, trades_per_yr: 3 },
+      { name: "Old style: crypto day trade", cagr: -82, maxdd: -100, sharpe: -4.7, trades_per_yr: 255 },
+      { name: "no numbers here" },
+    ]);
+    expect(table.map((s) => s.name)).toEqual(["QQQ 200d trend filter", "SPY buy & hold", "Old style: crypto day trade"]);
+    expect(table[0]).toMatchObject({ cagr: 11.2, worst_drawdown: -26.2, trades_per_year: 3 });
+  });
+
+  it("reads the trend signals and only accepts HOLD or CASH", () => {
+    const out = research.sleeves({
+      generated_at: "2026-11-17T18:59:25Z",
+      sleeves: [
+        { sleeve: "A", symbol: "QQQ", as_of: "2026-11-17", close: 654.135, length: 200, average: 681.5612, distance_pct: -4.01, signal: "CASH" },
+        { sleeve: "B", symbol: "BTC-USD", close: 63709.71, length: 50, average: 78967.9, distance_pct: -19.32, signal: "HOLD" },
+        { symbol: "NOPE", length: 10, signal: "maybe" },
+      ],
+    });
+    expect(out.sleeves).toHaveLength(2);
+    expect(out.sleeves[0]).toMatchObject({ symbol: "QQQ", signal: "CASH", distance_pct: -4.01, rule: "hold while above its 200-day average" });
+    expect(out.sleeves[1].signal).toBe("HOLD");
   });
 });

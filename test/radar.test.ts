@@ -1,6 +1,7 @@
 // The live radar: what the watcher last saw, and who is allowed to send it.
 import { env as rawEnv } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
+import * as db from "../src/db";
 import * as radar from "../src/radar";
 import type { Actor, Env } from "../src/util";
 
@@ -79,6 +80,12 @@ describe("reading the radar", () => {
   });
 
   it("says how old the scan is and when it has stopped being 'now'", async () => {
+    // The published copy is a real URL, so hold it still: this is about the posted one.
+    const original = globalThis.fetch;
+    globalThis.fetch = (async () => new Response("nope", { status: 404 })) as unknown as typeof fetch;
+    // Clear anything an earlier read cached, so this is only about the posted scan.
+    await db.setSetting(base, "radar_published", JSON.stringify({ stored_at: Date.now(), radar: { generated_at: null } }));
+    try {
     const old = { ...SCAN, generated_at: new Date(Date.now() - 3 * 3600_000).toISOString() };
     await radar.receive(armed(), post(old, "shared-secret"));
     const shown = await radar.current(base);
@@ -89,6 +96,9 @@ describe("reading the radar", () => {
     const now = await radar.current(base);
     expect(now?.stale).toBe(false);
     expect(now?.live_feed_connected).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 
   it("tells an AI that an empty list is not a reason to loosen anything", async () => {

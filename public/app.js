@@ -690,6 +690,29 @@
       </section>`;
   }
 
+  function swingBlock(sw) {
+    if (!sw) return "";
+    const sig = sw.signals;
+    const cards = (sig?.sleeves || []).map((x) => `<article class="ai">
+        <h3>${esc(x.symbol)} · ${x.signal === "HOLD" ? "hold" : "cash"}</h3>
+        <p class="meta">The rule: ${esc(x.rule || "a trend filter")}.</p>
+        <ul>
+          <li>Last close ${price(x.close)}</li>
+          <li>Its average ${price(x.average)}</li>
+          <li>${x.distance_pct === null ? "" : `${x.distance_pct > 0 ? "Above" : "Below"} it by ${Math.abs(x.distance_pct)}%`}</li>
+        </ul>
+        <p class="meta">${x.signal === "HOLD" ? "Above the line, so this rule would be holding it." : "Below the line, so this rule would be in cash."} Reading from ${esc(x.as_of || "an unknown date")}. This is what the rule says, not what to do.</p>
+      </article>`).join("");
+    return `<section class="section"><h2>Your second lab: slow strategies</h2>
+        <p class="sub">Twenty years of daily bars with real costs, testing well-known slow strategies instead of intraday breakouts. This is the better-evidenced of your two labs.</p>
+        ${cards ? `<p class="lead">Today's readings</p>${cards}` : ""}
+        ${sw.strategies?.length ? `<p class="lead">What it found, best risk-adjusted first</p>
+          ${labTable(sw.strategies, [["Strategy", (x) => x.name], ["Return a year", (x) => (x.cagr === null ? "–" : x.cagr + "%")], ["Worst fall", (x) => (x.worst_drawdown === null ? "–" : x.worst_drawdown + "%")], ["Sharpe", (x) => (x.sharpe === null ? "–" : x.sharpe)], ["Trades a year", (x) => (x.trades_per_year === null ? "–" : x.trades_per_year)]])}
+          <p class="meta">Sharpe is return measured against how bumpy the ride was; higher is steadier for the same return. "Worst fall" is the deepest drop from a high point along the way, which is the part that actually makes people quit.</p>` : ""}
+        <p class="meta">Backtests on past data. They say what a rule would have done, not what it will do. Nothing here places an order.</p>
+      </section>`;
+  }
+
   function renderResearch() {
     const r = S.research;
     if (!r || r.unavailable) {
@@ -754,6 +777,7 @@
         <p class="sub">Every lab run since it started keeping score. If the conclusion jumps around, no single run means much.</p>
         ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Held up", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
       </section>` : ""}
+      ${swingBlock(r.swing)}
       ${patternBlock("Stay away from these", "Conditions the lab found did worse, and kept doing worse when checked again on days it had not seen.", r.stay_away_from)}
       ${patternBlock("These held up", "Conditions that looked good and still looked good on fresh days. Rare, and worth little on their own.", r.held_up)}
       <section class="section"><h2>Read this before you lean on it</h2>
