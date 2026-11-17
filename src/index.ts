@@ -11,10 +11,11 @@ import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/w
 import * as assistant from "./assistant";
 import * as auth from "./auth";
 import * as db from "./db";
+import * as research from "./research";
 import { handleMcp } from "./mcp";
 import * as pages from "./pages";
 import * as tasks from "./tasks";
-import { type Actor, type Env, HubError, SCOPES, SCOPE_WORDS, json } from "./util";
+import { type Actor, type Env, HubError, SCOPES, SCOPE_WORDS, json , ownerOnly } from "./util";
 
 interface HubEnv extends assistant.AssistantEnv {
   ASSETS: Fetcher;
@@ -248,7 +249,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   }
 
   if (path === "/api/state" && method === "GET") {
-    const [board, chat, open, answered, plans, rules, links, seen] = await Promise.all([
+    const [board, chat, open, answered, plans, rules, links, seen, lab] = await Promise.all([
       db.buildBoard(env),
       db.readChat(env, owner, { limit: 40, mark_read: false }),
       db.listDecisions(env, owner, { status: "open" }),
@@ -257,6 +258,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       db.rulesHistory(env),
       connections(env),
       db.agentsSeen(env),
+      research.getResearch(env).catch(() => null),
     ]);
     return json({
       server_time: Date.now(),
@@ -270,6 +272,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       connections: links,
       seen,
       helpers: await assistant.status(env),
+      research: lab && lab.summary ? { ...lab.summary, read_at: lab.fetched_at, problem: lab.problem ?? null } : { unavailable: lab?.problem ?? "The lab's results have not been read yet." },
       jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
   }
@@ -295,6 +298,11 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
     // Only a genuinely new message from Casey sets anything off; a retried send does not.
     if (message.id > (before?.m ?? 0)) ctx.waitUntil(assistant.onOwnerMessage(env, owner, message));
     return json(message);
+  }
+  if (path === "/api/research/refresh" && method === "POST") {
+    ownerOnly(owner, "refresh the lab findings");
+    const fresh = await research.getResearch(env, { refresh: true });
+    return json(fresh.summary ? { ...fresh.summary, read_at: fresh.fetched_at, problem: fresh.problem ?? null } : { unavailable: fresh.problem });
   }
   if (path === "/api/helpers" && method === "POST") {
     await assistant.setSwitches(env, owner, await readJson(request));

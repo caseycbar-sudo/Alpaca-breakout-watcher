@@ -10,7 +10,7 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-  const TABS = ["today", "jobs", "chat", "trades", "rules", "ais"];
+  const TABS = ["today", "jobs", "chat", "trades", "research", "rules", "ais"];
 
   let S = null; // latest state from the server
   let tab = TABS.includes(sessionStorage.getItem("tab")) ? sessionStorage.getItem("tab") : "jobs";
@@ -623,7 +623,63 @@
 
   // ----------------------------------------------------------- render
 
-  const RENDER = { jobs: renderJobs, today: renderToday, chat: renderChat, trades: renderTrades, rules: renderRules, ais: renderAis };
+  // ------------------------------------------------------- research
+  function runLine(label, r, note) {
+    if (!r || r.trades === null) return "";
+    const pf = r.profit_factor === null ? "" : ` Profit factor ${r.profit_factor}, so it ${r.profit_factor >= 1 ? "made back more than it lost" : "lost more than it made"}.`;
+    return `<article class="ai">
+      <h3>${esc(label)}</h3>
+      <p class="meta">${esc(note)}</p>
+      <ul>
+        <li><strong>${r.trades}</strong> trades</li>
+        <li><strong>${r.win_rate === null ? "unknown" : r.win_rate + "%"}</strong> of them won</li>
+        <li>Average result <strong>${r.avg_r === null ? "unknown" : r.avg_r + "R"}</strong>${r.avg_r !== null && r.avg_r < 0 ? " (a loss)" : ""}</li>
+      </ul>
+      <p class="meta">R means one unit of what the trade risked. Minus 0.5R on a trade risking $10 is a $5 loss.${pf}</p>
+    </article>`;
+  }
+
+  function patternBlock(title, lead, list) {
+    if (!list || !list.length) return `<section class="section"><h2>${esc(title)}</h2><p class="sub">${esc(lead)}</p><p class="meta">The lab did not list any this run.</p></section>`;
+    return `<section class="section"><h2>${esc(title)}</h2><p class="sub">${esc(lead)}</p>
+      ${list.map((p) => `<article class="ai"><h3>${esc(p.pattern)}</h3>
+        <p class="meta">${p.trades_checked === null ? "" : `Checked on ${p.trades_checked} trades. `}${p.avg_r === null ? "" : `Average ${p.avg_r}R. `}${p.win_rate === null ? "" : `${p.win_rate}% won.`}</p>
+        ${p.evidence ? `<p class="meta">Evidence: ${esc(p.evidence)}.</p>` : ""}</article>`).join("")}
+    </section>`;
+  }
+
+  function renderResearch() {
+    const r = S.research;
+    if (!r || r.unavailable) {
+      return `<section class="section"><h2>Your breakout lab</h2>
+        <p class="sub">The hub reads the results your watcher publishes, so every trade idea here can be checked against your own history.</p>
+        <p class="banner">${esc(r?.unavailable || "Not read yet.")}</p>
+        <div class="actions"><button type="button" class="btn" id="lab-refresh">Try again</button></div></section>`;
+    }
+    const age = r.age_days === null ? "" : r.age_days === 0 ? "today" : r.age_days === 1 ? "yesterday" : `${r.age_days} days ago`;
+    return `<section class="section"><h2>Your breakout lab</h2>
+        <p class="sub">What your own rules actually did, replayed over past market days. This is where a trade idea gets checked against evidence instead of opinion.</p>
+        <p class="lead">${esc(r.headline)}</p>
+        ${r.stale ? `<p class="banner">The lab last ran ${esc(age)}. These findings are getting old, so the market it studied may not be the one you are trading.</p>` : ""}
+        <p class="meta">Lab run ${esc(age)}${r.window?.start ? `, covering ${esc(r.window.start)} to ${esc(r.window.end)}` : ""}${r.window?.trading_days ? ` (${r.window.trading_days} trading days)` : ""}.</p>
+        <div class="actions"><button type="button" class="btn" id="lab-refresh">Read the lab again</button></div>
+      </section>
+      <section class="section"><h2>How the rules performed</h2>
+        ${runLine("Taking every signal", r.every_signal, "The loose version: enter on anything that looks like a breakout.")}
+        ${runLine("Only the strict setups", r.strict_rules, "The careful version: every gate has to pass before entering.")}
+      </section>
+      ${r.model?.verdict ? `<section class="section"><h2>Can it be predicted?</h2>
+        <p class="sub">The lab also trains a model to guess which breakouts work.</p>
+        <p class="lead">${esc(r.model.verdict)}</p></section>` : ""}
+      ${patternBlock("Stay away from these", "Conditions the lab found did worse, and kept doing worse when checked again on days it had not seen.", r.stay_away_from)}
+      ${patternBlock("These held up", "Conditions that looked good and still looked good on fresh days. Rare, and worth little on their own.", r.held_up)}
+      <section class="section"><h2>Read this before you lean on it</h2>
+        <p class="meta">${esc(r.caveat)}</p>
+        <p class="meta">Claude, ChatGPT and Grok can read all of this too, and are asked to quote it when they write or review a plan.</p>
+      </section>`;
+  }
+
+  const RENDER = { jobs: renderJobs, today: renderToday, chat: renderChat, trades: renderTrades, research: renderResearch, rules: renderRules, ais: renderAis };
 
   function sliceKey() {
     if (!S) return "";
@@ -633,6 +689,7 @@
       today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
+      research: [S.research, Math.floor(minute / 5)],
       rules: [S.rules],
       ais: [S.connections, S.connector_address, S.helpers, Math.floor(minute / 5)],
     };
@@ -808,6 +865,10 @@
       }
       t.disabled = true;
       return act(() => api(`/api/connections/${encodeURIComponent(t.dataset.disconnect)}/disconnect`, {}), `${t.dataset.name} is disconnected`);
+    }
+    if (t.id === "lab-refresh") {
+      t.disabled = true;
+      return act(async () => { S.research = await api("/api/research/refresh", {}); }, "Lab read again");
     }
     if (t.dataset.helper) {
       t.disabled = true;

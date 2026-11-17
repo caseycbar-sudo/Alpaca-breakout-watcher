@@ -59,6 +59,7 @@ export function appShell(): Response {
     <button type="button" data-tab="jobs"><span class="nav-icon" aria-hidden="true">▤</span>Jobs<span class="badge" id="badge-jobs" hidden></span></button>
     <button type="button" data-tab="chat"><span class="nav-icon" aria-hidden="true">◌</span>Chat<span class="badge" id="badge-chat" hidden></span></button>
     <button type="button" data-tab="trades"><span class="nav-icon" aria-hidden="true">↗</span>Plans<span class="badge" id="badge-trades" hidden></span></button>
+    <button type="button" data-tab="research"><span class="nav-icon" aria-hidden="true">◴</span>Research</button>
     <button type="button" data-tab="rules"><span class="nav-icon" aria-hidden="true">☷</span>Rules</button>
     <button type="button" data-tab="ais"><span class="nav-icon" aria-hidden="true">◎</span>Team</button>
   </nav>
