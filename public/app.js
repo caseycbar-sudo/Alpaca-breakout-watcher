@@ -379,6 +379,7 @@
       : `No order can be placed from this hub, and no ${term("engine", "trading engine")} is running. ` +
         (s ? `The account numbers below are ${esc(s.age_words)} old.` : "No account numbers have been reported yet.");
     const flags = S.board.exceptions;
+    const history = [...(S.board.historical_details || []), ...(S.board.historical_notices || [])];
     const r = S.board.rules;
     return `<section class="notice ${cls}"><h1>${esc(head)}</h1><p>${stops.length ? esc(sub) : sub}</p></section>
       ${driftline()}
@@ -389,6 +390,7 @@
         ${flags.length
           ? `<ul class="flags">${flags.map((f) => `<li class="${f.level}"><span class="dot" aria-hidden="true"></span><span>${esc(f.text)}</span></li>`).join("")}</ul>`
           : `<p class="sub">Nothing flagged. The hub checks for missing stops, out-of-date numbers, and anything outside your rules.</p>`}
+        ${history.length ? `<details class="gloss"><summary>Historical protection details (${history.length})</summary><p class="sub">Source, date and account-matching caveats are retained below. Reports from other histories leave active flags after 72 elapsed hours; that does not resolve them or confirm current holdings.</p><ul>${history.map((h) => `<li>${esc(h.text)}</li>`).join("")}</ul></details>` : ""}
       </section>
       <section class="section"><h2>Your rules, version ${r.version}</h2>
         <p class="sub">At most ${esc(money(r.max_per_trade))} per trade. No new orders once down ${esc(money(r.daily_trigger))} on the day. At most ${r.max_positions} positions. ${esc(r.instruments)}.

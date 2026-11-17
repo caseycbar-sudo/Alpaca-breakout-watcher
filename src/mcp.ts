@@ -115,6 +115,9 @@ function createServer() {
             plans_to_approve: plans.plans.filter((p) => p.review_state === "reviewed").map((p) => ({ id: p.id, symbol: p.symbol })),
           },
           board_flags: board.exceptions,
+          historical_notice_count: board.historical_notices.length,
+          historical_detail_count: board.historical_details.length,
+          historical_details_tool: "get_board returns historical_details and historical_notices with full source/date context.",
           account_numbers: board.snapshot
             ? { reported_by: board.snapshot.reported_by, age: board.snapshot.age_words, stale: board.snapshot.stale }
             : "No snapshot reported yet.",
@@ -178,7 +181,7 @@ function createServer() {
     "get_board",
     {
       description:
-        "The shared board: the latest reported account snapshot with its source and age, whether each position is covered by a stop, open orders, the current rules, and every flag the hub is raising. Numbers are as reported by an AI, not live. When a value is null it was not reported; do not treat it as zero.",
+        "The shared board: the latest reported account snapshot with its source and age, whether each position is covered by a stop, open orders, the current rules, and every flag the hub is raising. Historical protection detail is returned in historical_details and historical_notices. Numbers are as reported by an AI, not live. When a value is null it was not reported; do not treat it as zero.",
       inputSchema: { include_history: z.boolean().optional().describe("Also return the last 20 snapshots, newest first.") },
     },
     (args) =>

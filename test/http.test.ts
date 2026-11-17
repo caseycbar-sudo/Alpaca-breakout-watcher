@@ -244,7 +244,10 @@ describe("the AI door", () => {
   it("holds a read-only AI to reading", async () => {
     const c = await connect("ChatGPT", { agent: "chatgpt" }); // Casey unticked everything but reading
     readOnly = await token(c);
-    expect((await tool(readOnly, "get_board")).isError).toBe(false);
+    const historicalBoard = await tool(readOnly, "get_board");
+    expect(historicalBoard.isError).toBe(false);
+    expect(Array.isArray(historicalBoard.data.historical_details)).toBe(true);
+    expect(Array.isArray(historicalBoard.data.historical_notices)).toBe(true);
     for (const [name, args] of [
       ["post_message", { body: "hi" }],
       ["report_snapshot", { source: "x" }],

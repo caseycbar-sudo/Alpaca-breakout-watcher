@@ -374,6 +374,8 @@ export async function buildBoard(env: Env, at = now()) {
   const rules = await currentRules(env);
   const snap = await env.DB.prepare(`SELECT * FROM snapshots ORDER BY observed_at DESC, id DESC LIMIT 1`).first<SnapshotRow>();
   const exceptions: BoardException[] = [];
+  const historicalNotices: Array<{ text: string }> = [];
+  const historicalDetails: Array<{ text: string }> = [];
   let snapshot: Record<string, unknown> | null = null;
 
   if (!snap) {
@@ -415,6 +417,7 @@ export async function buildBoard(env: Env, at = now()) {
     if (triggerReached) {
       exceptions.push({ level: "stop", text: `The account was down $${Math.abs(snap.day_change!).toFixed(2)} on the day at the last check, which reaches the $${rules.daily_trigger} daily stop. No new orders today.` });
     }
+    const historicalSymbols = new Set<string>();
     if (positionsOut) {
       if (positionsOut.length > rules.max_positions) {
         exceptions.push({ level: "stop", text: `There are ${positionsOut.length} positions open and the rules allow ${rules.max_positions}.` });
@@ -422,7 +425,79 @@ export async function buildBoard(env: Env, at = now()) {
       for (const p of positionsOut) {
         if (p.coverage === "none") exceptions.push({ level: "warn", text: `${p.symbol} has no stop order protecting it.` });
         if (p.coverage === "partial") exceptions.push({ level: "warn", text: `${p.symbol} is only partly covered by a stop order.` });
-        if (p.coverage === "unknown") exceptions.push({ level: "warn", text: `${p.symbol}: open orders were not reported, so whether it has a stop is unknown.` });
+      }
+    }
+    // Keep each reporter/source history separate. A new connection cannot silently
+    // clear another connection's warning, nor establish that their accounts match.
+    const priorReports = await env.DB.prepare(
+      `SELECT * FROM (
+         SELECT *, ROW_NUMBER() OVER (
+           PARTITION BY author_id, source ORDER BY observed_at DESC, id DESC
+         ) AS history_rank
+         FROM snapshots WHERE positions IS NOT NULL AND open_orders IS NOT NULL
+         AND (observed_at < ?1 OR (observed_at = ?1 AND id <= ?2))
+       ) WHERE history_rank = 1 ORDER BY observed_at DESC, id DESC`,
+    ).bind(snap.observed_at, snap.id).all<SnapshotRow>();
+    for (const prior of priorReports.results) {
+      const sameConnection = prior.author_id === snap.author_id && prior.source === snap.source;
+      // Current complete reports already have their own per-symbol coverage warnings.
+      if (sameConnection && positions !== null && orders !== null) continue;
+      const priorPositions = JSON.parse(prior.positions!) as PositionIn[];
+      const priorOrders = JSON.parse(prior.open_orders!) as OrderIn[];
+      const unresolved = priorPositions.filter(p => ["none", "partial"].includes(coverageFor(p, priorOrders).coverage));
+      if (!unresolved.length) continue;
+      // Only evidence from this history's own reporter/source may retire its warnings.
+      // These lists never become the current holdings/orders or affect slot capacity.
+      const [latestHoldings, latestOrders] = await Promise.all([
+        env.DB.prepare(
+          `SELECT positions FROM snapshots WHERE positions IS NOT NULL
+           AND author_id = ?3 AND source = ?4
+           AND (observed_at < ?1 OR (observed_at = ?1 AND id <= ?2))
+           ORDER BY observed_at DESC, id DESC LIMIT 1`,
+        ).bind(snap.observed_at, snap.id, prior.author_id, prior.source).first<{ positions: string }>(),
+        env.DB.prepare(
+          `SELECT * FROM snapshots WHERE open_orders IS NOT NULL
+           AND author_id = ?3 AND source = ?4
+           AND (observed_at < ?1 OR (observed_at = ?1 AND id <= ?2))
+           ORDER BY observed_at DESC, id DESC LIMIT 1`,
+        ).bind(snap.observed_at, snap.id, prior.author_id, prior.source).first<SnapshotRow>(),
+      ]);
+      const lastReportedPositions: PositionIn[] = JSON.parse(latestHoldings!.positions);
+      const laterOrders: OrderIn[] = JSON.parse(latestOrders!.open_orders!);
+      const ordersAreLater = latestOrders!.observed_at > prior.observed_at ||
+        (latestOrders!.observed_at === prior.observed_at && latestOrders!.id > prior.id);
+      const terminal = new Set(["canceled", "cancelled", "filled", "rejected", "expired", "failed", "voided"]);
+      const age = describeAge(Math.max(0, Math.round((at - prior.observed_at) / 60_000)));
+      for (const position of unresolved) {
+        if (!lastReportedPositions.some(p => p.symbol === position.symbol)) continue;
+        const coverage = coverageFor(position, priorOrders).coverage;
+        const hasLaterStop = ordersAreLater && laterOrders.some(o => o.symbol === position.symbol &&
+          o.side === "sell" && o.type.includes("stop") && o.quantity > 0 && !terminal.has((o.status ?? "").toLowerCase()));
+        const laterEvidence = hasLaterStop
+          ? ` A later report in that same history includes a sell stop for ${position.symbol}: snapshot #${latestOrders!.id} at ${new Date(latestOrders!.observed_at).toISOString()}. This does not confirm current quantities or coverage.`
+          : "";
+        const currentUncertainty = sameConnection
+          ? `The latest report omits ${positions === null && orders === null ? "positions and open orders" : positions === null ? "positions" : "open orders"}; current protection is unknown.`
+          : "This is from a different reporter/source connection and may not be the same account; it does not establish current protection or holdings.";
+        const quietHistory = !sameConnection && at - prior.observed_at > 72 * 60 * 60 * 1000;
+        const historicalText = `Unresolved historical report: ${position.symbol} ${coverage === "none" ? "had no stop protection" : "had only partial stop protection"} ` +
+            `in snapshot #${prior.id}, reported by ${prior.author_name} from ${prior.source} at ${new Date(prior.observed_at).toISOString()} (${age} ago). ` +
+            currentUncertainty + laterEvidence + " Account identity is not recorded; reconciliation stays within each reporter/source history.";
+        // Age changes display priority only; it does not resolve a protection concern.
+        if (quietHistory) historicalNotices.push({ text: historicalText });
+        else {
+          historicalDetails.push({ text: historicalText });
+          if (!historicalSymbols.has(position.symbol)) {
+            exceptions.push({ level: "warn", text: `${position.symbol}: earlier report (${age} ago) showed ${coverage === "none" ? "no stop" : "partial stop coverage"}. ${sameConnection ? "Current protection unknown." : "Account match unverified."} See historical details.` });
+          }
+          historicalSymbols.add(position.symbol);
+        }
+      }
+    }
+    // Combine historical context and current uncertainty into one warning per symbol.
+    for (const p of positionsOut ?? []) {
+      if (p.coverage === "unknown" && !historicalSymbols.has(p.symbol)) {
+        exceptions.push({ level: "warn", text: `${p.symbol}: open orders were not reported, so whether it has a stop is unknown.` });
       }
     }
     snapshot = {
@@ -482,7 +557,9 @@ export async function buildBoard(env: Env, at = now()) {
       slots_left: snapshot && typeof snapshot.position_count === "number" ? Math.max(0, rules.max_positions - (snapshot.position_count as number)) : null,
     },
     snapshot,
-    exceptions,
+    exceptions: exceptions.sort((a, b) => a.level === b.level ? 0 : a.level === "stop" ? -1 : 1),
+    historical_details: historicalDetails,
+    historical_notices: historicalNotices,
   };
 }
 

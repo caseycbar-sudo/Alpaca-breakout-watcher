@@ -134,6 +134,8 @@ export async function buildContext(env: AssistantEnv, owner: Actor, wakeNote: st
     lines.push(s.open_orders === null ? "Open orders: not reported." : `Open orders: ${s.open_orders.length}.`);
   }
   lines.push(`Flags: ${board.exceptions.map((e) => e.text).join(" | ") || "none"}`);
+  lines.push(`Active historical source details: ${board.historical_details.map((e) => e.text).join(" | ") || "none"}`);
+  lines.push(`Older historical reports (not current flags; age does not resolve them): ${board.historical_notices.map((e) => e.text).join(" | ") || "none"}`);
   lines.push(
     `Questions waiting on Casey: ${open.map((q) => `"${clip(q.question, 160)}" (from ${q.author_name})`).join("; ") || "none"}`,
   );
