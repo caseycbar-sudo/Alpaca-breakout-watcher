@@ -1,7 +1,8 @@
 {
   // Driftline Trading Hub. A separate project from Casey's business website.
   // Nothing here references driftlineprovisions.com or its app/database.
-  "name": "driftline-trading-hub",
+  // The app is named after the repository Cloudflare was connected to. The database keeps the hub's own name.
+  "name": "alpaca-breakout-watcher",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],

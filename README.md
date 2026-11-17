@@ -78,8 +78,10 @@ Changes to the schema go in a new numbered file under `migrations/`. Never edit 
 
 ## Deploying
 
-Cloudflare builds and deploys this repository on every push to `main`
-(Workers & Pages, connected to this repo; deploy command `npx wrangler deploy`).
+Cloudflare builds and deploys the `trading-hub` branch of this repository on every push
+(Workers & Pages app `alpaca-breakout-watcher`, production branch `trading-hub`,
+deploy command `npx wrangler deploy`). The `main` branch holds a different, older project
+and is not deployed.
 The database and the sign-in store are already created and named in `wrangler.jsonc`.
 
 ## Later milestones, each needing agreement from Casey and all three AIs
