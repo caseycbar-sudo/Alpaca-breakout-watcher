@@ -92,7 +92,7 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
       claude: !!(env.WAKE_CLAUDE_URL && env.WAKE_CLAUDE_TOKEN),
       grok: !!(env.WAKE_GROK_URL && env.WAKE_GROK_SECRET),
     };
-    return json({ ok: true, project_jobs: true, broker_connection: "none", engine: "none", orders_enabled: false, assistant: !!env.AI, wake_keys });
+    return json({ ok: true, project_jobs: true, broker_connection: "none", engine: "none", orders_enabled: false, assistant: !!env.AI, wake_keys, radar_feed: !!env.RADAR_TOKEN });
   }
 
   try {
