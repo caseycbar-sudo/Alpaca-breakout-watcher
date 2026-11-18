@@ -840,7 +840,7 @@
     const draft = tab === "chat" ? $("#composer textarea")?.value : "";
     view.innerHTML = RENDER[tab]();
     lastRendered = { key, tab };
-    measureTabs();
+    measureChrome();
     if (tab === "chat") {
       if (draft) $("#composer textarea").value = draft;
       if (atBottom || firstChat) window.scrollTo(0, document.body.scrollHeight);
@@ -848,15 +848,34 @@
     }
   }
 
-  // The composer and the page padding are both offset by --tabs-h. If the tab bar ever
-  // renders taller than that (an extra tab, a wrapped label, a larger font), the offset
-  // is wrong and the bar covers whatever sits at the bottom of the page. Measuring it
-  // after every render means the layout cannot silently drift out of agreement again.
-  function measureTabs() {
+  // One source of truth for how much room the floating chrome needs at the bottom.
+  //
+  // This used to be three hand-maintained numbers that had to agree: --tabs-h, a
+  // hardcoded .composer bottom of 100px, and 85px again in the mobile block. ChatGPT
+  // pointed out that my earlier "measured" fix did not actually drive the composer at
+  // all, because those later rules overrode it. It worked only because the bar happened
+  // to fit one row again. So now the geometry is measured and the CSS follows it.
+  //
+  // --nav-clear is the distance from the top of the tab bar to the bottom of the
+  // viewport, which already includes the bar's height, its floating margin and the
+  // safe-area inset, because it is read off the rendered element.
+  function measureChrome() {
     const bar = document.querySelector(".tabs");
     if (!bar) return;
-    const h = Math.round(bar.getBoundingClientRect().height);
-    if (h > 0) document.documentElement.style.setProperty("--tabs-h", h + "px");
+    const root = document.documentElement;
+    const clear = Math.round(window.innerHeight - bar.getBoundingClientRect().top);
+    const box = document.querySelector("#composer");
+    const composerH = box ? Math.round(box.getBoundingClientRect().height) : 0;
+    // Only write when it actually moves. The bar's height does not depend on the
+    // composer, so there is no feedback loop today, but a future change that made one
+    // would otherwise oscillate forever instead of failing loudly.
+    const put = (name, value) => {
+      if (value <= 0) return;
+      if (root.style.getPropertyValue(name) === value + "px") return;
+      root.style.setProperty(name, value + "px");
+    };
+    put("--nav-clear", clear);
+    put("--composer-h", composerH);
   }
 
   function go(next, scrollTop = true) {
@@ -1088,7 +1107,7 @@
 
   let resizeTimer;
   window.addEventListener("resize", () => {
-    measureTabs(); // the bar's height can change with the width, on every tab, not just today
+    measureChrome(); // the bar's height can change with the width, on every tab, not just today
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { if (tab === "today" && !typing()) render(true); }, 200);
   });

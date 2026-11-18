@@ -102,13 +102,19 @@ function newsTiming(published: string | null, firstSeen: string | null, scanAt: 
   // got it decides how much more it means. A live sighting shows the watcher held the
   // headline for some time first. A fetch made by the scan itself shows only that: the
   // scan had it, which says nothing about whether it was there early enough to act on.
+  // Whether the watcher had this headline before the scan STARTED is a stronger fact
+  // than having it before the scan finished, and only one of them is usually true.
+  // ChatGPT caught the live_stream line claiming the strong one on the weak evidence.
+  const beforeStart = seen <= scan;
   if (seenVia === "scan_fetch") {
-    return { verdict: "ok" as const, available_at, basis: "Published before the scan finished, and the scan fetched it itself partway through. That rules out a headline from after the scan. It does not show the headline was available early enough to act on." };
+    return { verdict: "ok" as const, available_at, basis: "Published before the scan, and the scan fetched it itself" + (beforeStart ? " before its decision time" : " partway through") + ". That rules out a headline from after the scan. It does not show the headline was available early enough to act on." };
   }
   if (seenVia === "live_stream") {
-    return { verdict: "ok" as const, available_at, basis: "Published, then seen live by the watcher, both before the scan ran." };
+    return beforeStart
+      ? { verdict: "ok" as const, available_at, basis: "Published, then seen live by the watcher, both before the scan started. The watcher held this headline going into the scan." }
+      : { verdict: "ok" as const, available_at, basis: "Published, then seen live by the watcher, but not until after the scan had started. It was in hand before the scan finished, not before it began, so it cannot show the news preceded the setup." };
   }
-  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan finished. How the watcher got it was not recorded." };
+  return { verdict: "ok" as const, available_at, basis: "Published, and first seen before the scan " + (beforeStart ? "started" : "finished") + ". How the watcher got it was not recorded." };
 }
 
 /** Only these fields are kept, whatever else arrives. Nothing about an account travels. */
@@ -286,6 +292,6 @@ export async function forAgent(env: Env, actor: Actor) {
   return {
     ...radar,
     how_to_use:
-"Each headline carries a timing verdict and a basis line saying what it rests on. Read the basis, not just the verdict: \"ok\" means only that the headline cannot have come from after the scan. Where seen_via is scan_fetch the scan fetched the headline itself, so nothing shows it was available early enough to act on; where it is live_stream the watcher held it before the scan ran. UNKNOWN_INGESTION means publication time only, so availability is a guess; UNKNOWN_SCAN_WINDOW means the headline is stamped after the scan's decision time and the scan did not report when it finished, so a mid-scan fetch cannot be told apart from a later backfill; FAIL_FUTURE_INFORMATION means it arrived after the scan had finished and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
+"Each headline carries a timing verdict and a basis line saying what it rests on. Read the basis, not just the verdict: \"ok\" means only that the headline cannot have come from after the scan. Where seen_via is scan_fetch the scan fetched the headline itself, so nothing shows it was available early enough to act on; where it is live_stream the watcher saw it on the live feed, and the basis says whether that was before the scan started or only before it finished. Only the first shows the news preceded the setup. UNKNOWN_INGESTION means publication time only, so availability is a guess; UNKNOWN_SCAN_WINDOW means the headline is stamped after the scan's decision time and the scan did not report when it finished, so a mid-scan fetch cannot be told apart from a later backfill; FAIL_FUTURE_INFORMATION means it arrived after the scan had finished and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
   };
 }

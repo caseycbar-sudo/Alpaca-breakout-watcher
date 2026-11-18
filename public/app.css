@@ -145,7 +145,7 @@ label { font-weight: 600; font-size: 15.5px; }
   text-decoration: underline dotted var(--tide); text-underline-offset: 3px; }
 
 /* ---------- chat ---------- */
-.chat { padding: 8px 14px 96px; }
+.chat { padding: 8px 14px calc(var(--nav-clear, 87px) + var(--composer-h, 70px) + 28px); }
 .msg { margin-top: 14px; max-width: 92%; }
 .msg .who { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: var(--drift); padding: 0 4px 3px; }
 .msg .who b { color: var(--ink); font-weight: 600; }
@@ -362,7 +362,7 @@ label { font-size:12px; color:#b0c4d5; }
 .msg.hub-assistant .body { background:#192b3b; }
 .md code,.md pre { background:#06101c; }
 .ledger,.rule-lines { border-top:1px solid var(--line); }
-.composer { background:#0a1423ed; backdrop-filter:blur(15px); bottom:100px; border:1px solid var(--line); max-width:900px; margin:0 auto; border-radius:16px; }
+.composer { background:#0a1423ed; backdrop-filter:blur(15px); bottom:calc(var(--nav-clear, 87px) + 13px); border:1px solid var(--line); max-width:900px; margin:0 auto; border-radius:16px; }
 .composer form { max-width:none; }
 .sheet { background:#0009; backdrop-filter:blur(5px); }
 .sheet-card { border:1px solid #3c5062; }.toast { background:#cceee3; color:#102b27; border:1px solid #78c6b2; }.toast.bad { background:#713d3e; color:#fff; }
@@ -380,7 +380,7 @@ label { font-size:12px; color:#b0c4d5; }
   .team-grid { gap:7px; }.team-tile { grid-template-columns:1fr; gap:8px; padding:12px; border-radius:12px; }.team-name { font-size:12px; }.team-name small { font-size:9px; }.team-load { font-size:10px; }.team-load span { display:block; }.agent-avatar { width:30px; height:30px; font-size:10px; }
   .section-heading h2 { font-size:20px; }.small-copy { font-size:9px; }.jobs-grid { grid-template-columns:1fr; }.job-card { padding:19px; }
   .tabs { margin:0 10px 10px; border-radius:16px; padding:3px; }.tabs button { height:56px; font-size:10px; }.nav-icon { font-size:19px; }
-  .notice { padding:23px; }.notice h1 { font-size:33px; }.composer { bottom:85px; margin:0 10px; }.chat { padding:8px 0 96px; }.formgrid .pair { gap:8px; }
+  .notice { padding:23px; }.notice h1 { font-size:33px; }.composer { margin:0 10px; }.chat { padding:8px 0 calc(var(--nav-clear, 87px) + var(--composer-h, 70px) + 28px); }.formgrid .pair { gap:8px; }
   .door { margin:20px 12px; }.sheet-card { max-height:88vh; }
 }
 @media(prefers-reduced-motion:no-preference) { .team-tile,.job-card,.btn { transition:background .18s,border-color .18s,transform .18s; }.team-tile:hover { border-color:#5d8d97; transform:translateY(-2px); }.btn:hover:not([disabled]) { border-color:#79cbbd; }@keyframes desk-in{from{opacity:.5;transform:translateY(7px)}to{opacity:1;transform:none}} }

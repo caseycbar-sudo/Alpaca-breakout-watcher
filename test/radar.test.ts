@@ -171,6 +171,19 @@ describe("reading the radar", () => {
     const streamed = news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z", news_seen_via: "live_stream" });
     expect(streamed.verdict).toBe("ok");
     expect(streamed.basis).toContain("seen live");
+    // Seen before the scan started, so the strong claim is earned.
+    expect(streamed.basis).toContain("before the scan started");
+
+    // ChatGPT's second catch. A live sighting DURING the scan is still ok, but it must
+    // not claim the watcher held the headline going in: the bound only proves it arrived
+    // before the scan finished. A setup forming at the decision time was not informed by
+    // news that landed two seconds later.
+    const midScan = radar.clean({ generated_at: "2026-11-17T18:30:00Z", published_at: "2026-11-17T18:30:05Z",
+      candidates: [{ symbol: "X", news_headline: "h", news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:30:02Z", news_seen_via: "live_stream" }] },
+      "posted by the watcher").candidates[0].news;
+    expect(midScan.verdict).toBe("ok");
+    expect(midScan.basis).toContain("not before it began");
+    expect(midScan.basis).not.toContain("before the scan started");
 
     // How it arrived is still optional, and an unlabelled sighting admits that.
     expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z" }).basis).toContain("not recorded");
