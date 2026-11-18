@@ -190,8 +190,14 @@
     const closed = ["done","canceled"].includes(t.status);
     return `<article class="job-card" data-status="${esc(t.status)}" id="job-${t.id}">
       <div class="job-card-top"><span class="job-tag">#${t.id} · ${esc(t.project)}</span><span class="priority ${esc(t.priority)}">${esc(t.priority)}</span></div>
-      <h3>${esc(t.title)}</h3><p class="meta"><strong class="status-pill ${esc(t.status)}">${esc(jobStates[t.status])}</strong> · ${esc(people[t.owner_id] || t.owner_id)}${t.status === "proposed" ? " (not yet accepted)" : ""} · Reviewer: ${esc(people[t.reviewer_id] || "Casey")}</p>
-      <p class="job-copy">${esc(t.description)}</p>
+      <h3>${esc(t.title)}</h3>
+      <div class="job-meta">
+        <strong class="status-pill ${esc(t.status)}">${esc(jobStates[t.status])}</strong>
+        <span class="who"><i class="av av-${esc(t.owner_id || "casey")}">${esc((people[t.owner_id] || "Casey").slice(0, 1))}</i>${esc(people[t.owner_id] || t.owner_id || "Casey")}${t.status === "proposed" ? " · not accepted" : ""}</span>
+        <span class="who quiet"><i class="av av-${esc(t.reviewer_id || "casey")}">${esc((people[t.reviewer_id] || "Casey").slice(0, 1))}</i>reviews</span>
+      </div>
+      <p class="job-copy job-desc">${esc(t.description)}</p>
+      <button type="button" class="job-expand" data-expand="job-${t.id}">Read the whole job</button>
       <p class="job-copy"><strong>Next:</strong> ${esc(t.next_action)}</p>
       ${t.blocker ? `<p class="banner job-copy"><strong>Blocked:</strong> ${esc(t.blocker)}</p>` : ""}
       ${t.stale ? `<p class="meta">No update in over 24 hours. Check whether the owner can continue.</p>` : ""}
@@ -1217,6 +1223,14 @@
   view.addEventListener("click", async (e) => {
     const t = e.target.closest("button, a");
     if (!t) return;
+    if (t.dataset.expand) {
+      const card = document.getElementById(t.dataset.expand);
+      if (card) {
+        const open = card.classList.toggle("open");
+        t.textContent = open ? "Show less" : "Read the whole job";
+      }
+      return;
+    }
     if (t.id === "v2-flags") {
       const list = document.getElementById("v2-flaglist");
       if (list) { list.hidden = !list.hidden; t.textContent = list.hidden ? t.textContent.replace("Hide", "Show") : t.textContent.replace("Show", "Hide"); }

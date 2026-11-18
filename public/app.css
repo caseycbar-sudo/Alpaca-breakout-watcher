@@ -619,3 +619,64 @@ label { font-size:12px; color:#b0c4d5; }
    meter drew a 100px bar inside a 322px track and read as nearly empty when it was
    actually full. Stretch it to the track. */
 .v2-meter .track svg { display: block; width: 100%; height: 9px; }
+
+/* ================= THE REST OF THE TABS =================
+   Casey approved the Overview direction, so the same language is lifted onto the
+   shared pieces every other tab already uses. Restyling what is there rather than
+   rewriting six renderers: less code, less risk, and the structure those tabs rely
+   on keeps working while the look changes. */
+
+.section, .plan, .ai, .job-card, .team-tile, .door, .sheet-card {
+  background: linear-gradient(168deg, #113449, #0e2a3d) !important;
+  border: 1px solid #1d4a63 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px #03121c55;
+}
+.section { padding: 20px 18px !important; margin-top: 14px; }
+.section > h2, .section-heading h2 { color: #eaf7fb; letter-spacing: -.025em; }
+.section > .sub, .meta, .small-copy { color: #9dc2d4; }
+.jobs-section { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+
+/* job cards: the description was the wall of text. Three lines, then a tap. Nothing
+   is removed, and the acceptance criteria and history stay exactly where they were. */
+.job-card { padding: 18px 17px !important; }
+.job-card h3 { font-size: 16.5px; letter-spacing: -.02em; color: #eaf7fb; margin: 8px 0 0; }
+.job-desc { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; color: #9dc2d4; font-size: 13.5px; margin-top: 8px; }
+.job-card.open .job-desc { -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+.job-expand { background: none; border: 0; padding: 4px 0 0; cursor: pointer;
+              color: #34d8f0; font-size: 12.5px; font-weight: 700; }
+.job-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 11px; margin-top: 10px; font-size: 12px; color: #9dc2d4; }
+.job-meta .who { display: inline-flex; align-items: center; gap: 6px; }
+.job-meta .who.quiet { color: #6b96ad; }
+.av { display: grid; place-items: center; width: 21px; height: 21px; border-radius: 7px;
+      font-size: 10px; font-weight: 800; font-style: normal; color: #04202b;
+      background: linear-gradient(150deg, #4aa8ff, #2563d6); }
+.av-claude { background: linear-gradient(150deg, #ff9d6b, #e0603c); }
+.av-chatgpt { background: linear-gradient(150deg, #3ee6b0, #19b98c); }
+.av-grok { background: linear-gradient(150deg, #b89cff, #7a5cf0); }
+.av-casey { background: linear-gradient(150deg, #34d8f0, #2b8fb8); }
+
+/* status and priority carry colour now, with the word still there so colour is never
+   the only thing saying what state a job is in. */
+.status-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 10.5px;
+               font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
+.status-pill.review { background: #ffc24d24; color: #ffc24d; border: 1px solid #ffc24d45; }
+.status-pill.in_progress { background: #3ee6b020; color: #3ee6b0; border: 1px solid #3ee6b045; }
+.status-pill.ready { background: #4aa8ff20; color: #7cc2ff; border: 1px solid #4aa8ff45; }
+.status-pill.blocked { background: #ff8f6b20; color: #ff8f6b; border: 1px solid #ff8f6b45; }
+.status-pill.proposed { background: #b89cff20; color: #c4affd; border: 1px solid #b89cff45; }
+.status-pill.done, .status-pill.canceled { background: #ffffff0f; color: #7fa5bb; border: 1px solid #ffffff1a; }
+.priority { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #6b96ad; }
+.priority.high { color: #ffc24d; }
+.job-tag { font-size: 10.5px; letter-spacing: .05em; color: #6b96ad; font-weight: 700; }
+
+/* tables and plan blocks pick up the same surfaces */
+.plan-table { border-radius: 14px; border: 1px solid #1d4a63; background: #0a2231; }
+.plan-table table { color: #d6e9f2; }
+.plan-table th { color: #7fa5bb; border-bottom-color: #1d4a63; }
+.plan-table td { border-bottom-color: #ffffff0d; }
+.btn { border-radius: 13px; }
+.btn.primary { background: linear-gradient(150deg, #3ee6b0, #19b98c); color: #04231a; border: 0; font-weight: 750; }
+.empty { background: #0a2231; border: 1px dashed #1d4a63; border-radius: 16px; color: #7fa5bb; }
+.flags li { border-radius: 12px; }
