@@ -788,6 +788,83 @@
       </section>`;
   }
 
+  // --- charts ---------------------------------------------------------------
+  // Two forms, chosen by what the data is for, not by what looks impressive.
+  //
+  // The lab trend is change-over-time for one measure, so: a line. The section it
+  // sits in asks "has the answer been steady?", which a line answers at a glance and
+  // a table of twenty rows does not.
+  //
+  // The strategy comparison is polarity, made money or lost it, so: diverging bars
+  // around a zero line. Return and drawdown are both percentages but they are
+  // different measures, and a second axis for the second one is the commonest way to
+  // make a chart lie, so drawdown is a direct label rather than a second scale.
+  //
+  // Colour never carries a value on its own here. Every bar is labelled with its
+  // signed number, and the table under each chart stays as the readable form. The
+  // green/coral pair is the same one the ticker uses and was chosen with a
+  // colourblind-separation check rather than by eye.
+  const UP = "#6fd6ae", DOWN = "#e2896f", AXIS = "#3b5468", INK = "#9fb4c4";
+
+  function trendChart(rows) {
+    const pts = rows.filter((r) => typeof r.avg_r === "number");
+    // One point is not a trend. Saying so is more useful than drawing a dot.
+    if (pts.length < 3) return "";
+    const W = 640, H = 150, L = 8, R = 54, T = 12, B = 22;
+    const vals = pts.map((r) => r.avg_r);
+    let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+    if (hi === lo) { hi += 0.5; lo -= 0.5; }
+    const pad = (hi - lo) * 0.12;
+    lo -= pad; hi += pad;
+    const x = (i) => L + (i * (W - L - R)) / Math.max(1, pts.length - 1);
+    const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
+    const zero = y(0);
+    const line = pts.map((r, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(r.avg_r).toFixed(1)}`).join(" ");
+    const area = `${line} L${x(pts.length - 1).toFixed(1)} ${zero.toFixed(1)} L${x(0).toFixed(1)} ${zero.toFixed(1)} Z`;
+    const last = pts[pts.length - 1];
+    const dots = pts.map((r, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(r.avg_r).toFixed(1)}" r="9" fill="transparent"><title>${esc(r.at)}: ${r.avg_r}R over ${r.trades === null ? "an unknown number of" : r.trades} trades</title></circle>`).join("");
+    return `<figure class="chart">
+      <svg viewBox="0 0 ${W} ${H}" role="img" width="100%" height="${H}"
+           aria-label="Average R per lab run across ${pts.length} runs. Latest ${last.avg_r} R. The table below has every value.">
+        <defs><linearGradient id="trendfill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="${UP}" stop-opacity=".30"/><stop offset="1" stop-color="${UP}" stop-opacity="0"/>
+        </linearGradient></defs>
+        <path d="${area}" fill="url(#trendfill)"/>
+        <line x1="${L}" x2="${W - R}" y1="${zero.toFixed(1)}" y2="${zero.toFixed(1)}" stroke="${AXIS}" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="${W - R + 6}" y="${(zero + 4).toFixed(1)}" fill="${INK}" font-size="11">break even</text>
+        <path d="${line}" fill="none" stroke="${UP}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(last.avg_r).toFixed(1)}" r="4" fill="${UP}" stroke="#0d1a2b" stroke-width="2"/>
+        <text x="${W - R + 6}" y="${(y(last.avg_r) + 4).toFixed(1)}" fill="${INK}" font-size="12" font-weight="600">${esc(String(last.avg_r))}R</text>
+        ${dots}
+      </svg>
+      <figcaption>Average R per trade, one point per lab run, oldest on the left. Below the dashed line the rules lost money on that run.</figcaption>
+    </figure>`;
+  }
+
+  function strategyChart(rows) {
+    const pts = rows.filter((s) => typeof s.cagr === "number").slice(0, 8);
+    if (pts.length < 2) return "";
+    const span = Math.max(...pts.map((s) => Math.abs(s.cagr)), 1);
+    const half = 50; // percent of the row width each arm may use
+    return `<figure class="chart">
+      <ul class="bars">${pts.map((s) => {
+        const w = (Math.abs(s.cagr) / span) * half;
+        const neg = s.cagr < 0;
+        const dd = s.worst_drawdown === null ? "worst fall not reported" : `worst fall ${s.worst_drawdown}%`;
+        return `<li>
+          <span class="bar-name">${esc(s.name)}</span>
+          <span class="bar-rail">
+            <span class="bar-zero"></span>
+            <span class="bar-fill ${neg ? "neg" : "pos"}" style="width:${w.toFixed(2)}%;${neg ? `right:${half}%` : `left:${half}%`}"></span>
+          </span>
+          <span class="bar-val ${neg ? "neg" : "pos"}">${s.cagr > 0 ? "+" : ""}${esc(String(s.cagr))}%</span>
+          <span class="bar-note">${esc(dd)}</span>
+        </li>`;
+      }).join("")}</ul>
+      <figcaption>Return a year, measured from the zero line in the middle. The worst fall beside each one is the deepest drop it took along the way, which is the number that decides whether anyone could actually have held it.</figcaption>
+    </figure>`;
+  }
+
   function swingBlock(sw) {
     if (!sw) return "";
     const sig = sw.signals;
@@ -805,6 +882,7 @@
         <p class="sub">Twenty years of daily bars with real costs, testing well-known slow strategies instead of intraday breakouts. This is the better-evidenced of your two labs.</p>
         ${cards ? `<p class="lead">Today's readings</p>${cards}` : ""}
         ${sw.strategies?.length ? `<p class="lead">What it found, best risk-adjusted first</p>
+          ${strategyChart(sw.strategies)}
           ${labTable(sw.strategies, [["Strategy", (x) => x.name], ["Return a year", (x) => (x.cagr === null ? "–" : x.cagr + "%")], ["Worst fall", (x) => (x.worst_drawdown === null ? "–" : x.worst_drawdown + "%")], ["Sharpe", (x) => (x.sharpe === null ? "–" : x.sharpe)], ["Trades a year", (x) => (x.trades_per_year === null ? "–" : x.trades_per_year)]])}
           <p class="meta">Sharpe is return measured against how bumpy the ride was; higher is steadier for the same return. "Worst fall" is the deepest drop from a high point along the way, which is the part that actually makes people quit.</p>` : ""}
         <p class="meta">Backtests on past data. They say what a rule would have done, not what it will do. Nothing here places an order.</p>
@@ -873,6 +951,7 @@
       </section>` : ""}
       ${r.trend?.length > 1 ? `<section class="section"><h2>Has the answer been steady?</h2>
         <p class="sub">Every lab run since it started keeping score. If the conclusion jumps around, no single run means much.</p>
+        ${trendChart(r.trend)}
         ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Selected for checking", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
       </section>` : ""}
       ${swingBlock(r.swing)}
