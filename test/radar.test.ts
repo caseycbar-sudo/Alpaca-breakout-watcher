@@ -145,4 +145,33 @@ describe("reading the radar", () => {
     // A mangled sighting time is no better than a missing one: not "ok" either way.
     expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T1805:00Z" }).verdict).toBe("UNKNOWN_INGESTION");
   });
+
+  // Job #9. The watcher now sends news_first_seen, so these reach "ok" where they used to
+  // read UNKNOWN_INGESTION. "ok" earned by the scan fetching the headline itself is much
+  // weaker than "ok" earned by a live sighting, and the basis has to say which it is,
+  // otherwise the field just turns every headline green.
+  it("says how the watcher got a headline, and does not overclaim a scan-time fetch", () => {
+    const news = (candidate: Record<string, unknown>) =>
+      radar.clean({ generated_at: "2026-11-17T18:30:00Z", candidates: [{ symbol: "X", news_headline: "h", ...candidate }] }, "posted by the watcher").candidates[0].news;
+
+    // A fetch made by the scan itself. Equal timestamps are fine: it still cannot be from
+    // the future. But the basis must not claim the headline was there in time to act on.
+    const fetched = news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:30:00Z", news_seen_via: "scan_fetch" });
+    expect(fetched.verdict).toBe("ok");
+    expect(fetched.seen_via).toBe("scan_fetch");
+    expect(fetched.basis).toContain("does not show the headline was available early enough to act on");
+
+    // A live sighting is the stronger case, and says so.
+    const streamed = news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z", news_seen_via: "live_stream" });
+    expect(streamed.verdict).toBe("ok");
+    expect(streamed.basis).toContain("seen live");
+
+    // How it arrived is still optional, and an unlabelled sighting admits that.
+    expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z" }).basis).toContain("not recorded");
+
+    // A sighting stamped after the scan stays a failure whatever label comes with it.
+    expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:45:00Z", news_seen_via: "scan_fetch" }).verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // And a label alone never buys a verdict.
+    expect(news({ news_seen_via: "live_stream" }).verdict).toBe("UNKNOWN_TIME");
+  });
 });

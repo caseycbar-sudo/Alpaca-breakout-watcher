@@ -45,7 +45,7 @@ function instant(value: string | null): number | null {
  * This fails closed. Anything missing, unzoned or unreadable is UNKNOWN, never "ok",
  * because "ok" is read elsewhere as proof that a candidate had a catalyst in time.
  */
-function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null) {
+function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null, seenVia: string | null) {
   const pub = instant(published);
   const seen = instant(firstSeen);
   const scan = instant(scanAt);
@@ -65,7 +65,17 @@ function newsTiming(published: string | null, firstSeen: string | null, scanAt: 
   if (seen === null) {
     return { verdict: "UNKNOWN_INGESTION" as const, available_at, basis: "Publication time only. When the watcher actually saw it was not recorded, so treat availability as a guess." };
   }
-  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan ran." };
+  // "ok" only ever means the headline cannot have come from after the scan. How the watcher
+  // got it decides how much more it means. A live sighting shows the watcher held the
+  // headline for some time first. A fetch made by the scan itself shows only that: the
+  // scan had it, which says nothing about whether it was there early enough to act on.
+  if (seenVia === "scan_fetch") {
+    return { verdict: "ok" as const, available_at, basis: "Published before the scan, and the scan fetched it itself. That rules out a headline from after the scan. It does not show the headline was available early enough to act on." };
+  }
+  if (seenVia === "live_stream") {
+    return { verdict: "ok" as const, available_at, basis: "Published, then seen live by the watcher, both before the scan ran." };
+  }
+  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan ran. How the watcher got it was not recorded." };
 }
 
 /** Only these fields are kept, whatever else arrives. Nothing about an account travels. */
@@ -73,6 +83,7 @@ function candidate(raw: unknown, scanAt: string | null) {
   const c = obj(raw);
   const published = str(c.news_time, 60);
   const firstSeen = str(c.news_first_seen, 60);
+  const seenVia = str(c.news_seen_via, 20);
   return {
     symbol: str(c.symbol, 20),
     price: num(c.price),
@@ -92,8 +103,9 @@ function candidate(raw: unknown, scanAt: string | null) {
       headline: str(c.news_headline, 300),
       published_at: published,
       first_seen_at: firstSeen,
+      seen_via: seenVia,
       url: str(c.news_url, 500),
-      ...newsTiming(published, firstSeen, scanAt),
+      ...newsTiming(published, firstSeen, scanAt, seenVia),
     },
     checks: {
       halt: str(c.halt_check, 120),
@@ -239,6 +251,6 @@ export async function forAgent(env: Env, actor: Actor) {
   return {
     ...radar,
     how_to_use:
-"Each headline carries a timing verdict. Only \"ok\" means it was both published and seen before the scan; UNKNOWN_INGESTION means publication time only, so availability is a guess; FAIL_FUTURE_INFORMATION means it is stamped after the scan and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
+"Each headline carries a timing verdict and a basis line saying what it rests on. Read the basis, not just the verdict: \"ok\" means only that the headline cannot have come from after the scan. Where seen_via is scan_fetch the scan fetched the headline itself, so nothing shows it was available early enough to act on; where it is live_stream the watcher held it before the scan ran. UNKNOWN_INGESTION means publication time only, so availability is a guess; FAIL_FUTURE_INFORMATION means it is stamped after the scan and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
   };
 }
