@@ -645,8 +645,9 @@
     if (!list || !list.length) return `<section class="section"><h2>${esc(title)}</h2><p class="sub">${esc(lead)}</p><p class="meta">The lab did not list any this run.</p></section>`;
     return `<section class="section"><h2>${esc(title)}</h2><p class="sub">${esc(lead)}</p>
       ${list.map((p) => `<article class="ai"><h3>${esc(p.pattern)}</h3>
-        <p class="meta">${p.trades_checked === null ? "" : `Checked on ${p.trades_checked} trades. `}${p.avg_r === null ? "" : `Average ${p.avg_r}R. `}${p.win_rate === null ? "" : `${p.win_rate}% won.`}</p>
-        ${p.evidence ? `<p class="meta">Evidence: ${esc(p.evidence)}.</p>` : ""}</article>`).join("")}
+        <p class="meta">Earlier validation sample: ${p.trades_checked == null ? "trade count not reported. " : `${esc(p.trades_checked)} trades. `}${p.avg_r == null ? "" : `Average ${esc(p.avg_r)}R. `}${p.win_rate == null ? "" : `${esc(p.win_rate)}% won.`}</p>
+        <p class="banner">Unseen result: ${esc(p.unseen_result || "not reported")}. ${p.unseen?.trades == null ? "Unseen trade count not reported." : `${esc(p.unseen.trades)} trades.`}${p.unseen?.avg_r == null ? "" : ` Average ${esc(p.unseen.avg_r)}R.`}${p.unseen?.win_rate == null ? "" : ` ${esc(p.unseen.win_rate)}% won.`}</p>
+        ${p.evidence ? `<p class="meta">Producer's selection evidence label: ${esc(p.evidence)}. This does not establish performance on unseen data.</p>` : ""}</article>`).join("")}
     </section>`;
   }
 
@@ -781,8 +782,8 @@
         ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Held up", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
       </section>` : ""}
       ${swingBlock(r.swing)}
-      ${patternBlock("Stay away from these", "Conditions the lab found did worse, and kept doing worse when checked again on days it had not seen.", r.stay_away_from)}
-      ${patternBlock("These held up", "Conditions that looked good and still looked good on fresh days. Rare, and worth little on their own.", r.held_up)}
+      ${patternBlock("Patterns flagged as weak", "Selected using earlier samples. Read the unseen result separately; a label does not prove future performance.", r.stay_away_from)}
+      ${patternBlock("Patterns selected for checking", "Looked promising in earlier samples. They may fail on unseen days; selection is not validation.", r.held_up)}
       <section class="section"><h2>Read this before you lean on it</h2>
         <p class="meta">${esc(r.caveat)}</p>
         ${r.assumptions?.entry ? `<p class="meta">Entry: ${esc(r.assumptions.entry)}. Exit: ${esc(r.assumptions.exit || "not stated")}. Every fill pays a modeled ${r.assumptions.spread_pct}% spread and ${r.assumptions.slippage_pct}% slippage, aiming at ${r.assumptions.reward_to_risk} times the risk.</p>` : ""}

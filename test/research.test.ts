@@ -26,6 +26,20 @@ const LAB = {
 };
 
 describe("reading the lab", () => {
+  it("preserves unseen outcomes separately from earlier validation metrics", () => {
+    const s = research.summarize({ patterns: {
+      promising: [{ pattern: "Selected pattern", evidence: "strong", test: { n: 27, avg_r: 0.2166 }, unseen: { n: 51, avg_r: -0.2751, win_rate: 33.3 }, unseen_result: "did not hold up" }],
+      avoid: [{ pattern: "Weak candidate", test: { n: 31, avg_r: -0.9275 }, unseen: { n: 4, avg_r: 0.8459 }, unseen_result: "too few trades" }],
+    } });
+    expect(s.held_up[0]).toMatchObject({ trades_checked: 27, avg_r: 0.22, unseen_result: "did not hold up", unseen: { trades: 51, avg_r: -0.28, win_rate: 33.3 } });
+    expect(s.stay_away_from[0]).toMatchObject({ unseen_result: "too few trades", unseen: { trades: 4, avg_r: 0.85 } });
+  });
+
+  it("keeps unreported unseen validation unknown", () => {
+    const s = research.summarize({ patterns: { promising: [{ pattern: "Legacy pattern", test: { n: 20, avg_r: 0.2 } }] } });
+    expect(s.held_up[0]).toMatchObject({ unseen_result: null, unseen: { trades: null, avg_r: null, win_rate: null } });
+  });
+
   it("turns the numbers into one sentence Casey can act on", () => {
     const s = research.summarize(LAB, Date.parse("2026-11-17T00:00:00Z"));
     expect(s.headline).toContain("lost money across 1187 trades");

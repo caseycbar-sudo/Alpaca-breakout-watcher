@@ -69,13 +69,14 @@ function headline(loose: Run, strict: Run, validated: boolean, days: number | nu
   return parts.join(" ");
 }
 
-/** Keep the patterns worth naming: what held up, and what to stay away from. */
+/** Producer-selected patterns; selection does not establish unseen validation. */
 function patternList(raw: unknown, limit: number) {
   return arr(raw)
     .slice(0, limit)
     .map((p) => {
       const o = obj(p);
       const test = obj(o.test);
+      const unseen = obj(o.unseen);
       return {
         pattern: str(o.pattern) || str(o.bucket) || "unnamed",
         verdict: str(o.verdict) || null,
@@ -83,6 +84,8 @@ function patternList(raw: unknown, limit: number) {
         trades_checked: num(test.n),
         avg_r: round(num(test.avg_r)),
         win_rate: round(num(test.win_rate), 1),
+        unseen_result: str(o.unseen_result) || null,
+        unseen: { trades: num(unseen.n), avg_r: round(num(unseen.avg_r)), win_rate: round(num(unseen.win_rate), 1) },
       };
     })
     .filter((p) => p.pattern !== "unnamed");
@@ -450,7 +453,7 @@ export async function forAgent(env: Env, actor: Actor, opts: { refresh?: boolean
     ...result.summary,
     read_at: new Date(result.fetched_at).toISOString(),
     how_to_use:
-      "swing holds a second, separate study: twenty years of daily bars testing slow strategies, with its two trend readings. Treat it as the better-evidenced of the two labs and say which one a number came from. Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade. In what_moves_the_odds, use only entries with knowable_at_entry true as a reason to take or skip a trade; the rest describe what happened after the entry and cannot be used to choose one.",
+      "swing holds a second, separate study: twenty years of daily bars testing slow strategies, with its two trend readings. Treat it as the better-evidenced of the two labs and say which one a number came from. The legacy held_up field contains producer-selected promising patterns, not confirmed unseen successes. Read unseen_result and unseen metrics separately from the earlier validation sample; missing results are unknown and selection evidence labels do not prove an edge. Cite these findings when you write or review a plan. A plan whose stop or setup sits in stay_away_from should be objected to with the number quoted. Never present a backtest as a prediction, and never treat a finding as permission to trade. In what_moves_the_odds, use only entries with knowable_at_entry true as a reason to take or skip a trade; the rest describe what happened after the entry and cannot be used to choose one.",
     ...(result.problem ? { note: `Showing the last good read. ${result.problem}` } : {}),
   };
 }
