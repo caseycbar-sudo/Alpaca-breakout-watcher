@@ -268,3 +268,52 @@ describe("the ticker strip", () => {
     expect(quotes([...many, { price: 9, available: true }]).length).toBe(12);
   });
 });
+
+// ChatGPT's finding on the revamp. clean()'s output is STORED, so any age computed
+// inside it freezes at ingestion. The browser recomputes from `at` and was never
+// affected, but get_radar is what ChatGPT and Grok read, and a cached scan would have
+// kept handing them a fresh-looking quote age indefinitely. Same bug class as the
+// cached lab staleness fixed earlier today, which is why this test advances a clock
+// rather than just asserting a number once.
+describe("quote ages on a cached scan", () => {
+  it("re-ages every quote from its own timestamp on each read", async () => {
+    const realNow = Date.now;
+    const at = "2026-11-18T19:58:00+00:00";
+    const stored = radar.clean(
+      { generated_at: "2026-11-18T19:59:00+00:00", published_at: "2026-11-18T19:59:02+00:00", candidates: [],
+        quotes: [{ symbol: "TEST", price: 10, change_pct: 0.5, at, available: true },
+                 { symbol: "NOTIME", price: 11, at: null, available: true }] },
+      "posted by the watcher");
+    // Clear the posted copy first: an earlier test in this file posts a scan stamped
+    // "now", which would outrank this fixture and silently test nothing.
+    const priorPosted = await db.getSetting(base, "radar_latest");
+    await db.setSetting(base, "radar_latest", "");
+    await db.setSetting(base, "radar_published", JSON.stringify({ stored_at: Date.parse("2026-11-18T20:00:00Z"), radar: stored }));
+
+    const ageAt = async (iso: string) => {
+      Date.now = () => Date.parse(iso);
+      try {
+        const v = await radar.current(base);
+        return { quote: v!.quotes.find((q) => q.symbol === "TEST")!.age_seconds,
+                 undated: v!.quotes.find((q) => q.symbol === "NOTIME")!.age_seconds,
+                 radar: v!.age_minutes };
+      } finally { Date.now = realNow; }
+    };
+
+    const first = await ageAt("2026-11-18T20:00:00Z");
+    expect(first.quote).toBe(120);
+
+    // One minute later, same stored scan. The quote must age with the clock, exactly as
+    // the radar's own age_minutes already did.
+    const later = await ageAt("2026-11-18T20:01:00Z");
+    expect(later.quote).toBe(180);
+    expect(later.radar).toBe(2);
+
+    // A quote with no usable time stays unknown instead of being handed a number.
+    expect(first.undated).toBeNull();
+    expect(later.undated).toBeNull();
+
+    await db.setSetting(base, "radar_published", "");
+    await db.setSetting(base, "radar_latest", priorPosted ?? "");
+  });
+});

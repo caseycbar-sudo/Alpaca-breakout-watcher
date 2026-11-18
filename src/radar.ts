@@ -159,8 +159,13 @@ function candidate(raw: unknown, scanAt: string | null, publishedAt: string | nu
   };
 }
 
-/** One ticker row. `age_seconds` is computed at read time, never stored, so it cannot
- *  freeze at whatever it happened to be when the scan arrived. */
+/** One ticker row.
+ *
+ *  `age_seconds` here is only the age AT INGESTION. clean()'s output is stored, so this
+ *  number is frozen the moment it is written. current() recomputes it from `at` on every
+ *  read, and that is the only value an agent ever sees. ChatGPT caught me shipping this
+ *  with a comment claiming read-time freshness while the value was in fact cached: a
+ *  cached scan would have kept reporting a fresh-looking quote age forever. */
 function quote(raw: unknown) {
   const q = obj(raw);
   const at = str(q.at, 60);
@@ -305,6 +310,13 @@ export async function current(env: Env) {
   const age = ageMinutes(pick.radar, now);
   return {
     ...pick.radar,
+    // Re-aged from each quote's own unchanged timestamp, never from the stored age, and
+    // never from when the hub happened to receive the scan. An unreadable or missing
+    // time stays unknown rather than being given a number.
+    quotes: (pick.radar.quotes ?? []).map((q) => {
+      const ms = instant(q.at);
+      return { ...q, age_seconds: ms === null ? null : Math.max(0, Math.round((now - ms) / 1000)) };
+    }),
     age_minutes: age,
     stale: age === null || age > STALE_AFTER_MINUTES,
     live_feed_connected: !!posted && now - posted.stored_at < 2 * 60 * 60_000,
