@@ -605,3 +605,13 @@ label { font-size:12px; color:#b0c4d5; }
 .v2-dot-up { background:#3ee6b0; } .v2-dot-flat { background:#6b96ad; }
 .v2-legend span { display:inline-flex; align-items:center; }
 .v2 .v2-hold .nm span { white-space:normal; }
+/* A grid item's default min-width is auto, so it refuses to shrink below the widest
+   unbreakable thing inside it. With three figures side by side in the hero that pushed
+   the whole screen to 1747px on a 390px phone. minmax(0,1fr) plus min-width:0 lets the
+   children actually shrink, which is what every nested flex/grid here needs. */
+.v2 { grid-template-columns: minmax(0, 1fr); }
+.v2 > *, .v2 *:not(svg):not(svg *) { min-width: 0; }
+.v2-split div { overflow: hidden; }
+.v2-split b, .v2-split span { overflow: hidden; text-overflow: ellipsis; }
+.v2-hero .amt { word-break: break-word; }
+.v2-hold .nm b, .v2-hold .nm span { overflow-wrap: anywhere; }
