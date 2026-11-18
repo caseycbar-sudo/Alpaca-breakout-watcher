@@ -42,13 +42,25 @@ function instant(value: string | null): number | null {
  * A story published before the scan is not the same as one the pipeline had in hand:
  * availability is the later of publication and first sighting.
  *
- * This fails closed. Anything missing, unzoned or unreadable is UNKNOWN, never "ok",
- * because "ok" is read elsewhere as proof that a candidate had a catalyst in time.
+ * A scan is not an instant. The watcher fixes its decision clock (generated_at) before
+ * it reads anything, then spends real seconds fetching, and publishes at the end
+ * (published_at). A headline the scan fetches for itself is stamped inside that window,
+ * so it is legitimately later than generated_at. Comparing a sighting against the start
+ * of the window would accuse every real headline of arriving from the future.
+ *
+ * So the comparison is against the END of the window. Without it we cannot tell a
+ * headline gathered mid-scan from one backfilled afterwards, and we say so rather than
+ * guessing in either direction.
+ *
+ * This fails closed in both directions. Anything missing, unzoned or unreadable is
+ * UNKNOWN, never "ok", because "ok" is read elsewhere as proof that a candidate had a
+ * catalyst in time; and never FAIL, because that is read as proof it could not have.
  */
-function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null, seenVia: string | null) {
+function newsTiming(published: string | null, firstSeen: string | null, scanAt: string | null, publishedAt: string | null, seenVia: string | null) {
   const pub = instant(published);
   const seen = instant(firstSeen);
   const scan = instant(scanAt);
+  const done = instant(publishedAt);
   const unknown = (basis: string) => ({ verdict: "UNKNOWN_TIME" as const, available_at: null, basis });
 
   if (pub === null && seen === null) return unknown("No readable, time-zoned time came with this headline.");
@@ -59,8 +71,29 @@ function newsTiming(published: string | null, firstSeen: string | null, scanAt: 
 
   const availableMs = seen === null ? pub : Math.max(pub, seen);
   const available_at = new Date(availableMs).toISOString();
-  if (availableMs > scan) {
-    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "This headline was not available until after the scan that carries it, so it cannot have informed it." };
+
+  // Two facts, two different bounds.
+  //
+  // Publication is bounded by the DECISION clock. The scanner asks for news in the window
+  // ending at that clock, so a headline published after it cannot have come through the
+  // gate at all. That is a real impossibility, and it is named as one.
+  if (pub > scan) {
+    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "This headline was published after the scan's decision time, so the scan cannot have had it." };
+  }
+
+  // The sighting is bounded by the END of the scan, because the fetch happens partway
+  // through. A completion time earlier than the decision time is a broken pair we do not
+  // trust to widen anything.
+  const windowKnown = done !== null && done >= scan;
+  const windowEnd = windowKnown ? (done as number) : scan;
+  if (seen !== null && seen > windowEnd) {
+    if (!windowKnown) {
+      // Mid-scan fetch and later backfill are indistinguishable here. Saying so is not a
+      // weaker guard than accusing: only "ok" lets a headline count as a catalyst, and
+      // this is not "ok". It just stops the hub asserting something it cannot know.
+      return { verdict: "UNKNOWN_SCAN_WINDOW" as const, available_at, basis: "The watcher saw this headline after the scan's decision time, and the scan did not report when it finished. A headline fetched during the scan looks exactly like one backfilled after it, so this cannot be resolved." };
+    }
+    return { verdict: "FAIL_FUTURE_INFORMATION" as const, available_at, basis: "The watcher did not have this headline until after the scan had finished, so it cannot have informed it." };
   }
   if (seen === null) {
     return { verdict: "UNKNOWN_INGESTION" as const, available_at, basis: "Publication time only. When the watcher actually saw it was not recorded, so treat availability as a guess." };
@@ -70,16 +103,16 @@ function newsTiming(published: string | null, firstSeen: string | null, scanAt: 
   // headline for some time first. A fetch made by the scan itself shows only that: the
   // scan had it, which says nothing about whether it was there early enough to act on.
   if (seenVia === "scan_fetch") {
-    return { verdict: "ok" as const, available_at, basis: "Published before the scan, and the scan fetched it itself. That rules out a headline from after the scan. It does not show the headline was available early enough to act on." };
+    return { verdict: "ok" as const, available_at, basis: "Published before the scan finished, and the scan fetched it itself partway through. That rules out a headline from after the scan. It does not show the headline was available early enough to act on." };
   }
   if (seenVia === "live_stream") {
     return { verdict: "ok" as const, available_at, basis: "Published, then seen live by the watcher, both before the scan ran." };
   }
-  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan ran. How the watcher got it was not recorded." };
+  return { verdict: "ok" as const, available_at, basis: "Published and first seen before the scan finished. How the watcher got it was not recorded." };
 }
 
 /** Only these fields are kept, whatever else arrives. Nothing about an account travels. */
-function candidate(raw: unknown, scanAt: string | null) {
+function candidate(raw: unknown, scanAt: string | null, publishedAt: string | null) {
   const c = obj(raw);
   const published = str(c.news_time, 60);
   const firstSeen = str(c.news_first_seen, 60);
@@ -105,7 +138,7 @@ function candidate(raw: unknown, scanAt: string | null) {
       first_seen_at: firstSeen,
       seen_via: seenVia,
       url: str(c.news_url, 500),
-      ...newsTiming(published, firstSeen, scanAt, seenVia),
+      ...newsTiming(published, firstSeen, scanAt, publishedAt, seenVia),
     },
     checks: {
       halt: str(c.halt_check, 120),
@@ -122,6 +155,7 @@ function candidate(raw: unknown, scanAt: string | null) {
 
 export interface Radar {
   generated_at: string | null;
+  published_at: string | null;
   market: { phase: string | null; is_open: boolean | null; next_open: string | null; next_close: string | null };
   sources: { market_data: string | null; sec_edgar: string | null; halts: string | null; social: string | null };
   note: string | null;
@@ -139,6 +173,7 @@ export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
   const all = arr(d.candidates);
   return {
     generated_at: str(d.generated_at, 60),
+    published_at: str(d.published_at, 60),
     market: { phase: str(m.phase, 60), is_open: bool(m.is_open), next_open: str(m.next_open, 60), next_close: str(m.next_close, 60) },
     sources: {
       market_data: str(sys.market_data, 80),
@@ -148,7 +183,7 @@ export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
     },
     note: str(sys.note, 400),
     candidate_count: all.length,
-    candidates: all.slice(0, MAX_CANDIDATES).map((c) => candidate(c, str(d.generated_at, 60))).filter((c) => c.symbol),
+    candidates: all.slice(0, MAX_CANDIDATES).map((c) => candidate(c, str(d.generated_at, 60), str(d.published_at, 60))).filter((c) => c.symbol),
     research_log: arr(d.research_log)
       .slice(0, MAX_LOG)
       .map((r) => {
@@ -251,6 +286,6 @@ export async function forAgent(env: Env, actor: Actor) {
   return {
     ...radar,
     how_to_use:
-"Each headline carries a timing verdict and a basis line saying what it rests on. Read the basis, not just the verdict: \"ok\" means only that the headline cannot have come from after the scan. Where seen_via is scan_fetch the scan fetched the headline itself, so nothing shows it was available early enough to act on; where it is live_stream the watcher held it before the scan ran. UNKNOWN_INGESTION means publication time only, so availability is a guess; FAIL_FUTURE_INFORMATION means it is stamped after the scan and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
+"Each headline carries a timing verdict and a basis line saying what it rests on. Read the basis, not just the verdict: \"ok\" means only that the headline cannot have come from after the scan. Where seen_via is scan_fetch the scan fetched the headline itself, so nothing shows it was available early enough to act on; where it is live_stream the watcher held it before the scan ran. UNKNOWN_INGESTION means publication time only, so availability is a guess; UNKNOWN_SCAN_WINDOW means the headline is stamped after the scan's decision time and the scan did not report when it finished, so a mid-scan fetch cannot be told apart from a later backfill; FAIL_FUTURE_INFORMATION means it arrived after the scan had finished and cannot have informed it. Never use a headline that is not \"ok\" as evidence that a setup had a catalyst. This is what the watcher saw at generated_at, not now. An empty candidate list means nothing passed Casey's gates at that moment, which is the usual and correct outcome; do not treat it as a reason to loosen anything. A headline here is a timestamped observation, not a verified catalyst, and attention numbers are never a reason on their own. Check age_minutes before relying on any of it, and never present this as permission to trade.",
   };
 }

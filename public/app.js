@@ -679,7 +679,7 @@
           ${c.rsi === null ? "" : `<li>RSI ${c.rsi}</li>`}
         </ul>
         ${c.news?.headline ? `<p class="meta">Headline${c.news.published_at ? ` at ${esc(c.news.published_at)}` : ""}: ${c.news.url ? `<a href="${esc(c.news.url)}" rel="noopener noreferrer" target="_blank">${esc(c.news.headline)}</a>` : esc(c.news.headline)}</p>
-          ${c.news.verdict && c.news.verdict !== "ok" ? `<p class="banner">${esc(c.news.basis || "The timing of this headline could not be checked.")}</p>` : ""}` : `<p class="meta">No headline found beside this one.</p>`}
+          ${c.news.verdict ? `<p class="banner">${esc(c.news.basis || "The timing of this headline could not be checked.")}</p>` : ""}` : `<p class="meta">No headline found beside this one.</p>`}
         ${(c.checks?.risk_sources || []).length ? `<p class="banner">${c.checks.risk_sources.map(esc).join(" · ")}</p>` : ""}
       </article>`).join("");
     return `<section class="section"><h2>Live radar</h2>

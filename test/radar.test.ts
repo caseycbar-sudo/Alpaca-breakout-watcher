@@ -120,8 +120,14 @@ describe("reading the radar", () => {
     expect(at("2026-11-17T18:00:00Z", { news_first_seen: "2026-11-17T18:05:00Z" })).toMatchObject({ verdict: "ok", available_at: "2026-11-17T18:05:00.000Z" });
     // Stamped after the scan that carries it: it cannot have informed that scan.
     expect(at("2026-11-17T18:45:00Z").verdict).toBe("FAIL_FUTURE_INFORMATION");
-    // Seen after the scan even though published before it: still unusable.
-    expect(at("2026-11-17T18:00:00Z", { news_first_seen: "2026-11-17T18:45:00Z" }).verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // Seen after the scan finished even though published before it: still unusable.
+    expect(radar.clean({ generated_at: "2026-11-17T18:30:00Z", published_at: "2026-11-17T18:30:05Z",
+      candidates: [{ symbol: "X", news_headline: "h", news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:45:00Z" }] },
+      "posted by the watcher").candidates[0].news.verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // Without a completion time the same sighting is unresolvable rather than condemned,
+    // because a slow scan and a backfill look the same. Either way it is not "ok", so it
+    // still cannot be used as a catalyst.
+    expect(at("2026-11-17T18:00:00Z", { news_first_seen: "2026-11-17T18:45:00Z" }).verdict).toBe("UNKNOWN_SCAN_WINDOW");
     // Publication time only, which is what the watcher reports today: availability is a guess.
     expect(at("2026-11-17T18:00:00Z").verdict).toBe("UNKNOWN_INGESTION");
     // Nothing readable at all is never quietly treated as fine.
@@ -169,9 +175,43 @@ describe("reading the radar", () => {
     // How it arrived is still optional, and an unlabelled sighting admits that.
     expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:05:00Z" }).basis).toContain("not recorded");
 
-    // A sighting stamped after the scan stays a failure whatever label comes with it.
-    expect(news({ news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:45:00Z", news_seen_via: "scan_fetch" }).verdict).toBe("FAIL_FUTURE_INFORMATION");
+    // A sighting stamped after the scan finished stays a failure whatever label comes with it.
+    expect(radar.clean({ generated_at: "2026-11-17T18:30:00Z", published_at: "2026-11-17T18:30:05Z",
+      candidates: [{ symbol: "X", news_headline: "h", news_time: "2026-11-17T18:00:00Z", news_first_seen: "2026-11-17T18:45:00Z", news_seen_via: "scan_fetch" }] },
+      "posted by the watcher").candidates[0].news.verdict).toBe("FAIL_FUTURE_INFORMATION");
     // And a label alone never buys a verdict.
     expect(news({ news_seen_via: "live_stream" }).verdict).toBe("UNKNOWN_TIME");
+  });
+
+  // ChatGPT's rework of job #9. My first version compared a sighting against the scan's
+  // DECISION time, which the watcher fixes before it reads anything. A scan then spends
+  // real seconds fetching, so every genuine headline is stamped after it. The result was
+  // not a weak "ok" but a confident FAIL on every real candidate: the hub would have
+  // reported that a headline could not have informed the scan that fetched it.
+  // The comparison belongs at the END of the scan's window.
+  it("treats a headline fetched partway through a scan as available to it", () => {
+    const news = (c: Record<string, unknown>, scan: unknown, publishedAt?: unknown) =>
+      radar.clean({ generated_at: scan, published_at: publishedAt, candidates: [{ symbol: "X", news_headline: "h", ...c }] }, "posted by the watcher").candidates[0].news;
+
+    // The real order: decision clock 17:30:00, REST fetch returns 17:30:02, scan written
+    // 17:30:05. This is the exact shape ChatGPT reproduced as a failure.
+    const real = { news_time: "2026-11-17T17:00:00Z", news_first_seen: "2026-11-17T17:30:02Z", news_seen_via: "scan_fetch" };
+    expect(news(real, "2026-11-17T17:30:00Z", "2026-11-17T17:30:05Z").verdict).toBe("ok");
+
+    // A backfill after the scan finished is still caught. This is the case the guard exists for.
+    expect(news({ ...real, news_first_seen: "2026-11-17T17:31:00Z" }, "2026-11-17T17:30:00Z", "2026-11-17T17:30:05Z").verdict).toBe("FAIL_FUTURE_INFORMATION");
+
+    // No completion time: a mid-scan fetch and a later backfill look identical, so the
+    // honest answer is neither "ok" nor an accusation.
+    expect(news(real, "2026-11-17T17:30:00Z").verdict).toBe("UNKNOWN_SCAN_WINDOW");
+
+    // A completion time earlier than the decision time is a broken pair. Don't trust it
+    // to widen the window; fall back to the unresolvable case.
+    expect(news(real, "2026-11-17T17:30:00Z", "2026-11-17T17:29:00Z").verdict).toBe("UNKNOWN_SCAN_WINDOW");
+    // An unzoned completion time is not a completion time.
+    expect(news(real, "2026-11-17T17:30:00Z", "2026-11-17T17:30:05").verdict).toBe("UNKNOWN_SCAN_WINDOW");
+
+    // A sighting before the decision clock never needed the window at all.
+    expect(news({ ...real, news_first_seen: "2026-11-17T17:29:00Z" }, "2026-11-17T17:30:00Z").verdict).toBe("ok");
   });
 });
