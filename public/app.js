@@ -841,6 +841,12 @@
     </figure>`;
   }
 
+  // Drawn as SVG rather than positioned divs on purpose. The page sends
+  // style-src 'self' with no unsafe-inline, so a style="width:42%" attribute is parsed
+  // into the DOM and then ignored, which is how the first version of this chart drew
+  // every bar as a 2px sliver. SVG geometry lives in presentation attributes, which the
+  // policy does not touch. Loosening the CSP to let a chart position itself would be a
+  // bad trade: that directive is a real defence, and this needed no exception.
   function strategyChart(rows) {
     // Every strategy, never a top slice. The table under this chart lists all of them,
     // and the row that matters most to Casey is the worst one: the lab's "current-style"
@@ -862,10 +868,11 @@
         const dd = s.worst_drawdown === null ? "worst fall not reported" : `worst fall ${s.worst_drawdown}%`;
         return `<li>
           <span class="bar-name">${esc(s.name)}</span>
-          <span class="bar-rail">
-            <span class="bar-zero"></span>
-            <span class="bar-fill ${neg ? "neg" : "pos"}" style="width:${w.toFixed(2)}%;${neg ? `right:${half}%` : `left:${half}%`}"></span>
-          </span>
+          <svg class="bar-rail" viewBox="0 0 360 14" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="360" height="14" rx="7" fill="#0b1726"/>
+            <rect x="${(neg ? 180 - (w / half) * 180 : 180).toFixed(2)}" y="3" width="${Math.max(1.5, (w / half) * 180).toFixed(2)}" height="8" rx="2" fill="${neg ? DOWN : UP}"/>
+            <rect x="179.6" y="0" width="0.8" height="14" fill="#3b5468"/>
+          </svg>
           <span class="bar-val ${neg ? "neg" : "pos"}">${s.cagr > 0 ? "+" : ""}${esc(String(s.cagr))}%</span>
           <span class="bar-note">${esc(dd)}</span>
         </li>`;
