@@ -469,3 +469,8 @@ label { font-size:12px; color:#b0c4d5; }
             font-size: 11px; color: #64798c; letter-spacing: .02em; }
 .tick.is-old .tick-px, .tick.is-old .tick-chg { opacity: .5; filter: grayscale(1); }
 .tick.is-old .tick-age { color: #dfb875; }
+/* The second copy of the loop is a wrapper span so it can be aria-hidden in one place.
+   Without this it becomes a single flex item holding the whole duplicate set, which
+   stacks and leaves a tall empty band under the row. display:contents drops the
+   wrapper from layout while aria-hidden still hides its contents from screen readers. */
+.ticker-track > [aria-hidden="true"] { display: contents; }
