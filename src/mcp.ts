@@ -361,7 +361,7 @@ function createServer() {
 
   server.registerTool("get_research", {
     description:
-      "Read what Casey's own breakout lab found. Use it before writing or reviewing a trade plan, and quote the numbers. It reports how the rules actually performed over a backtest window, which patterns held up, and which to stay away from. These are modeled past results, never a prediction and never permission to trade.",
+      "Read what Casey's own breakout lab found. Use it before writing or reviewing a trade plan, and quote the numbers. It reports how the rules actually performed over a backtest window, which patterns it selected as promising and which it flagged as weak. Selection is not validation: read each pattern's unseen_result and unseen metrics, which are the days the lab had not looked at when it picked, before quoting it as evidence. These are modeled past results, never a prediction and never permission to trade.",
     inputSchema: { refresh: z.boolean().optional().describe("Read the lab again instead of using the hub's hourly copy. Only when you need the very latest.") },
   }, args => run(({env,actor})=>research.forAgent(env,actor,{refresh:args.refresh})));
   server.registerTool("get_radar", {

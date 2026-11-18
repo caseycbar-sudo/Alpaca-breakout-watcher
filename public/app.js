@@ -779,7 +779,7 @@
       </section>` : ""}
       ${r.trend?.length > 1 ? `<section class="section"><h2>Has the answer been steady?</h2>
         <p class="sub">Every lab run since it started keeping score. If the conclusion jumps around, no single run means much.</p>
-        ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Held up", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
+        ${labTable(r.trend.slice(-10).reverse(), [["Run", (x) => x.at], ["Trades", (x) => x.trades], ["Average", (x) => rTxt(x.avg_r)], ["Avoid list", (x) => x.avoid_count], ["Selected for checking", (x) => (x.promising.length ? x.promising.join(", ") : "nothing")]])}
       </section>` : ""}
       ${swingBlock(r.swing)}
       ${patternBlock("Patterns flagged as weak", "Selected using earlier samples. Read the unseen result separately; a label does not prove future performance.", r.stay_away_from)}
