@@ -197,8 +197,8 @@
         <span class="who quiet"><i class="av av-${esc(t.reviewer_id || "casey")}">${esc((people[t.reviewer_id] || "Casey").slice(0, 1))}</i>reviews</span>
       </div>
       <p class="job-copy job-desc">${esc(t.description)}</p>
+      <p class="job-copy job-desc job-next"><strong>Next:</strong> ${esc(t.next_action)}</p>
       <button type="button" class="job-expand" data-expand="job-${t.id}">Read the whole job</button>
-      <p class="job-copy"><strong>Next:</strong> ${esc(t.next_action)}</p>
       ${t.blocker ? `<p class="banner job-copy"><strong>Blocked:</strong> ${esc(t.blocker)}</p>` : ""}
       ${t.stale ? `<p class="meta">No update in over 24 hours. Check whether the owner can continue.</p>` : ""}
       <details><summary>Acceptance criteria${t.dependencies.length ? " and dependencies" : ""}</summary><p class="job-copy">${esc(t.acceptance)}</p>${t.dependencies.length ? `<p>Depends on: ${t.dependencies.map(id=>`#${id}`).join(", ")}</p>` : ""}${t.evidence ? `<p class="job-copy"><strong>Submitted evidence:</strong> ${esc(t.evidence)}</p>` : ""}</details>
@@ -230,9 +230,9 @@
   function renderJobs() {
     const all = allJobs().sort((a,b)=>({high:0,normal:1,low:2}[a.priority]-{high:0,normal:1,low:2}[b.priority]) || a.id-b.id);
     const jobs = all.filter(t=>(jobOwner === "all" || t.owner_id === jobOwner) && (jobStatus === "all" || (jobStatus === "active" ? !["done","canceled"].includes(t.status) : t.status === jobStatus)));
-    return `<section class="section jobs-section"><div class="job-hero"><span class="eyebrow">THE SHARED WORKSPACE</span><h1>Good ideas.<br><em>Visible progress.</em></h1>
+    return `<section class="section jobs-section"><div class="job-hero"><h1>Good ideas.<br><em>Visible progress.</em></h1>
       <p class="sub">The job list for your whole team. Know who owns the next move.</p>${jobStats()}</div>
-      <div class="section-heading"><div><span class="eyebrow">PEOPLE & AGENTS</span><h2>Your team’s work</h2></div><span class="quiet small-copy">Tap a teammate to filter</span></div>
+      <div class="section-heading"><div><h2>Your team’s work</h2></div><span class="quiet small-copy">Tap a teammate to filter</span></div>
       ${workloadHtml()}
       <details class="gloss workflow-note"><summary>How work moves</summary><p>Propose → accept → work → review → done. An assignment becomes a commitment when its owner accepts. Completed work needs evidence and an independent review. Agents work when their sessions run; the queue does not keep them online or grant permission for external actions.</p></details>
       <details class="gloss job-create"><summary><span aria-hidden="true">＋</span> Create a job</summary><form id="job-form" class="formgrid">

@@ -393,7 +393,7 @@ label { font-size:12px; color:#b0c4d5; }
 .plan-table tr:last-child td { border-bottom: 0; }
 /* Overview polish: stronger landmarks without implying live market data. */
 .notice { position:relative; isolation:isolate; overflow:hidden; padding:36px; border-color:#3e7881; background:radial-gradient(ellipse at 100% 0%,#28616b88,transparent 65%),linear-gradient(120deg,#132e40,#142036); box-shadow:0 18px 50px #0003; }
-.notice::before { content:"WORKSPACE OVERVIEW"; display:block; margin-bottom:16px; color:#9ae5d7; font-size:10px; font-weight:750; letter-spacing:.2em; }
+/* The all-caps label above every panel was decoration that said nothing. Removed. */
 .notice::after { content:""; position:absolute; z-index:-1; width:340px; height:340px; right:-180px; top:-160px; border:1px solid #87e3d333; border-radius:50%; box-shadow:0 0 0 38px #87e3d30a,0 0 0 76px #87e3d306; pointer-events:none; }
 .notice h1 { max-width:16em; font-size:clamp(32px,5vw,48px); }
 .notice.stop { border-color:#a85f59; background:linear-gradient(115deg,#3b2632,#17263b); }
@@ -680,3 +680,9 @@ label { font-size:12px; color:#b0c4d5; }
 .btn.primary { background: linear-gradient(150deg, #3ee6b0, #19b98c); color: #04231a; border: 0; font-weight: 750; }
 .empty { background: #0a2231; border: 1px dashed #1d4a63; border-radius: 16px; color: #7fa5bb; }
 .flags li { border-radius: 12px; }
+/* Both the description and the next action clamp, and one tap opens both. The next
+   action was often the longer of the two, so clamping only the description moved the
+   wall of text down the card rather than removing it. */
+.job-next { margin-top: 10px; }
+.job-card.open .job-next { -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+.job-next strong { color: #cfe6f0; }
