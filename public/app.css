@@ -615,3 +615,7 @@ label { font-size:12px; color:#b0c4d5; }
 .v2-split b, .v2-split span { overflow: hidden; text-overflow: ellipsis; }
 .v2-hero .amt { word-break: break-word; }
 .v2-hold .nm b, .v2-hold .nm span { overflow-wrap: anywhere; }
+/* An svg with a viewBox but no width falls back to its intrinsic size, so the slots
+   meter drew a 100px bar inside a 322px track and read as nearly empty when it was
+   actually full. Stretch it to the track. */
+.v2-meter .track svg { display: block; width: 100%; height: 9px; }
