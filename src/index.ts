@@ -77,6 +77,9 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
   const method = request.method;
 
   if (STATIC.has(path) && (method === "GET" || method === "HEAD")) return env.ASSETS.fetch(request);
+  // Cheap after the first call in an isolate, and it must happen before any page is
+  // rendered so the shell can stamp its asset URLs.
+  await pages.primeAssetStamp(env);
   if (path === "/api/radar" && request.method === "POST") {
     try {
       const scan = await radar.receive(env, request);

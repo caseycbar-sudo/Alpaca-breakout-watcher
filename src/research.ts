@@ -214,7 +214,7 @@ function symbols(raw: unknown) {
 
 /** How the lab's own conclusions have moved from run to run. */
 export function trend(raw: unknown) {
-  return arr(raw)
+  const rows = arr(raw)
     .map((x) => {
       const o = obj(x);
       return {
@@ -226,18 +226,19 @@ export function trend(raw: unknown) {
         avoid_count: arr(o.avoid).length,
       };
     })
-    .filter((r) => r.at)
-    // One point per lab run date, keeping the last. The lab can run several times in a
-    // day, and today it ran three times with identical numbers. Left in, those repeats
-    // flatten the tail of the trend line and make the most recent day look like three
-    // days of agreement, which is the opposite of what a steadiness chart is for.
-    .reduce((out: { at: string }[], row) => {
-      const last = out[out.length - 1];
-      if (last && last.at === row.at) out[out.length - 1] = row;
-      else out.push(row);
-      return out;
-    }, [] as never[])
-    .slice(-20);
+    .filter((r) => r.at);
+
+  // One point per lab run date, keeping the last. The lab can run several times in a
+  // day, and today it ran three times with identical numbers. Left in, those repeats
+  // flatten the tail of the trend line and make the most recent day look like three
+  // days of agreement, which is the opposite of what a steadiness chart is for.
+  const oncePerDay: typeof rows = [];
+  for (const row of rows) {
+    const last = oncePerDay[oncePerDay.length - 1];
+    if (last && last.at === row.at) oncePerDay[oncePerDay.length - 1] = row;
+    else oncePerDay.push(row);
+  }
+  return oncePerDay.slice(-20);
 }
 
 // The second lab. Twenty years of daily bars with real costs, testing slow and

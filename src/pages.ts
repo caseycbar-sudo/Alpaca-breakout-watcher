@@ -22,6 +22,26 @@ const CSP_STRICT =
 const CSP_CONSENT =
   "default-src 'none'; style-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'";
 
+/** A stamp that changes whenever the deployed assets change.
+ *
+ *  /app.css and /app.js were referenced by bare path. The HTML is no-store so it is
+ *  always fresh, but a phone can keep serving the code files it already has, which is
+ *  how Casey kept seeing the old hub after a deploy had gone out. The asset ETag is
+ *  read once per isolate and hung off the URL, so a new deploy can never be masked by
+ *  a cached copy and nobody has to know to force-refresh. */
+let assetStamp: string | null = null;
+export async function primeAssetStamp(env: { ASSETS?: { fetch: (r: Request) => Promise<Response> } }): Promise<void> {
+  if (assetStamp || !env.ASSETS) return;
+  try {
+    const res = await env.ASSETS.fetch(new Request("https://assets.invalid/app.js"));
+    const tag = (res.headers.get("etag") ?? "").replace(/[^a-zA-Z0-9]/g, "");
+    assetStamp = tag.slice(0, 16) || null;
+  } catch {
+    assetStamp = null; // leave it unstamped rather than inventing a value that churns
+  }
+}
+const stamp = () => (assetStamp ? `?v=${assetStamp}` : "");
+
 function page(title: string, body: string, opts: { script?: boolean; status?: number; csp?: string; headers?: Headers } = {}): Response {
   const html = `<!doctype html>
 <html lang="en">
@@ -32,11 +52,11 @@ function page(title: string, body: string, opts: { script?: boolean; status?: nu
 <meta name="theme-color" content="#0E3A4A">
 <title>${escapeHtml(title)}</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/app.css${stamp()}">
 </head>
 <body>
 ${body}
-${opts.script ? '<script src="/app.js" defer></script>' : ""}
+${opts.script ? `<script src="/app.js${stamp()}" defer></script>` : ""}
 </body>
 </html>`;
   const headers = new Headers(opts.headers);
