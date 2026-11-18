@@ -231,3 +231,31 @@ describe("a lab file the hub cannot read", () => {
     } finally { restore(); }
   });
 });
+
+// The lab can run several times in one day. On 18 Nov it ran three times with
+// identical numbers, and all three landed in the trend. Left in, the repeats flatten
+// the tail of the steadiness chart and make one day look like three days of
+// agreement, which inverts what the chart is for.
+describe("repeated lab runs on one date", () => {
+  it("keeps one point per date, the last", () => {
+    const rows = research.trend([
+      { generated_at: "2026-11-17T05:00:00Z", learning_trades: 1058, learning_avg_r: -0.44 },
+      { generated_at: "2026-11-18T05:00:00Z", learning_trades: 1351, learning_avg_r: -0.43 },
+      { generated_at: "2026-11-18T12:00:00Z", learning_trades: 1351, learning_avg_r: -0.43 },
+      { generated_at: "2026-11-18T19:00:00Z", learning_trades: 1400, learning_avg_r: -0.51 },
+    ]);
+    expect(rows.map((r) => r.at)).toEqual(["2026-11-17", "2026-11-18"]);
+    // The last run of the day wins, not the first.
+    expect(rows[1].avg_r).toBe(-0.51);
+    expect(rows[1].trades).toBe(1400);
+  });
+
+  it("leaves genuinely distinct dates alone", () => {
+    const rows = research.trend([
+      { generated_at: "2026-11-16T05:00:00Z", learning_avg_r: -0.3 },
+      { generated_at: "2026-11-17T05:00:00Z", learning_avg_r: -0.44 },
+      { generated_at: "2026-11-18T05:00:00Z", learning_avg_r: -0.43 },
+    ]);
+    expect(rows.length).toBe(3);
+  });
+});

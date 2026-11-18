@@ -227,6 +227,16 @@ export function trend(raw: unknown) {
       };
     })
     .filter((r) => r.at)
+    // One point per lab run date, keeping the last. The lab can run several times in a
+    // day, and today it ran three times with identical numbers. Left in, those repeats
+    // flatten the tail of the trend line and make the most recent day look like three
+    // days of agreement, which is the opposite of what a steadiness chart is for.
+    .reduce((out: { at: string }[], row) => {
+      const last = out[out.length - 1];
+      if (last && last.at === row.at) out[out.length - 1] = row;
+      else out.push(row);
+      return out;
+    }, [] as never[])
     .slice(-20);
 }
 
