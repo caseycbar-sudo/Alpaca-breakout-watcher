@@ -193,3 +193,41 @@ describe("the swing lab", () => {
     expect(out.sleeves[1].signal).toBe("HOLD");
   });
 });
+
+// The swing lab was invisible in the hub for its whole life, and nothing said so.
+// The producer wrote Infinity, which Python reads back happily and JSON.parse rejects
+// outright. readJson caught the error, logged it to a console nobody reads and
+// returned null, so the page rendered an empty section that looked exactly like a lab
+// that had found nothing. An unreadable file is a fault to report, not an absence.
+describe("a lab file the hub cannot read", () => {
+  const withBody = (body: string) => {
+    const real = globalThis.fetch;
+    globalThis.fetch = (async (url: unknown) =>
+      String(url).includes("swing_lab")
+        ? new Response(body, { status: 200 })
+        : new Response("[]", { status: 200 })) as typeof fetch;
+    return () => { globalThis.fetch = real; };
+  };
+
+  it("says the file is unreadable instead of showing an empty lab", async () => {
+    const restore = withBody('[{"name":"SPY buy & hold","cagr":11.2,"pf":Infinity}]');
+    try {
+      const swing = await research.readSwingForTest();
+      expect(swing).not.toBeNull();
+      expect(swing!.strategies.length).toBe(0);
+      expect(swing!.problem).toContain("cannot read");
+      // Names the actual cause, so whoever reads it knows where to look.
+      expect(swing!.problem).toContain("Infinity");
+    } finally { restore(); }
+  });
+
+  it("reports no problem when the file is valid", async () => {
+    const restore = withBody('[{"name":"QQQ 200d trend filter","start":"2006-10-03","cagr":11.2,"maxdd":-26.2,"sharpe":0.76,"trades_per_yr":3,"last3y":24.4,"pf":3.82}]');
+    try {
+      const swing = await research.readSwingForTest();
+      expect(swing!.problem).toBeNull();
+      expect(swing!.strategies[0].name).toBe("QQQ 200d trend filter");
+      expect(swing!.strategies[0].cagr).toBe(11.2);
+    } finally { restore(); }
+  });
+});

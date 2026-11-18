@@ -299,7 +299,7 @@ export interface Summary {
   symbols_studied: number | null;
   caveats: string[];
   trend: ReturnType<typeof trend>;
-  swing: { strategies: ReturnType<typeof strategies>; signals: ReturnType<typeof sleeves> | null } | null;
+  swing: { strategies: ReturnType<typeof strategies>; signals: ReturnType<typeof sleeves> | null; problem: string | null } | null;
   caveat: string;
 }
 
@@ -365,23 +365,40 @@ interface Cached {
   problem?: string;
 }
 
-async function readJson(url: string): Promise<unknown | null> {
+/** A lab file, with "never published" kept distinct from "published but unreadable".
+ *
+ *  Those two look identical on the page if both just return null, and that is exactly
+ *  how the whole swing lab stayed invisible: the producer wrote Infinity, which Python
+ *  reads back happily and JSON.parse rejects outright, the error went to a console
+ *  nobody reads, and the hub rendered an empty section as though the lab had simply
+ *  not run. A file we cannot read is a fault to report, not an absence to render. */
+async function readJson(url: string): Promise<{ data: unknown | null; problem: string | null }> {
   try {
     const res = await fetch(url, { headers: { accept: "application/json" } });
-    return res.ok ? await res.json() : null;
+    if (!res.ok) return { data: null, problem: `The lab file could not be fetched (${res.status}).` };
+    const text = await res.text();
+    try {
+      return { data: JSON.parse(text), problem: null };
+    } catch {
+      const bad = /\b(Infinity|-Infinity|NaN)\b/.test(text) ? " It contains Infinity or NaN, which is not valid JSON." : "";
+      return { data: null, problem: `The lab published a file this hub cannot read.${bad} The numbers below are missing for that reason, not because the lab found nothing.` };
+    }
   } catch (error) {
     console.error("lab file fetch failed", url, String(error));
-    return null;
+    return { data: null, problem: "The lab file could not be fetched." };
   }
 }
 
 /** The swing lab's table and its two trend readings, if they have been published. */
+export const readSwingForTest = () => readSwing();
+
 async function readSwing(): Promise<Summary["swing"]> {
   const [results, signal] = await Promise.all([readJson(SWING_RESULTS_URL), readJson(SWING_SIGNAL_URL)]);
-  if (!results && !signal) return null;
-  const table = strategies(results);
-  if (!table.length && !signal) return null;
-  return { strategies: table, signals: signal ? sleeves(signal) : null };
+  const problem = results.problem ?? signal.problem ?? null;
+  if (!results.data && !signal.data && !problem) return null;
+  const table = strategies(results.data);
+  if (!table.length && !signal.data && !problem) return null;
+  return { strategies: table, signals: signal.data ? sleeves(signal.data) : null, problem };
 }
 
 async function readHistory(): Promise<ReturnType<typeof trend>> {

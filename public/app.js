@@ -880,6 +880,7 @@
       </article>`).join("");
     return `<section class="section"><h2>Your second lab: slow strategies</h2>
         <p class="sub">Twenty years of daily bars with real costs, testing well-known slow strategies instead of intraday breakouts. This is the better-evidenced of your two labs.</p>
+        ${sw.problem ? `<p class="banner">${esc(sw.problem)}</p>` : ""}
         ${cards ? `<p class="lead">Today's readings</p>${cards}` : ""}
         ${sw.strategies?.length ? `<p class="lead">What it found, best risk-adjusted first</p>
           ${strategyChart(sw.strategies)}
