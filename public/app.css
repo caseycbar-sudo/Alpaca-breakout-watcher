@@ -385,3 +385,20 @@ label { font-size:12px; color:#b0c4d5; }
 .plan-table th, .plan-table td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line, rgba(14,58,74,.12)); white-space: nowrap; }
 .plan-table th { font-weight: 600; color: var(--drift); font-size: 13px; }
 .plan-table tr:last-child td { border-bottom: 0; }
+/* Overview polish: stronger landmarks without implying live market data. */
+.notice { position:relative; isolation:isolate; overflow:hidden; padding:36px; border-color:#3e7881; background:radial-gradient(ellipse at 100% 0%,#28616b88,transparent 65%),linear-gradient(120deg,#132e40,#142036); box-shadow:0 18px 50px #0003; }
+.notice::before { content:"WORKSPACE OVERVIEW"; display:block; margin-bottom:16px; color:#9ae5d7; font-size:10px; font-weight:750; letter-spacing:.2em; }
+.notice::after { content:""; position:absolute; z-index:-1; width:340px; height:340px; right:-180px; top:-160px; border:1px solid #87e3d333; border-radius:50%; box-shadow:0 0 0 38px #87e3d30a,0 0 0 76px #87e3d306; pointer-events:none; }
+.notice h1 { max-width:16em; font-size:clamp(32px,5vw,48px); }
+.notice.stop { border-color:#a85f59; background:linear-gradient(115deg,#3b2632,#17263b); }
+.notice.stop::before { color:#ffc1b7; }
+.ledger { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:18px; padding:0; border:0; }
+.ledger .row { min-width:0; margin:0; padding:18px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-content:start; border:1px solid var(--line); border-radius:14px; background:linear-gradient(140deg,#172b3f,#101c2c); overflow-wrap:anywhere; }
+.ledger .label { font-size:12px; color:#b8ccdc; }
+.ledger .value { font-size:20px; letter-spacing:-.035em; }
+.ledger .value.none { font-size:13px; letter-spacing:0; }
+.ledger .note { font-size:12px; line-height:1.6; }
+.flags li { background:#162638; border:1px solid #46546a; border-left:3px solid #e5bf7e; border-radius:12px; margin:10px 0; padding:15px; font-size:14px; }
+.flags li.stop { border-left-color:var(--flare); background:#322631; }
+.team-tile:focus-visible { outline-offset:4px; }
+@media(max-width:600px) { .notice { padding:25px; }.ledger { grid-template-columns:1fr; }.ledger .row { padding:16px; }.notice::after { right:-240px; } }
