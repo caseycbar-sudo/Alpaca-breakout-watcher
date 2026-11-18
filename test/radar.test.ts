@@ -228,3 +228,43 @@ describe("reading the radar", () => {
     expect(news({ ...real, news_first_seen: "2026-11-17T17:29:00Z" }, "2026-11-17T17:30:00Z").verdict).toBe("ok");
   });
 });
+
+describe("the ticker strip", () => {
+  const quotes = (rows: unknown[]) =>
+    radar.clean({ generated_at: "2026-11-18T18:30:00Z", quotes: rows, candidates: [] }, "posted by the watcher").quotes;
+
+  it("ages a price at read time so it cannot freeze", () => {
+    const fresh = new Date(Date.now() - 90_000).toISOString();
+    const [q] = quotes([{ symbol: "QQQ", price: 756.02, change_pct: 1.2, at: fresh, available: true }]);
+    expect(q.available).toBe(true);
+    expect(q.age_seconds).toBeGreaterThanOrEqual(89);
+    expect(q.age_seconds).toBeLessThan(120);
+  });
+
+  // The strip moves, so it reads as live. Everything here exists to stop it lying.
+  it("refuses to show a price it cannot stand behind", () => {
+    // Marked unavailable by the watcher: no price, and it says why.
+    const [gone] = quotes([{ symbol: "PSQ", price: null, at: null, available: false }]);
+    expect(gone.price).toBeNull();
+    expect(gone.note).toContain("No price is shown rather than an old one");
+
+    // available:true with no price is a contradiction. Trusting the flag would put an
+    // empty slot on the strip looking like a real quote.
+    const [liar] = quotes([{ symbol: "SPY", price: null, at: "2026-11-18T18:29:00Z", available: true }]);
+    expect(liar.available).toBe(false);
+
+    // An undated price is real but we cannot say when it was true.
+    const [undated] = quotes([{ symbol: "QQQ", price: 756.02, at: null, available: true }]);
+    expect(undated.price).toBe(756.02);
+    expect(undated.age_seconds).toBeNull();
+
+    // An unzoned stamp is not a stamp.
+    const [unzoned] = quotes([{ symbol: "QQQ", price: 1, at: "2026-11-18T18:29:00", available: true }]);
+    expect(unzoned.age_seconds).toBeNull();
+  });
+
+  it("keeps the strip short and drops nameless rows", () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({ symbol: `S${i}`, price: 1, available: true }));
+    expect(quotes([...many, { price: 9, available: true }]).length).toBe(12);
+  });
+});

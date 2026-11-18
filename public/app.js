@@ -255,6 +255,78 @@
     return { questions, approvals, total: questions.length + approvals.length };
   }
 
+  // --- ticker strip -------------------------------------------------------------
+  // Prices come from the watcher, which runs every five minutes through the session.
+  // They are never live, so the age goes on screen in words and the motion stops when
+  // the numbers stop being current. See the note in app.css.
+  const STALE_AFTER_S = 15 * 60;
+
+  // Same rule the hub applies server-side: a timestamp without a zone is not a
+  // timestamp. Date.parse would happily read it in the viewer's own zone instead.
+  function zonedMs(value) {
+    if (typeof value !== "string") return null;
+    if (!/^\d{4}-\d{2}-\d{2}[Tt ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?([Zz]|[+-]\d{2}:?\d{2})$/.test(value.trim())) return null;
+    const ms = Date.parse(value.trim().replace(" ", "T"));
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  function sinceWords(seconds) {
+    if (seconds === null) return "at an unrecorded time";
+    if (seconds < 90) return "under a minute ago";
+    const mins = Math.round(seconds / 60);
+    if (mins < 60) return mins + " min ago";
+    const hrs = Math.round(mins / 60);
+    return hrs < 24 ? hrs + " hr ago" : Math.round(hrs / 24) + " days ago";
+  }
+
+  function tickItem(q) {
+    const sym = `<span class="tick-sym">${esc(q.symbol)}</span>`;
+    if (!q.available || q.price === null || q.price === undefined) {
+      return `<span class="tick">${sym}<span class="tick-none">no price this scan</span></span><span class="tick-sep"></span>`;
+    }
+    const price = Math.abs(q.price) < 1 ? q.price.toFixed(4) : q.price.toFixed(2);
+    const c = q.change_pct;
+    const dir = c === null || c === undefined ? "flat" : c > 0 ? "up" : c < 0 ? "down" : "flat";
+    const glyph = dir === "up" ? "\u25B2" : dir === "down" ? "\u25BC" : "\u2013";
+    const chg = c === null || c === undefined ? "" :
+      `<span class="tick-chg ${dir}">${glyph} ${Math.abs(c).toFixed(2)}%</span>`;
+    return `<span class="tick">${sym}<span class="tick-px">${esc(price)}</span>${chg}</span><span class="tick-sep"></span>`;
+  }
+
+  function ticker() {
+    const v = S.radar;
+    const rows = (v && v.quotes) || [];
+    if (!rows.length) return "";
+
+    // Age the strip by its OLDEST readable quote, not its newest. One fresh symbol
+    // must not make the row look current when the rest of it is hours behind.
+    const ages = rows.filter((q) => q.available).map((q) => zonedMs(q.at))
+      .filter((ms) => ms !== null).map((ms) => Math.max(0, Math.round((Date.now() - ms) / 1000)));
+    const oldest = ages.length ? Math.max(...ages) : null;
+    const undated = rows.some((q) => q.available && zonedMs(q.at) === null);
+    const missing = rows.filter((q) => !q.available).map((q) => q.symbol);
+    const closed = v.market && v.market.is_open === false;
+    const stale = oldest === null || oldest > STALE_AFTER_S || closed;
+
+    const items = rows.map(tickItem).join("");
+    // Doubled so the loop meets itself. aria-hidden on the copy, so a screen reader
+    // reads each price once; the whole strip is also a list in the markup order.
+    const track = `<div class="ticker-track">${items}<span aria-hidden="true">${items}</span></div>`;
+
+    const bits = [];
+    bits.push(`<span class="age">${esc(oldest === null ? "Timing not recorded" : "As of " + sinceWords(oldest))}</span>`);
+    bits.push(`<span>From the watcher's last scan, not a live feed.</span>`);
+    if (closed) bits.push(`<span class="warn">Market closed, so these are the last prices of the session.</span>`);
+    else if (stale) bits.push(`<span class="warn">Older than ${Math.round(STALE_AFTER_S / 60)} minutes, so treat as history.</span>`);
+    if (undated) bits.push(`<span class="warn">Some prices arrived without a usable time.</span>`);
+    if (missing.length) bits.push(`<span class="warn">No price this scan for ${esc(missing.join(", "))}.</span>`);
+
+    return `<section class="section" aria-label="Prices from the last scan">
+      <div class="ticker ${stale ? "is-stale" : ""}">${track}</div>
+      <p class="ticker-meta">${bits.join("")}</p>
+    </section>`;
+  }
+
   function driftline() {
     if (!S.connections.length) {
       return `<div class="section"><div class="empty">No AI is connected yet. Open the AIs tab to connect Claude, ChatGPT or Grok.</div></div>`;
@@ -382,6 +454,7 @@
     const history = [...(S.board.historical_details || []), ...(S.board.historical_notices || [])];
     const r = S.board.rules;
     return `<section class="notice ${cls}"><h1>${esc(head)}</h1><p>${stops.length ? esc(sub) : sub}</p></section>
+      ${ticker()}
       ${driftline()}
       <section class="section"><h2>Project work</h2>${jobStats()}<button type="button" class="btn" data-tab-link="jobs">Open jobs and next actions</button></section>
       ${need.total ? `<section class="section"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>` : ""}
@@ -799,7 +872,7 @@
     const minute = Math.floor(S.server_time / 60000);
     const slices = {
       jobs: [S.jobs, extraJobs, jobOwner, jobStatus, jobsCursor, minute],
-      today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, minute],
+      today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, S.radar?.quotes, S.radar?.market?.is_open, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
       research: [S.research, S.radar, Math.floor(minute / 5)],

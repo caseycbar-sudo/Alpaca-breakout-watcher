@@ -408,3 +408,58 @@ label { font-size:12px; color:#b0c4d5; }
 .flags li.stop { border-left-color:var(--flare); background:#322631; }
 .team-tile:focus-visible { outline-offset:4px; }
 @media(max-width:600px) { .notice { padding:25px; }.ledger { grid-template-columns:1fr; }.ledger .row { padding:16px; }.notice::after { right:-240px; } }
+
+/* ---------- ticker strip ----------
+   Casey asked for moving parts. Motion is the one thing on this page that can imply
+   freshness without saying anything, so the strip is built so that the movement never
+   carries that meaning on its own:
+     * the age of the prices is printed on the strip, always, in words;
+     * when the data goes stale or the market closes the strip desaturates and the
+       motion stops, so "moving" and "current" cannot drift apart;
+     * a symbol the feed did not return shows a gap that says so, never a last-known
+       price sitting there looking alive;
+     * direction is a glyph as well as a colour, so it survives colourblindness and
+       a greyed-out stale state.
+   prefers-reduced-motion removes the animation entirely and leaves a readable row. */
+.ticker {
+  position: relative; overflow: hidden; border-radius: 16px;
+  border: 1px solid #27455c; background: linear-gradient(180deg, #0d1a2b, #0a1522);
+  padding: 11px 0 9px;
+}
+.ticker::before, .ticker::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 46px; z-index: 2; pointer-events: none;
+}
+.ticker::before { left: 0; background: linear-gradient(90deg, #0d1a2b, #0d1a2b00); }
+.ticker::after { right: 0; background: linear-gradient(270deg, #0d1a2b, #0d1a2b00); }
+.ticker-track { display: flex; width: max-content; animation: drift 42s linear infinite; }
+.ticker:hover .ticker-track, .ticker:focus-within .ticker-track { animation-play-state: paused; }
+.ticker.is-stale .ticker-track { animation: none; transform: none; filter: grayscale(0.85) opacity(0.62); }
+@keyframes drift { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
+
+.tick { display: flex; align-items: baseline; gap: 8px; padding: 0 20px; white-space: nowrap; }
+.tick-sym { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: #8fa5b9; }
+/* Monospace here is doing a job, not setting a mood: prices line up digit for digit
+   as the strip moves, so a changing number does not shuffle the layout. */
+.tick-px { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+           font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 600; color: #e8f1f6; }
+.tick-chg { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600; }
+.tick-chg.up { color: #6fd6ae; } .tick-chg.down { color: #e2896f; } .tick-chg.flat { color: #8fa5b9; }
+.tick-none { font-size: 12px; color: #8fa5b9; font-style: italic; }
+.tick-sep { width: 1px; align-self: stretch; background: #24405422; }
+
+.ticker-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline;
+  margin: 9px 2px 0; font-size: 12px; color: #8095a8;
+}
+.ticker-meta .age { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: #9fb4c4; }
+.ticker-meta .warn { color: #dfb875; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; flex-wrap: wrap; width: auto; justify-content: center; }
+  .ticker::before, .ticker::after { display: none; }
+  .tick { padding: 4px 14px; }
+}
+@media (max-width: 600px) {
+  .tick { padding: 0 14px; } .tick-px { font-size: 16px; }
+}

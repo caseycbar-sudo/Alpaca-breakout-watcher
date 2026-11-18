@@ -159,6 +159,30 @@ function candidate(raw: unknown, scanAt: string | null, publishedAt: string | nu
   };
 }
 
+/** One ticker row. `age_seconds` is computed at read time, never stored, so it cannot
+ *  freeze at whatever it happened to be when the scan arrived. */
+function quote(raw: unknown) {
+  const q = obj(raw);
+  const at = str(q.at, 60);
+  // instant(), not Date.parse(). Date.parse accepts an unzoned string and reads it in
+  // the runtime's own zone, which is the exact bug ChatGPT found in the headline timing
+  // check. A price stamped "18:29:00" with no offset is not a stamp.
+  const ms = instant(at);
+  const price = num(q.price);
+  // A row is only usable if the watcher said so AND a price actually came with it.
+  // Trusting the flag alone would let a null price through as though it were real.
+  const usable = q.available === true && price !== null;
+  return {
+    symbol: str(q.symbol, 20),
+    price,
+    change_pct: num(q.change_pct),
+    at,
+    age_seconds: ms === null ? null : Math.max(0, Math.round((Date.now() - ms) / 1000)),
+    available: usable,
+    note: usable ? null : "The feed did not return this symbol on the last scan. No price is shown rather than an old one.",
+  };
+}
+
 export interface Radar {
   generated_at: string | null;
   published_at: string | null;
@@ -167,6 +191,7 @@ export interface Radar {
   note: string | null;
   candidate_count: number;
   candidates: ReturnType<typeof candidate>[];
+  quotes: ReturnType<typeof quote>[];
   research_log: { time: string | null; text: string | null }[];
   gates: { label: string | null; rule: string | null }[];
   arrived_via: "posted by the watcher" | "published with the nightly lab run";
@@ -180,6 +205,7 @@ export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
   return {
     generated_at: str(d.generated_at, 60),
     published_at: str(d.published_at, 60),
+    quotes: arr(d.quotes).slice(0, 12).map(quote).filter((q) => q.symbol),
     market: { phase: str(m.phase, 60), is_open: bool(m.is_open), next_open: str(m.next_open, 60), next_close: str(m.next_close, 60) },
     sources: {
       market_data: str(sys.market_data, 80),
