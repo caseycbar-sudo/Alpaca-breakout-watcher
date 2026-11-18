@@ -1,95 +1,11 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-17T18:16:42.223822+00:00",
-  "market": {
-    "phase": "regular session",
-    "is_open": true,
-    "next_open": "2026-11-18T09:30:00-05:00",
-    "next_close": "2026-11-17T16:00:00-05:00"
-  },
-  "system": {
-    "watcher": "online",
-    "market_data": "Alpaca IEX",
-    "scan_frequency": "5 minutes",
-    "email_bridge": "standing by",
-    "paper_account": "healthy",
-    "paper_positions": 0,
-    "paper_open_orders": 0,
-    "sec_edgar": "unavailable",
-    "nasdaq_halts": "online \u00b7 15 active",
-    "stocktwits": "online \u2014 secondary discovery",
-    "note": "No confirmed setup or account-risk change."
-  },
+  "generated_at": null,
+  "market": {},
+  "system": {},
   "candidates": [],
   "research_log": [],
-  "paper_lab": {
-    "starting_balance": 50.0,
-    "balance": 50.0,
-    "completed_trades": 0,
-    "open_trades": 0,
-    "win_rate": 0,
-    "average_win": 0,
-    "average_loss": 0,
-    "profit_factor": null,
-    "expectancy": 0,
-    "maximum_drawdown": 0.0,
-    "validated": false,
-    "trades": []
-  },
-  "gates": [
-    {
-      "label": "Price",
-      "rule": "$0.50\u2013$100.00"
-    },
-    {
-      "label": "Session move",
-      "rule": "2%\u20138%"
-    },
-    {
-      "label": "Relative volume",
-      "rule": "at least 1.5x"
-    },
-    {
-      "label": "5-minute liquidity",
-      "rule": "at least $250,000"
-    },
-    {
-      "label": "RSI",
-      "rule": "52\u201378; 55\u201372 preferred"
-    },
-    {
-      "label": "Spread",
-      "rule": "0.40% maximum"
-    },
-    {
-      "label": "VWAP",
-      "rule": "above; within 1 ATR"
-    },
-    {
-      "label": "Catalyst",
-      "rule": "verified news within 24 hours"
-    },
-    {
-      "label": "Stocktwits",
-      "rule": "attention/ranking only; never confirmation"
-    },
-    {
-      "label": "SEC filing",
-      "rule": "no fresh offering, dilution or listing risk"
-    },
-    {
-      "label": "Trading halt",
-      "rule": "clear on Nasdaq Trader's official feed"
-    },
-    {
-      "label": "Confirmation",
-      "rule": "second-bar hold or first retest"
-    }
-  ],
-  "privacy": {
-    "public_data": "Market research and paper simulations only",
-    "private_data": "Robinhood verification remains inside ChatGPT",
-    "orders": "No real-order code exists in this repository",
-    "social_data": "Stocktwits is untrusted attention data, never a catalyst or quote"
-  }
+  "paper_lab": {},
+  "gates": [],
+  "privacy": {}
 }

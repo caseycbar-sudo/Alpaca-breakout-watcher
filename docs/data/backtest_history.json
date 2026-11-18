@@ -555,5 +555,62 @@
   "promising": [],
   "avoid": [],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-18T02:55:04.852590+00:00",
+  "tickers": 20,
+  "learning_trades": 1351,
+  "learning_avg_r": -0.432,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.58,
+  "promising": [
+   "Stop distance: 4%+",
+   "Setup: A \u2014 catalyst ORB second-bar hold + 5-min RSI: 65\u201372",
+   "5-min RSI: 65\u201372 + Opening gap: gap down"
+  ],
+  "avoid": [
+   "5-min RSI: under 52 + Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-18T05:29:22.505974+00:00",
+  "tickers": 20,
+  "learning_trades": 1351,
+  "learning_avg_r": -0.432,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.58,
+  "promising": [
+   "Stop distance: 4%+",
+   "Setup: A \u2014 catalyst ORB second-bar hold + 5-min RSI: 65\u201372",
+   "5-min RSI: 65\u201372 + Opening gap: gap down"
+  ],
+  "avoid": [
+   "5-min RSI: under 52 + Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-18T05:44:40.347202+00:00",
+  "tickers": 20,
+  "learning_trades": 1351,
+  "learning_avg_r": -0.432,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.58,
+  "promising": [
+   "Stop distance: 4%+",
+   "Setup: A \u2014 catalyst ORB second-bar hold + 5-min RSI: 65\u201372",
+   "5-min RSI: 65\u201372 + Opening gap: gap down"
+  ],
+  "avoid": [
+   "5-min RSI: under 52 + Opening gap: flat (\u00b11%)"
+  ],
+  "run": "study list"
  }
 ]
