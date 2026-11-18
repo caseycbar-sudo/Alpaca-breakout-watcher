@@ -497,3 +497,111 @@ label { font-size:12px; color:#b0c4d5; }
 .bar-rail { grid-area: rail; display: block; width: 100%; height: 14px; }
 
 @media (max-width: 600px) { .chart figcaption { font-size: 12px; } }
+
+/* ================= OVERVIEW v2 =================
+   Casey's note, three times running: too dark, too drab, still just lists, does not
+   feel like an app. All three earlier passes were mine built to my own taste, which
+   runs to hairlines and restraint. This one is built to his: green and blue, colour
+   used generously, depth, and the numbers treated as the thing you came to look at.
+   Every v2- class is namespaced so it cannot collide with the older tabs while the
+   rest of the site still uses them.
+
+   The one thing that does not move: every number keeps its age beside it, and nothing
+   animates in a way that implies a price is live. Colour was never what made that
+   honest, so there is no reason for honesty to look grey. */
+
+.v2 { --g1:#3ee6b0; --g2:#19b98c; --b1:#4aa8ff; --b2:#2563d6; --cy:#34d8f0;
+      --warm:#ff8f6b; --gold:#ffc24d;
+      --panel:#0e2a3d; --panel-2:#113449; --edge:#1d4a63; --edge-2:#245f7e;
+      --t1:#eaf7fb; --t2:#9dc2d4; --t3:#6b96ad; }
+
+.v2 { display:grid; gap:14px; }
+.v2 .num { font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+
+/* hero: a lit panel rather than a flat box. the glow is the point, it is what makes
+   the screen feel like a product instead of a report. */
+.v2-hero { position:relative; overflow:hidden; border-radius:22px; padding:22px 20px 20px;
+  background:radial-gradient(130% 110% at 8% -10%, #1d6f78 0%, #124257 42%, #0b2638 100%);
+  border:1px solid var(--edge-2); box-shadow:0 18px 44px #02101a80, inset 0 1px 0 #ffffff14; }
+.v2-hero::after { content:""; position:absolute; right:-70px; top:-110px; width:300px; height:300px;
+  border-radius:50%; background:radial-gradient(circle,#3ee6b038,transparent 62%); pointer-events:none; }
+.v2-hero .cap { font-size:12.5px; color:#a9d8e4; letter-spacing:.02em; }
+.v2-hero .amt { margin:7px 0 0; font-size:46px; line-height:1; font-weight:700; letter-spacing:-.035em;
+  background:linear-gradient(94deg,#ffffff 12%,var(--g1) 92%); -webkit-background-clip:text;
+  background-clip:text; color:transparent; }
+.v2-hero .amt.none { font-size:25px; background:none; color:#a9d8e4; -webkit-text-fill-color:#a9d8e4; }
+.v2-age { display:inline-flex; align-items:center; gap:7px; margin-top:12px; padding:5px 11px;
+  border-radius:999px; font-size:11.5px; font-weight:600;
+  background:#ffc24d1f; border:1px solid #ffc24d4d; color:var(--gold); }
+.v2-age.fresh { background:#3ee6b01c; border-color:#3ee6b047; color:var(--g1); }
+.v2-split { display:flex; gap:10px; margin-top:18px; }
+.v2-split div { flex:1; background:#06203073; border:1px solid #ffffff14; border-radius:14px; padding:11px 12px; }
+.v2-split span { display:block; font-size:11px; color:#9fcdde; }
+.v2-split b { display:block; font-size:17px; font-weight:700; margin-top:3px; color:#fff; }
+.v2-split b.dim { font-size:13px; font-weight:600; color:#7fb0c4; }
+
+/* chart as a centrepiece, not a strip under some text */
+.v2-card { border-radius:20px; padding:17px 17px 15px; background:linear-gradient(168deg,var(--panel-2),var(--panel));
+  border:1px solid var(--edge); box-shadow:0 10px 30px #03121c66; }
+.v2-card > h2 { margin:0 0 3px; font-size:16.5px; font-weight:680; letter-spacing:-.02em; color:var(--t1); }
+.v2-card > p.sub { margin:0 0 12px; font-size:12.5px; color:var(--t2); }
+.v2-figure svg { display:block; width:100%; height:auto; }
+.v2-legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:10px; font-size:11.5px; color:var(--t2); }
+.v2-legend i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:6px; vertical-align:0; }
+
+/* alert: a coloured icon tile, not a bullet list */
+.v2-alert { display:flex; gap:13px; align-items:flex-start; border-radius:18px; padding:15px 16px;
+  background:linear-gradient(150deg,#3b2f1b,#1d2a38 70%); border:1px solid #ffc24d4a; }
+.v2-alert .ic { flex:0 0 auto; width:34px; height:34px; border-radius:12px; display:grid; place-items:center;
+  font-size:17px; font-weight:800; color:#2a1d05; background:linear-gradient(150deg,var(--gold),#e59a28); }
+.v2-alert h3 { margin:0; font-size:14.5px; font-weight:700; color:#ffe6b8; }
+.v2-alert p { margin:5px 0 0; font-size:12.8px; color:#d6c3a2; }
+.v2-alert.calm { background:linear-gradient(150deg,#123b3a,#102b3b 70%); border-color:#3ee6b03d; }
+.v2-alert.calm .ic { background:linear-gradient(150deg,var(--g1),var(--g2)); color:#04231a; }
+.v2-alert.calm h3 { color:#c9f6e7; } .v2-alert.calm p { color:#9fd2c6; }
+.v2-more { display:inline-block; margin-top:9px; font-size:12.5px; font-weight:700; color:var(--cy);
+  text-decoration:none; border:0; background:none; padding:0; cursor:pointer; }
+
+/* holdings: a coloured chip per symbol so the eye lands on it first */
+.v2-hold { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #ffffff10; }
+.v2-hold:last-child { border-bottom:0; }
+.v2-chip { flex:0 0 auto; width:40px; height:40px; border-radius:13px; display:grid; place-items:center;
+  font-size:12px; font-weight:800; letter-spacing:-.02em; color:#04202b;
+  background:linear-gradient(150deg,var(--b1),var(--b2)); }
+.v2-chip.c2 { background:linear-gradient(150deg,var(--g1),var(--g2)); }
+.v2-chip.c3 { background:linear-gradient(150deg,var(--cy),#2b8fb8); }
+.v2-hold .nm { flex:1; min-width:0; }
+.v2-hold .nm b { display:block; font-size:14.5px; font-weight:680; color:var(--t1); }
+.v2-hold .nm span { display:block; font-size:11.5px; color:var(--t3); margin-top:1px; }
+.v2-hold .rt { text-align:right; }
+.v2-hold .rt b { display:block; font-size:15px; font-weight:680; color:#fff; }
+.v2-tag { display:inline-block; margin-top:3px; font-size:10px; font-weight:700; letter-spacing:.04em;
+  padding:2px 7px; border-radius:999px; background:#ffc24d20; color:var(--gold); border:1px solid #ffc24d3d; }
+.v2-tag.ok { background:#3ee6b01c; color:var(--g1); border-color:#3ee6b040; }
+
+/* rules as filled meters, work as colour tiles */
+.v2-meter { margin-top:11px; }
+.v2-meter .lab { display:flex; justify-content:space-between; font-size:12.5px; color:var(--t2); margin-bottom:6px; }
+.v2-meter .lab b { color:#fff; font-weight:680; }
+.v2-meter .track { height:9px; border-radius:999px; background:#06202d; overflow:hidden; border:1px solid #ffffff0f; }
+.v2-meter .track i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--b1),var(--g1)); }
+.v2-meter .track i.full { background:linear-gradient(90deg,var(--warm),#e0603c); }
+.v2-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+.v2-tile { border-radius:15px; padding:13px 8px; text-align:center; border:1px solid var(--edge);
+  background:linear-gradient(165deg,var(--panel-2),var(--panel)); }
+.v2-tile b { display:block; font-size:23px; font-weight:720; color:#fff; letter-spacing:-.02em; }
+.v2-tile span { display:block; font-size:10.5px; color:var(--t3); margin-top:3px; }
+.v2-tile.hot { border-color:#3ee6b047; background:linear-gradient(165deg,#12403c,#0e2b3c); }
+.v2-tile.hot b { color:var(--g1); }
+
+@media (max-width:600px){
+  .v2-hero .amt { font-size:40px; }
+  .v2-split { gap:7px; } .v2-split div { padding:9px 9px; } .v2-split b { font-size:15px; }
+  .v2-tiles { gap:7px; } .v2-tile b { font-size:20px; }
+}
+.v2-pos { color:#3ee6b0; } .v2-neg { color:#ff8f6b; }
+.v2-yr { display:block; font-size:10.5px; color:#6b96ad; margin-top:2px; }
+.v2-dot-up, .v2-dot-flat { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:6px; }
+.v2-dot-up { background:#3ee6b0; } .v2-dot-flat { background:#6b96ad; }
+.v2-legend span { display:inline-flex; align-items:center; }
+.v2 .v2-hold .nm span { white-space:normal; }

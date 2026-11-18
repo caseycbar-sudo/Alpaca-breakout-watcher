@@ -462,37 +462,138 @@
   function renderToday() {
     const need = needsYou();
     const stops = S.board.exceptions.filter((e) => e.level === "stop");
+    const warns = S.board.exceptions.filter((e) => e.level !== "stop");
     const s = S.board.snapshot;
-    let head, cls = "";
-    if (stops.length) { head = "Stop and look."; cls = "stop"; }
-    else if (need.total) head = `${count(need.total, "thing needs", "things need")} you.`;
-    else head = "Nothing needs you right now.";
-    const sub = stops.length
-      ? stops[0].text
-      : `No order can be placed from this hub, and no ${term("engine", "trading engine")} is running. ` +
-        (s ? `The account numbers below are ${esc(s.age_words)} old.` : "No account numbers have been reported yet.");
-    const flags = S.board.exceptions;
-    const history = [...(S.board.historical_details || []), ...(S.board.historical_notices || [])];
     const r = S.board.rules;
-    return `<section class="notice ${cls}"><h1>${esc(head)}</h1><p>${stops.length ? esc(sub) : sub}</p></section>
+    const c = S.jobs?.counts || {};
+
+    const amount = s && s.total_value !== null && s.total_value !== undefined
+      ? `<div class="amt num">${esc(money(s.total_value))}</div>`
+      : `<div class="amt none">No account numbers yet</div>`;
+    const age = s
+      ? `<div class="v2-age ${s.stale ? "" : "fresh"}">${esc(s.age_words)} old, reported by ${esc(s.reported_by)}</div>`
+      : `<div class="v2-age">Nothing reported yet</div>`;
+    const money2 = (n, dim) => (n === null || n === undefined
+      ? `<b class="dim">not reported</b>` : `<b class="num${dim ? " dim" : ""}">${esc(money(n))}</b>`);
+
+    const hero = `<section class="v2-hero">
+      <div class="cap">Account value</div>
+      ${amount}
+      ${age}
+      <div class="v2-split">
+        <div><span>Cash</span>${s ? money2(s.cash) : `<b class="dim">–</b>`}</div>
+        <div><span>Today</span>${s ? money2(s.day_change) : `<b class="dim">–</b>`}</div>
+        <div><span>Slots free</span><b class="num">${r.slots_left} of ${r.max_positions}</b></div>
+      </div>
+    </section>`;
+
+    // One headline, coloured by whether anything is actually wrong. The five separate
+    // warning lines that used to sit here are behind the count now; nothing is lost,
+    // but the screen answers its question before it lists its caveats.
+    const flagCount = S.board.exceptions.length;
+    const alert = stops.length
+      ? `<section class="v2-alert"><div class="ic">!</div><div>
+           <h3>Stop and look</h3><p>${esc(stops[0].text)}</p>
+           <button type="button" class="v2-more" data-tab-link="rules">See your rules</button></div></section>`
+      : flagCount
+        ? `<section class="v2-alert"><div class="ic">!</div><div>
+             <h3>${count(flagCount, "thing", "things")} flagged</h3>
+             <p>${esc(warns[0].text)}</p>
+             <button type="button" class="v2-more" id="v2-flags">Show all ${flagCount}</button></div></section>`
+        : `<section class="v2-alert calm"><div class="ic">✓</div><div>
+             <h3>Nothing needs you</h3>
+             <p>No order can be placed from this hub, and no trading engine is running.</p></div></section>`;
+
+    const held = s && s.positions && s.positions.length
+      ? `<section class="v2-card"><h2>What you hold</h2>
+          ${s.positions.map((p, i) => `<div class="v2-hold">
+            <div class="v2-chip c${(i % 3) + 1}">${esc(p.symbol.slice(0, 4))}</div>
+            <div class="nm"><b>${esc(p.symbol)}</b><span class="num">${esc(String(+p.quantity.toFixed(6)))} held</span></div>
+            <div class="rt">${p.market_value !== null ? `<b class="num">${esc(money(p.market_value))}</b>` : `<b class="dim">–</b>`}
+              ${coverageTag(p.coverage)}</div>
+          </div>`).join("")}
+        </section>`
+      : "";
+
+    // Meters, because a number with a bar beside it reads faster than a sentence.
+    const spent = r.max_positions ? (r.max_positions - r.slots_left) / r.max_positions : 0;
+    const rules = `<section class="v2-card"><h2>Your rules</h2>
+      <p class="sub">Version ${r.version}. ${esc(r.instruments)}.</p>
+      <div class="v2-meter"><div class="lab"><span>Position slots used</span><b>${r.max_positions - r.slots_left} of ${r.max_positions}</b></div>
+        <div class="track"><svg viewBox="0 0 100 9" preserveAspectRatio="none" height="9" aria-hidden="true"><rect x="0" y="0" width="${(spent * 100).toFixed(1)}" height="9" rx="4" fill="${spent >= 1 ? "#ff8f6b" : "#3ee6b0"}"/></svg></div></div>
+      <div class="v2-meter"><div class="lab"><span>Most per trade</span><b class="num">${esc(money(r.max_per_trade))}</b></div></div>
+      <div class="v2-meter"><div class="lab"><span>Stop new orders once down</span><b class="num">${esc(money(r.daily_trigger))}</b></div></div>
+    </section>`;
+
+    const work = `<section class="v2-card"><h2>Work in the hub</h2>
+      <p class="sub">Claude, ChatGPT and Grok, and what each is holding.</p>
+      <div class="v2-tiles">
+        <div class="v2-tile ${c.review ? "hot" : ""}"><b>${c.review || 0}</b><span>need review</span></div>
+        <div class="v2-tile"><b>${c.in_progress || 0}</b><span>running</span></div>
+        <div class="v2-tile"><b>${c.ready || 0}</b><span>ready</span></div>
+        <div class="v2-tile"><b>${c.done || 0}</b><span>done</span></div>
+      </div>
+      <button type="button" class="v2-more" data-tab-link="jobs">Open the job list</button>
+    </section>`;
+
+    const needed = need.total
+      ? `<section class="v2-card"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>`
+      : "";
+
+    const flagList = flagCount
+      ? `<section class="v2-card" id="v2-flaglist" hidden><h2>Everything flagged</h2>
+          ${S.board.exceptions.map((f) => `<div class="v2-hold"><div class="nm"><span>${esc(f.text)}</span></div></div>`).join("")}
+        </section>`
+      : "";
+
+    return `<div class="v2">
+      ${hero}
       ${ticker()}
+      ${alert}
+      ${flagList}
+      ${needed}
+      ${held}
+      ${labCard()}
+      ${work}
+      ${rules}
       ${driftline()}
-      <section class="section"><h2>Project work</h2>${jobStats()}<button type="button" class="btn" data-tab-link="jobs">Open jobs and next actions</button></section>
-      ${need.total ? `<section class="section"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>` : ""}
-      <section class="section"><h2>Your account</h2>${ledger()}</section>
-      <section class="section"><h2>Flags</h2>
-        ${flags.length
-          ? `<ul class="flags">${flags.map((f) => `<li class="${f.level}"><span class="dot" aria-hidden="true"></span><span>${esc(f.text)}</span></li>`).join("")}</ul>`
-          : `<p class="sub">Nothing flagged. The hub checks for missing stops, out-of-date numbers, and anything outside your rules.</p>`}
-        ${history.length ? `<details class="gloss"><summary>Historical protection details (${history.length})</summary><p class="sub">Source, date and account-matching caveats are retained below. Reports from other histories leave active flags after 72 elapsed hours; that does not resolve them or confirm current holdings.</p><ul>${history.map((h) => `<li>${esc(h.text)}</li>`).join("")}</ul></details>` : ""}
-      </section>
-      <section class="section"><h2>Your rules, version ${r.version}</h2>
-        <p class="sub">At most ${esc(money(r.max_per_trade))} per trade. No new orders once down ${esc(money(r.daily_trigger))} on the day. At most ${r.max_positions} positions. ${esc(r.instruments)}.
-        <button type="button" class="linkish" data-tab-link="rules">See or change the rules</button></p>
-      </section>`;
+    </div>`;
   }
 
-  // ------------------------------------------------------------- chat
+  // The lab, as a picture on the front page rather than a paragraph three taps away.
+  function labCard() {
+    const sw = S.research?.swing;
+    const rows = (sw?.strategies || []).filter((x) => typeof x.cagr === "number");
+    if (!rows.length) return "";
+    const sorted = rows.slice().sort((a, b) => b.cagr - a.cagr);
+    const pick = [sorted[0], sorted[sorted.length - 1]].filter(Boolean);
+    const span = Math.max(...pick.map((x) => Math.abs(x.cagr)), 1);
+    const sig = (sw.signals?.sleeves || []).map((x) =>
+      `<span><i class="${x.signal === "HOLD" ? "v2-dot-up" : "v2-dot-flat"}"></i>${esc(x.symbol)} reads ${x.signal === "HOLD" ? "hold" : "cash"}</span>`).join("");
+    return `<section class="v2-card"><h2>Your slow lab, twenty years</h2>
+      <p class="sub">The best and the worst of ${rows.length} strategies it tested, with real costs.</p>
+      <div class="v2-figure">
+        <svg viewBox="0 0 360 ${pick.length * 46}" preserveAspectRatio="none" height="${pick.length * 46}" role="img"
+             aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${x.worst_drawdown}%`).join(". "))}">
+          <defs>
+            <linearGradient id="v2up" x1="0" x2="1"><stop offset="0" stop-color="#19b98c"/><stop offset="1" stop-color="#3ee6b0"/></linearGradient>
+            <linearGradient id="v2dn" x1="1" x2="0"><stop offset="0" stop-color="#e0603c"/><stop offset="1" stop-color="#ff8f6b"/></linearGradient>
+          </defs>
+          ${pick.map((x, i) => {
+            const y = i * 46 + 22, w = (Math.abs(x.cagr) / span) * 170, neg = x.cagr < 0;
+            return `<rect x="0" y="${y}" width="360" height="14" rx="7" fill="#06202d"/>
+              <rect x="${(neg ? 180 - w : 180).toFixed(1)}" y="${y + 2}" width="${Math.max(2, w).toFixed(1)}" height="10" rx="4" fill="url(#${neg ? "v2dn" : "v2up"})"/>
+              <rect x="179.6" y="${y}" width="0.8" height="14" fill="#2d6076"/>`;
+          }).join("")}
+        </svg>
+      </div>
+      ${pick.map((x) => `<div class="v2-hold"><div class="nm"><b>${esc(x.name)}</b>
+          <span>worst fall ${x.worst_drawdown}% along the way</span></div>
+        <div class="rt"><b class="num ${x.cagr < 0 ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}%</b><span class="v2-yr">a year</span></div></div>`).join("")}
+      ${sig ? `<div class="v2-legend">${sig}</div>` : ""}
+      <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button>
+    </section>`;
+  }
 
   function messageHtml(m) {
     const kind = m.author_kind === "owner" ? "owner" : m.author_kind === "system" ? "system" : esc(m.author_id);
@@ -1116,6 +1217,11 @@
   view.addEventListener("click", async (e) => {
     const t = e.target.closest("button, a");
     if (!t) return;
+    if (t.id === "v2-flags") {
+      const list = document.getElementById("v2-flaglist");
+      if (list) { list.hidden = !list.hidden; t.textContent = list.hidden ? t.textContent.replace("Hide", "Show") : t.textContent.replace("Show", "Hide"); }
+      return;
+    }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
     if (t.dataset.jobHistory) {
       try {
