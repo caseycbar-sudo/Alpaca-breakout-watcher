@@ -279,18 +279,34 @@
     return hrs < 24 ? hrs + " hr ago" : Math.round(hrs / 24) + " days ago";
   }
 
+  function compactAge(seconds) {
+    if (seconds === null) return "no time";
+    if (seconds < 60) return seconds + "s";
+    const mins = Math.round(seconds / 60);
+    if (mins < 60) return mins + "m";
+    const hrs = Math.round(mins / 60);
+    return hrs < 24 ? hrs + "h" : Math.round(hrs / 24) + "d";
+  }
+
+  // Every price carries its own age, always. These four symbols do not refresh together:
+  // a crypto snapshot can be twenty minutes behind while an equity is seconds old, so a
+  // single age for the whole strip would be wrong for most of it in both directions.
   function tickItem(q) {
     const sym = `<span class="tick-sym">${esc(q.symbol)}</span>`;
     if (!q.available || q.price === null || q.price === undefined) {
       return `<span class="tick">${sym}<span class="tick-none">no price this scan</span></span><span class="tick-sep"></span>`;
     }
+    const ms = zonedMs(q.at);
+    const age = ms === null ? null : Math.max(0, Math.round((Date.now() - ms) / 1000));
+    const old = age === null || age > STALE_AFTER_S;
     const price = Math.abs(q.price) < 1 ? q.price.toFixed(4) : q.price.toFixed(2);
     const c = q.change_pct;
     const dir = c === null || c === undefined ? "flat" : c > 0 ? "up" : c < 0 ? "down" : "flat";
     const glyph = dir === "up" ? "\u25B2" : dir === "down" ? "\u25BC" : "\u2013";
     const chg = c === null || c === undefined ? "" :
       `<span class="tick-chg ${dir}">${glyph} ${Math.abs(c).toFixed(2)}%</span>`;
-    return `<span class="tick">${sym}<span class="tick-px">${esc(price)}</span>${chg}</span><span class="tick-sep"></span>`;
+    return `<span class="tick ${old ? "is-old" : ""}">${sym}<span class="tick-px">${esc(price)}</span>${chg}` +
+           `<span class="tick-age">${esc(compactAge(age))}</span></span><span class="tick-sep"></span>`;
   }
 
   function ticker() {
@@ -298,27 +314,32 @@
     const rows = (v && v.quotes) || [];
     if (!rows.length) return "";
 
-    // Age the strip by its OLDEST readable quote, not its newest. One fresh symbol
-    // must not make the row look current when the rest of it is hours behind.
-    const ages = rows.filter((q) => q.available).map((q) => zonedMs(q.at))
-      .filter((ms) => ms !== null).map((ms) => Math.max(0, Math.round((Date.now() - ms) / 1000)));
-    const oldest = ages.length ? Math.max(...ages) : null;
-    const undated = rows.some((q) => q.available && zonedMs(q.at) === null);
-    const missing = rows.filter((q) => !q.available).map((q) => q.symbol);
+    const readable = rows.filter((q) => q.available && q.price !== null && q.price !== undefined);
+    const ages = readable.map((q) => zonedMs(q.at)).filter((ms) => ms !== null)
+      .map((ms) => Math.max(0, Math.round((Date.now() - ms) / 1000)));
+    const freshest = ages.length ? Math.min(...ages) : null;
     const closed = v.market && v.market.is_open === false;
-    const stale = oldest === null || oldest > STALE_AFTER_S || closed;
+    // The strip only stops when nothing on it is current. One stale symbol greys out on
+    // its own; it does not freeze the whole row, and a fresh symbol never covers for it.
+    const allOld = !readable.length || !ages.length || Math.min(...ages) > STALE_AFTER_S;
+    const stale = closed || allOld;
 
     const items = rows.map(tickItem).join("");
-    // Doubled so the loop meets itself. aria-hidden on the copy, so a screen reader
-    // reads each price once; the whole strip is also a list in the markup order.
+    // Doubled so the loop meets itself. The copy is aria-hidden, so a screen reader
+    // reads each price once.
     const track = `<div class="ticker-track">${items}<span aria-hidden="true">${items}</span></div>`;
 
-    const bits = [];
-    bits.push(`<span class="age">${esc(oldest === null ? "Timing not recorded" : "As of " + sinceWords(oldest))}</span>`);
-    bits.push(`<span>From the watcher's last scan, not a live feed.</span>`);
+    const lagging = readable.filter((q) => {
+      const ms = zonedMs(q.at);
+      return ms === null || (Date.now() - ms) / 1000 > STALE_AFTER_S;
+    }).map((q) => q.symbol);
+    const missing = rows.filter((q) => !q.available).map((q) => q.symbol);
+
+    const bits = [`<span>Each price shows its own age. From the watcher's last scan, not a live feed.</span>`];
     if (closed) bits.push(`<span class="warn">Market closed, so these are the last prices of the session.</span>`);
-    else if (stale) bits.push(`<span class="warn">Older than ${Math.round(STALE_AFTER_S / 60)} minutes, so treat as history.</span>`);
-    if (undated) bits.push(`<span class="warn">Some prices arrived without a usable time.</span>`);
+    else if (allOld) bits.push(`<span class="warn">Nothing here is recent. Treat the whole strip as history.</span>`);
+    else if (freshest !== null) bits.push(`<span class="age">Newest ${esc(sinceWords(freshest))}</span>`);
+    if (lagging.length) bits.push(`<span class="warn">Behind by more than ${Math.round(STALE_AFTER_S / 60)} min: ${esc(lagging.join(", "))}.</span>`);
     if (missing.length) bits.push(`<span class="warn">No price this scan for ${esc(missing.join(", "))}.</span>`);
 
     return `<section class="section" aria-label="Prices from the last scan">

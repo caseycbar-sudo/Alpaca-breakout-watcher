@@ -463,3 +463,9 @@ label { font-size:12px; color:#b0c4d5; }
 @media (max-width: 600px) {
   .tick { padding: 0 14px; } .tick-px { font-size: 16px; }
 }
+/* Each price carries its own age: these four symbols do not refresh together, and a
+   crypto snapshot can sit twenty minutes behind an equity quote on the same strip. */
+.tick-age { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 11px; color: #64798c; letter-spacing: .02em; }
+.tick.is-old .tick-px, .tick.is-old .tick-chg { opacity: .5; filter: grayscale(1); }
+.tick.is-old .tick-age { color: #dfb875; }
