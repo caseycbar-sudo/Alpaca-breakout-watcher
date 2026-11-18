@@ -840,11 +840,23 @@
     const draft = tab === "chat" ? $("#composer textarea")?.value : "";
     view.innerHTML = RENDER[tab]();
     lastRendered = { key, tab };
+    measureTabs();
     if (tab === "chat") {
       if (draft) $("#composer textarea").value = draft;
       if (atBottom || firstChat) window.scrollTo(0, document.body.scrollHeight);
       if (document.visibilityState === "visible") markChatSeen();
     }
+  }
+
+  // The composer and the page padding are both offset by --tabs-h. If the tab bar ever
+  // renders taller than that (an extra tab, a wrapped label, a larger font), the offset
+  // is wrong and the bar covers whatever sits at the bottom of the page. Measuring it
+  // after every render means the layout cannot silently drift out of agreement again.
+  function measureTabs() {
+    const bar = document.querySelector(".tabs");
+    if (!bar) return;
+    const h = Math.round(bar.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty("--tabs-h", h + "px");
   }
 
   function go(next, scrollTop = true) {
@@ -1076,6 +1088,7 @@
 
   let resizeTimer;
   window.addEventListener("resize", () => {
+    measureTabs(); // the bar's height can change with the width, on every tab, not just today
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { if (tab === "today" && !typing()) render(true); }, 200);
   });
