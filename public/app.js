@@ -842,7 +842,16 @@
   }
 
   function strategyChart(rows) {
-    const pts = rows.filter((s) => typeof s.cagr === "number").slice(0, 8);
+    // Every strategy, never a top slice. The table under this chart lists all of them,
+    // and the row that matters most to Casey is the worst one: the lab's "current-style"
+    // entry, named after how he actually trades, which lost essentially everything. It
+    // ranks last by Sharpe, so a top-eight chart hid it completely while showing eight
+    // winners. A chart of results that quietly drops the catastrophic result is not a
+    // summary, it is a recommendation.
+    //
+    // Sorted by return here, because that is what the bars encode. The table keeps the
+    // risk-adjusted order, so each view is internally consistent.
+    const pts = rows.filter((s) => typeof s.cagr === "number").slice().sort((a, b) => b.cagr - a.cagr);
     if (pts.length < 2) return "";
     const span = Math.max(...pts.map((s) => Math.abs(s.cagr)), 1);
     const half = 50; // percent of the row width each arm may use
@@ -861,7 +870,7 @@
           <span class="bar-note">${esc(dd)}</span>
         </li>`;
       }).join("")}</ul>
-      <figcaption>Return a year, measured from the zero line in the middle. The worst fall beside each one is the deepest drop it took along the way, which is the number that decides whether anyone could actually have held it.</figcaption>
+      <figcaption>Every strategy the lab tested, best return first, measured from the zero line in the middle. The worst fall beside each one is the deepest drop it took along the way, which is the number that decides whether anyone could actually have held it. A high return with a near-total fall is not a strategy anyone survives.</figcaption>
     </figure>`;
   }
 
