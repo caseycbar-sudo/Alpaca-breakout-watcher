@@ -497,18 +497,26 @@
     // warning lines that used to sit here are behind the count now; nothing is lost,
     // but the screen answers its question before it lists its caveats.
     const flagCount = S.board.exceptions.length;
+    const alsoFlagged = flagCount ? ` ${count(flagCount, "thing", "things")} also flagged below.` : "";
     const alert = stops.length
       ? `<section class="v2-alert"><div class="ic">!</div><div>
            <h3>Stop and look</h3><p>${esc(stops[0].text)}</p>
            <button type="button" class="v2-more" data-tab-link="rules">See your rules</button></div></section>`
-      : flagCount
-        ? `<section class="v2-alert"><div class="ic">!</div><div>
-             <h3>${count(flagCount, "thing", "things")} flagged</h3>
-             <p>${esc(warns[0].text)}</p>
-             <button type="button" class="v2-more" id="v2-flags">Show all ${flagCount}</button></div></section>`
-        : `<section class="v2-alert calm"><div class="ic">✓</div><div>
-             <h3>Nothing needs you</h3>
-             <p>No order can be placed from this hub, and no trading engine is running.</p></div></section>`;
+      : need.total
+        // A waiting decision outranks a flag count. Saying "nothing needs you" above a
+        // question card was the hub contradicting itself on the one line Casey reads first.
+        ? `<section class="v2-alert"><div class="ic">?</div><div>
+             <h3>${count(need.total, "thing", "things")} waiting on you</h3>
+             <p>${need.questions.length ? "A question needs your answer." : ""}${need.approvals.length ? ` ${count(need.approvals.length, "plan", "plans")} reviewed and waiting for your approval.` : ""}${alsoFlagged}</p>
+             ${flagCount ? `<button type="button" class="v2-more" id="v2-flags">Show the ${flagCount} flagged</button>` : ""}</div></section>`
+        : flagCount
+          ? `<section class="v2-alert"><div class="ic">!</div><div>
+               <h3>${count(flagCount, "thing", "things")} flagged</h3>
+               <p>${esc(warns[0].text)}</p>
+               <button type="button" class="v2-more" id="v2-flags">Show all ${flagCount}</button></div></section>`
+          : `<section class="v2-alert calm"><div class="ic">✓</div><div>
+               <h3>Nothing needs you</h3>
+               <p>No order can be placed from this hub, and no trading engine is running.</p></div></section>`;
 
     const held = s && s.positions && s.positions.length
       ? `<section class="v2-card"><h2>What you hold</h2>
@@ -529,6 +537,7 @@
         <div class="track"><svg viewBox="0 0 100 9" preserveAspectRatio="none" height="9" aria-hidden="true"><rect x="0" y="0" width="${(spent * 100).toFixed(1)}" height="9" rx="4" fill="${spent >= 1 ? "#ff8f6b" : "#3ee6b0"}"/></svg></div></div>
       <div class="v2-meter"><div class="lab"><span>Most per trade</span><b class="num">${esc(money(r.max_per_trade))}</b></div></div>
       <div class="v2-meter"><div class="lab"><span>Stop new orders once down</span><b class="num">${esc(money(r.daily_trigger))}</b></div></div>
+      <p class="v2-fineprint">${esc(r.daily_trigger_words || "Checked when an AI reports a snapshot or before an order. It is not watched continuously, so it limits new orders but does not cap a day's loss.")}</p>
     </section>`;
 
     const work = `<section class="v2-card"><h2>Work in the hub</h2>
@@ -546,9 +555,16 @@
       ? `<section class="v2-card"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>`
       : "";
 
-    const flagList = flagCount
+    // The flag lines are short summaries. The full records, with their source, date and
+    // account-match caveats, live in historical_details and historical_notices. The
+    // first version of this screen read neither, which quietly dropped the only place
+    // those caveats appeared. Collapsed behind a tap is fine. Discarded is not.
+    const hist = [...(S.board.historical_details || []), ...(S.board.historical_notices || [])];
+    const flagList = flagCount || hist.length
       ? `<section class="v2-card" id="v2-flaglist" hidden><h2>Everything flagged</h2>
           ${S.board.exceptions.map((f) => `<div class="v2-hold"><div class="nm"><span>${esc(f.text)}</span></div></div>`).join("")}
+          ${hist.length ? `<h2 class="v2-sub">What the earlier reports actually said</h2>
+            ${hist.map((h) => `<div class="v2-hold"><div class="nm"><span>${esc(h.text)}</span></div></div>`).join("")}` : ""}
         </section>`
       : "";
 
@@ -570,14 +586,28 @@
   function labCard() {
     const sw = S.research?.swing;
     const rows = (sw?.strategies || []).filter((x) => typeof x.cagr === "number");
-    if (!rows.length) return "";
+    // An unreadable lab must stay distinguishable from a lab that found nothing, here
+    // as well as on the Research tab. Saying nothing would read as "no results".
+    if (!rows.length) {
+      return sw?.problem
+        ? `<section class="v2-card"><h2>Your slow lab</h2>
+             <p class="banner">${esc(sw.problem)}</p></section>`
+        : "";
+    }
     const sorted = rows.slice().sort((a, b) => b.cagr - a.cagr);
     const pick = [sorted[0], sorted[sorted.length - 1]].filter(Boolean);
     const span = Math.max(...pick.map((x) => Math.abs(x.cagr)), 1);
     const sig = (sw.signals?.sleeves || []).map((x) =>
       `<span><i class="${x.signal === "HOLD" ? "v2-dot-up" : "v2-dot-flat"}"></i>${esc(x.symbol)} reads ${x.signal === "HOLD" ? "hold" : "cash"}</span>`).join("");
-    return `<section class="v2-card"><h2>Your slow lab, twenty years</h2>
-      <p class="sub">The best and the worst of ${rows.length} strategies it tested, with real costs.</p>
+    // Each strategy has its own start date, so one blanket "twenty years" over the card
+    // was wrong for most of the rows. Each row now carries the window it actually covers.
+    // read_at arrives as a millisecond number from the hub, not an ISO string, so
+    // Date.parse would quietly yield NaN and the provenance line would lose its age.
+    const readMs = typeof S.research?.read_at === "number" ? S.research.read_at
+      : typeof S.research?.read_at === "string" ? Date.parse(S.research.read_at) : NaN;
+    const read = Number.isFinite(readMs) ? sinceWords(Math.max(0, Math.round((Date.now() - readMs) / 1000))) : null;
+    return `<section class="v2-card"><h2>Your slow lab</h2>
+      <p class="sub">The best and the worst of ${rows.length} strategies it tested, each over its own stretch of history, with real costs.</p>
       <div class="v2-figure">
         <svg viewBox="0 0 360 ${pick.length * 46}" preserveAspectRatio="none" height="${pick.length * 46}" role="img"
              aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${x.worst_drawdown}%`).join(". "))}">
@@ -594,9 +624,10 @@
         </svg>
       </div>
       ${pick.map((x) => `<div class="v2-hold"><div class="nm"><b>${esc(x.name)}</b>
-          <span>worst fall ${x.worst_drawdown}% along the way</span></div>
+          <span>worst fall ${x.worst_drawdown}% along the way${x.since ? `, tested from ${esc(x.since)}` : ""}</span></div>
         <div class="rt"><b class="num ${x.cagr < 0 ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}%</b><span class="v2-yr">a year</span></div></div>`).join("")}
       ${sig ? `<div class="v2-legend">${sig}</div>` : ""}
+      <p class="v2-fineprint">From your own backtest${read ? `, read ${esc(read)}` : ""}. These are modelled past results with assumed costs, not a prediction and not permission to trade. The cash and hold readings describe where each rule stands today, nothing more.</p>
       <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button>
     </section>`;
   }
