@@ -38,11 +38,13 @@ type AssetPath = (typeof ASSET_PATHS)[number];
 let assetStamps: Partial<Record<AssetPath, string>> | null = null;
 
 export async function primeAssetStamp(env: { ASSETS?: { fetch: (r: Request) => Promise<Response> } }): Promise<void> {
-  if (assetStamps || !env.ASSETS) return;
-  const out: Partial<Record<AssetPath, string>> = {};
+  if (!env.ASSETS || ASSET_PATHS.every(path => assetStamps?.[path])) return;
+  const out: Partial<Record<AssetPath, string>> = { ...assetStamps };
   await Promise.all(ASSET_PATHS.map(async (path) => {
+    if (out[path]) return;
     try {
       const res = await env.ASSETS!.fetch(new Request(`https://assets.invalid${path}`));
+      if (!res.ok) return;
       const tag = (res.headers.get("etag") ?? "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
       if (tag) out[path] = tag;
     } catch {
@@ -50,7 +52,7 @@ export async function primeAssetStamp(env: { ASSETS?: { fetch: (r: Request) => P
       // request and defeats caching altogether.
     }
   }));
-  assetStamps = out;
+  assetStamps = { ...assetStamps, ...out };
 }
 
 /** Exported for tests: the stamps actually in use, and a way to set them. */
