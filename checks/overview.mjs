@@ -67,3 +67,27 @@ test('zero drawdown remains a reported zero in both visible and accessible outpu
   assert.match(html, /<span>worst fall 0% along the way/);
   assert.match(html, /aria-label="Zero drawdown: 5% a year, worst fall 0%"/);
 });
+
+// Job #12 content slice, agreed in hub #355/#356. The Overview leads with what needs
+// Casey, built from the board's one canonical exception list, with the historical
+// records still behind the disclosure and never merged into the current ones.
+test('needs-you material leads the Overview, above the ticker', () => {
+  const html = render({ need: { total: 1, questions: [{}], approvals: [] },
+    board: board({ exceptions: [{ level: 'warn', text: 'A current flag' }] }) });
+  const alert = html.indexOf('waiting on you');
+  const question = html.indexOf('Pending question');
+  const flags = html.indexOf('id="v2-flaglist"');
+  assert.ok(alert > -1 && question > alert, 'the question card follows its own headline');
+  assert.ok(flags > question, 'the flag list follows the decision that needs answering');
+});
+
+test('current and historical warnings stay separate even for the same symbol', () => {
+  const html = render({ board: board({
+    exceptions: [{ level: 'warn', text: 'QQQ: current protection unknown.' }],
+    historical_details: [{ text: 'QQQ had no stop in the snapshot reported by Grok on Nov 17.' }] }) });
+  // Both survive. Deduplicating by symbol would drop the dated source record, which is
+  // the only place the reporter and date appear.
+  assert.match(html, /QQQ: current protection unknown/);
+  assert.match(html, /QQQ had no stop in the snapshot reported by Grok on Nov 17/);
+  assert.match(html, /What the earlier reports actually said/);
+});

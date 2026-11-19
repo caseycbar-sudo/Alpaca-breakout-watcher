@@ -196,12 +196,15 @@
         <span class="who"><i class="av av-${esc(t.owner_id || "casey")}">${esc((people[t.owner_id] || "Casey").slice(0, 1))}</i>${esc(people[t.owner_id] || t.owner_id || "Casey")}${t.status === "proposed" ? " · not accepted" : ""}</span>
         <span class="who quiet"><i class="av av-${esc(t.reviewer_id || "casey")}">${esc((people[t.reviewer_id] || "Casey").slice(0, 1))}</i>reviews</span>
       </div>
-      <p class="job-copy job-desc">${esc(t.description)}</p>
-      <p class="job-copy job-desc job-next"><strong>Next:</strong> ${esc(t.next_action)}</p>
-      <button type="button" class="job-expand" data-expand="job-${t.id}">Read the whole job</button>
+      <p class="job-copy job-next"><strong>Next:</strong> ${esc(t.next_action)}</p>
       ${t.blocker ? `<p class="banner job-copy"><strong>Blocked:</strong> ${esc(t.blocker)}</p>` : ""}
       ${t.stale ? `<p class="meta">No update in over 24 hours. Check whether the owner can continue.</p>` : ""}
-      <details><summary>Acceptance criteria${t.dependencies.length ? " and dependencies" : ""}</summary><p class="job-copy">${esc(t.acceptance)}</p>${t.dependencies.length ? `<p>Depends on: ${t.dependencies.map(id=>`#${id}`).join(", ")}</p>` : ""}${t.evidence ? `<p class="job-copy"><strong>Submitted evidence:</strong> ${esc(t.evidence)}</p>` : ""}</details>
+      <details class="job-detail"><summary>What this job is${t.dependencies.length ? ", what it depends on" : ""} and how it will be judged</summary>
+        <p class="job-copy">${esc(t.description)}</p>
+        <h4 class="job-h4">Judged by</h4><p class="job-copy">${esc(t.acceptance)}</p>
+        ${t.dependencies.length ? `<p class="meta">Depends on: ${t.dependencies.map(id=>`#${id}`).join(", ")}</p>` : ""}
+        ${t.evidence ? `<h4 class="job-h4">Submitted evidence</h4><p class="job-copy">${esc(t.evidence)}</p>` : ""}
+      </details>
       ${!closed ? `<details><summary>Update or hand off</summary>
         <form class="formgrid" data-job-update="${t.id}" data-version="${t.version}">
           <label>Action<select name="action">${options(actions, t.status === "review" && t.owner_id !== "casey" ? "complete" : t.status === "proposed" && (!t.owner_id || t.owner_id === "casey") ? "accept" : "handoff")}</select></label>
@@ -570,10 +573,10 @@
 
     return `<div class="v2">
       ${hero}
-      ${ticker()}
       ${alert}
-      ${flagList}
       ${needed}
+      ${flagList}
+      ${ticker()}
       ${held}
       ${labCard()}
       ${work}
@@ -1308,18 +1311,16 @@
     const t = e.target.closest("button, a");
     if (!t) return;
     if (t.dataset.expand) {
+      // Chat's "Show the whole message" uses this too, so the label is restored from
+      // the button rather than hardcoded. The old version wrote "Read the whole job"
+      // onto a chat button when you collapsed a long message.
       const card = document.getElementById(t.dataset.expand);
       if (card) {
         const open = card.classList.toggle("open");
-        t.textContent = open ? "Show less" : "Read the whole job";
+        t.dataset.closedLabel ||= t.textContent;
+        t.textContent = open ? "Show less" : t.dataset.closedLabel;
       }
       return;
-    }
-    if (t.dataset.discardJobDraft) {
-      const form = t.closest("form");
-      form.reset(); delete form.dataset.retryKey;
-      jobDrafts.delete(jobFormKey(form));
-      return render(true);
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
     if (t.dataset.jobHistory) {
