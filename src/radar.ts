@@ -202,6 +202,20 @@ export interface Radar {
   arrived_via: "posted by the watcher" | "published with the nightly lab run";
 }
 
+function gate(raw: unknown) {
+  const g = obj(raw);
+  const label = str(g.label, 60);
+  const rule = str(g.rule, 120);
+  // A scan-time REST lookup proves that a recent headline was found, not that
+  // the watcher held it before the setup formed. Keep the producer's gate but
+  // do not repeat its legacy overclaim in Casey's Hub.
+  const legacyCatalyst = /^catalyst:\s*verified news within 24 hours$/i;
+  return {
+    label: label && legacyCatalyst.test(label) ? "Recent headline: published within 24 hours" : label,
+    rule: rule?.replace(/verified news/gi, "a headline published in the scan lookback") ?? null,
+  };
+}
+
 export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
   const d = obj(raw);
   const m = obj(d.market);
@@ -230,7 +244,7 @@ export function clean(raw: unknown, via: Radar["arrived_via"]): Radar {
       .filter((r) => r.text),
     gates: arr(d.gates)
       .slice(0, 20)
-      .map((g) => ({ label: str(obj(g).label, 60), rule: str(obj(g).rule, 120) }))
+      .map(gate)
       .filter((g) => g.label),
     arrived_via: via,
   };
