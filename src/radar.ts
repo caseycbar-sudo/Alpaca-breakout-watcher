@@ -209,10 +209,14 @@ function gate(raw: unknown) {
   // A scan-time REST lookup proves that a recent headline was found, not that
   // the watcher held it before the setup formed. Keep the producer's gate but
   // do not repeat its legacy overclaim in Casey's Hub.
-  const legacyCatalyst = /^catalyst:\s*verified news within 24 hours$/i;
+  const legacyCatalyst = /^catalyst$/i;
+  const legacyRule = /^verified news within 24 hours$/i;
+  const isLegacyCatalyst = Boolean(label && rule && legacyCatalyst.test(label) && legacyRule.test(rule));
   return {
-    label: label && legacyCatalyst.test(label) ? "Recent headline: published within 24 hours" : label,
-    rule: rule?.replace(/verified news/gi, "a headline published in the scan lookback") ?? null,
+    label: isLegacyCatalyst ? "Recent headline" : label,
+    rule: isLegacyCatalyst
+      ? "Published within 24 hours of the scan; not evidence the news caused the move"
+      : rule,
   };
 }
 
