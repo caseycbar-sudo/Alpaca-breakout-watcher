@@ -54,3 +54,16 @@ test('one strategy is shown once and non-finite results never become chart coord
 test('daily trigger retains the non-continuous monitoring caveat', () => {
   assert.match(render(), /not watched continuously/); assert.match(render(), /does not cap a day/);
 });
+test('missing drawdown is explicit in both the visible row and accessible chart label', () => {
+  for (const value of [null, undefined, NaN, Infinity]) {
+    const html = render({research:research({strategies:[{name:'Missing drawdown',cagr:5,worst_drawdown:value,since:'2019-01-01'}]})});
+    assert.match(html, /<span>worst fall not reported along the way/);
+    assert.match(html, /aria-label="Missing drawdown: 5% a year, worst fall not reported"/);
+    assert.doesNotMatch(html, /null%|undefined%|NaN%|Infinity%/);
+  }
+});
+test('zero drawdown remains a reported zero in both visible and accessible output', () => {
+  const html = render({research:research({strategies:[{name:'Zero drawdown',cagr:5,worst_drawdown:0,since:'2019-01-01'}]})});
+  assert.match(html, /<span>worst fall 0% along the way/);
+  assert.match(html, /aria-label="Zero drawdown: 5% a year, worst fall 0%"/);
+});

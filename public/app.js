@@ -598,6 +598,7 @@
     const sorted = rows.slice().sort((a, b) => b.cagr - a.cagr);
     const pick = sorted.length === 1 ? [sorted[0]] : [sorted[0], sorted[sorted.length - 1]];
     const span = Math.max(...pick.map((x) => Math.abs(x.cagr)), 1);
+    const drawdown = (x) => Number.isFinite(x.worst_drawdown) ? `${x.worst_drawdown}%` : "not reported";
     const sig = (sw.signals?.sleeves || []).map((x) => {
       const reading = x.signal === "HOLD" ? "hold" : x.signal === "CASH" ? "cash" : "unknown";
       return `<span><i class="${x.signal === "HOLD" ? "v2-dot-up" : "v2-dot-flat"}"></i>${esc(x.symbol)} reads ${reading}; as of ${esc(x.as_of || "unknown date")}</span>`;
@@ -612,7 +613,7 @@
       ${problemHtml}<p class="sub">${rows.length === 1 ? "One strategy result" : `The best and the worst of ${rows.length} strategies`} over the reported historical windows, with assumed costs.</p>
       <div class="v2-figure">
         <svg viewBox="0 0 360 ${pick.length * 46}" preserveAspectRatio="none" height="${pick.length * 46}" role="img"
-             aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${x.worst_drawdown}%`).join(". "))}">
+             aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${drawdown(x)}`).join(". "))}">
           <defs>
             <linearGradient id="v2up" x1="0" x2="1"><stop offset="0" stop-color="#19b98c"/><stop offset="1" stop-color="#3ee6b0"/></linearGradient>
             <linearGradient id="v2dn" x1="1" x2="0"><stop offset="0" stop-color="#e0603c"/><stop offset="1" stop-color="#ff8f6b"/></linearGradient>
@@ -626,10 +627,10 @@
         </svg>
       </div>
       ${pick.map((x) => `<div class="v2-hold"><div class="nm"><b>${esc(x.name)}</b>
-          <span>worst fall ${x.worst_drawdown}% along the way, tested from ${esc(x.since || "unknown date")}</span></div>
+          <span>worst fall ${drawdown(x)} along the way, tested from ${esc(x.since || "unknown date")}</span></div>
         <div class="rt"><b class="num ${x.cagr < 0 ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}%</b><span class="v2-yr">a year</span></div></div>`).join("")}
-      ${sig ? `<div class="v2-legend">${sig}</div><p class="v2-fineprint">Signal source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_signal.json">dated rule readings</a>.</p>` : ""}
-      <p class="v2-fineprint">Source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_lab.json">swing lab backtest</a>; ${read ? `fetched ${esc(read)}` : "fetch time unknown"}. These are modelled past results with assumed costs, not a prediction and not permission to trade. Cash and hold readings describe the rule on its stated observation date, not a current broker position.</p>
+      ${sig ? `<div class="v2-legend">${sig}</div><p class="v2-fineprint">Signal source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_signal.json">dated rule readings (raw data)</a>.</p>` : ""}
+      <p class="v2-fineprint">Source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_lab.json">swing lab backtest (raw data)</a>; ${read ? `fetched ${esc(read)}` : "fetch time unknown"}. These are modelled past results with assumed costs, not a prediction and not permission to trade. Cash and hold readings describe the rule on its stated observation date, not a current broker position.</p>
       <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button>
     </section>`;
   }
