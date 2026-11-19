@@ -1310,18 +1310,6 @@
   view.addEventListener("click", async (e) => {
     const t = e.target.closest("button, a");
     if (!t) return;
-    if (t.dataset.expand) {
-      // Chat's "Show the whole message" uses this too, so the label is restored from
-      // the button rather than hardcoded. The old version wrote "Read the whole job"
-      // onto a chat button when you collapsed a long message.
-      const card = document.getElementById(t.dataset.expand);
-      if (card) {
-        const open = card.classList.toggle("open");
-        t.dataset.closedLabel ||= t.textContent;
-        t.textContent = open ? "Show less" : t.dataset.closedLabel;
-      }
-      return;
-    }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
     if (t.dataset.jobHistory) {
       try {

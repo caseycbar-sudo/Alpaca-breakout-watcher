@@ -91,3 +91,20 @@ test('current and historical warnings stay separate even for the same symbol', (
   assert.match(html, /QQQ had no stop in the snapshot reported by Grok on Nov 17/);
   assert.match(html, /What the earlier reports actually said/);
 });
+
+// Casey found this one. A second handler for data-expand was added earlier in the
+// click chain for job cards; it returned unconditionally, so chat's "Show the whole
+// message" button stopped working and silently did nothing on every tap. Jobs use a
+// native <details> now and do not need the attribute at all.
+test('only one handler claims data-expand, so chat keeps its expand button', () => {
+  const appJs = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  const handlers = appJs.match(/if \(t\.dataset\.expand\)/g) || [];
+  assert.equal(handlers.length, 1,
+    'a second data-expand branch will swallow chat clicks before chat sees them');
+  // And the one that remains must be the chat one, which records the id and re-renders.
+  assert.match(appJs, /if \(t\.dataset\.expand\) \{\s*expandedMessages\.add/);
+  // The button targets the message id; messages carry data-id, never id, so a
+  // getElementById lookup on it would always miss.
+  assert.match(appJs, /data-expand="\$\{m\.id\}"/);
+  assert.doesNotMatch(appJs, /getElementById\(t\.dataset\.expand\)/);
+});
