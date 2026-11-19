@@ -49,3 +49,24 @@ describe("asset cache stamps", () => {
     expect(js).toBe("/app.js");
   });
 });
+
+describe("recovering asset stamps", () => {
+  it("retries missing files after a partial failure without refetching successful ones", async () => {
+    const paths: string[] = [];
+    let fail = true;
+    const env = { ASSETS: { fetch: async (r: Request) => {
+      const path = new URL(r.url).pathname;
+      paths.push(path);
+      return fail && path === '/app.css'
+        ? new Response('unavailable', { status: 503, headers: { etag: 'error-page' } })
+        : new Response('', { headers: { etag: path === '/app.css' ? 'cssOK' : 'jsOK' } });
+    } } };
+    await pages.primeAssetStamp(env);
+    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK' });
+    fail = false;
+    await pages.primeAssetStamp(env);
+    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK', '/app.css': 'cssOK' });
+    expect(paths.filter(p => p === '/app.js')).toHaveLength(1);
+    expect(paths.filter(p => p === '/app.css')).toHaveLength(2);
+  });
+});

@@ -508,12 +508,12 @@
         ? `<section class="v2-alert"><div class="ic">?</div><div>
              <h3>${count(need.total, "thing", "things")} waiting on you</h3>
              <p>${need.questions.length ? "A question needs your answer." : ""}${need.approvals.length ? ` ${count(need.approvals.length, "plan", "plans")} reviewed and waiting for your approval.` : ""}${alsoFlagged}</p>
-             ${flagCount ? `<button type="button" class="v2-more" id="v2-flags">Show the ${flagCount} flagged</button>` : ""}</div></section>`
+           </div></section>`
         : flagCount
           ? `<section class="v2-alert"><div class="ic">!</div><div>
                <h3>${count(flagCount, "thing", "things")} flagged</h3>
                <p>${esc(warns[0].text)}</p>
-               <button type="button" class="v2-more" id="v2-flags">Show all ${flagCount}</button></div></section>`
+</div></section>`
           : `<section class="v2-alert calm"><div class="ic">✓</div><div>
                <h3>Nothing needs you</h3>
                <p>No order can be placed from this hub, and no trading engine is running.</p></div></section>`;
@@ -544,7 +544,7 @@
       <p class="sub">Claude, ChatGPT and Grok, and what each is holding.</p>
       <div class="v2-tiles">
         <div class="v2-tile ${c.review ? "hot" : ""}"><b>${c.review || 0}</b><span>need review</span></div>
-        <div class="v2-tile"><b>${c.in_progress || 0}</b><span>running</span></div>
+        <div class="v2-tile"><b>${c.in_progress || 0}</b><span>in progress</span></div>
         <div class="v2-tile"><b>${c.ready || 0}</b><span>ready</span></div>
         <div class="v2-tile"><b>${c.done || 0}</b><span>done</span></div>
       </div>
@@ -561,11 +561,11 @@
     // those caveats appeared. Collapsed behind a tap is fine. Discarded is not.
     const hist = [...(S.board.historical_details || []), ...(S.board.historical_notices || [])];
     const flagList = flagCount || hist.length
-      ? `<section class="v2-card" id="v2-flaglist" hidden><h2>Everything flagged</h2>
+      ? `<details class="v2-card" id="v2-flaglist"><summary>${flagCount ? `Show all ${flagCount} flags and earlier reports` : "Show earlier protection reports"}</summary>
           ${S.board.exceptions.map((f) => `<div class="v2-hold"><div class="nm"><span>${esc(f.text)}</span></div></div>`).join("")}
           ${hist.length ? `<h2 class="v2-sub">What the earlier reports actually said</h2>
             ${hist.map((h) => `<div class="v2-hold"><div class="nm"><span>${esc(h.text)}</span></div></div>`).join("")}` : ""}
-        </section>`
+        </details>`
       : "";
 
     return `<div class="v2">
@@ -585,29 +585,31 @@
   // The lab, as a picture on the front page rather than a paragraph three taps away.
   function labCard() {
     const sw = S.research?.swing;
-    const rows = (sw?.strategies || []).filter((x) => typeof x.cagr === "number");
-    // An unreadable lab must stay distinguishable from a lab that found nothing, here
-    // as well as on the Research tab. Saying nothing would read as "no results".
+    const rows = (sw?.strategies || []).filter((x) => Number.isFinite(x.cagr));
+    const problem = sw?.problem || S.research?.problem || S.research?.unavailable;
+    const problemHtml = problem ? `<p class="banner">${esc(problem)}</p>` : "";
     if (!rows.length) {
-      return sw?.problem
-        ? `<section class="v2-card"><h2>Your slow lab</h2>
-             <p class="banner">${esc(sw.problem)}</p></section>`
-        : "";
+      const empty = !S.research ? "Lab results have not been read yet."
+        : sw ? "No readable strategy results were published."
+        : "The slow lab is unavailable; this does not mean it found no opportunities.";
+      return `<section class="v2-card"><h2>Your slow lab</h2>${problemHtml || `<p class="sub">${empty}</p>`}
+        <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button></section>`;
     }
     const sorted = rows.slice().sort((a, b) => b.cagr - a.cagr);
-    const pick = [sorted[0], sorted[sorted.length - 1]].filter(Boolean);
+    const pick = sorted.length === 1 ? [sorted[0]] : [sorted[0], sorted[sorted.length - 1]];
     const span = Math.max(...pick.map((x) => Math.abs(x.cagr)), 1);
-    const sig = (sw.signals?.sleeves || []).map((x) =>
-      `<span><i class="${x.signal === "HOLD" ? "v2-dot-up" : "v2-dot-flat"}"></i>${esc(x.symbol)} reads ${x.signal === "HOLD" ? "hold" : "cash"}</span>`).join("");
+    const sig = (sw.signals?.sleeves || []).map((x) => {
+      const reading = x.signal === "HOLD" ? "hold" : x.signal === "CASH" ? "cash" : "unknown";
+      return `<span><i class="${x.signal === "HOLD" ? "v2-dot-up" : "v2-dot-flat"}"></i>${esc(x.symbol)} reads ${reading}; as of ${esc(x.as_of || "unknown date")}</span>`;
+    }).join("");
     // Each strategy has its own start date, so one blanket "twenty years" over the card
     // was wrong for most of the rows. Each row now carries the window it actually covers.
-    // read_at arrives as a millisecond number from the hub, not an ISO string, so
-    // Date.parse would quietly yield NaN and the provenance line would lose its age.
+    // Fetch age and signal observation date are separate facts; a fresh fetch is not a fresh signal.
     const readMs = typeof S.research?.read_at === "number" ? S.research.read_at
       : typeof S.research?.read_at === "string" ? Date.parse(S.research.read_at) : NaN;
     const read = Number.isFinite(readMs) ? sinceWords(Math.max(0, Math.round((Date.now() - readMs) / 1000))) : null;
     return `<section class="v2-card"><h2>Your slow lab</h2>
-      <p class="sub">The best and the worst of ${rows.length} strategies it tested, each over its own stretch of history, with real costs.</p>
+      ${problemHtml}<p class="sub">${rows.length === 1 ? "One strategy result" : `The best and the worst of ${rows.length} strategies`} over the reported historical windows, with assumed costs.</p>
       <div class="v2-figure">
         <svg viewBox="0 0 360 ${pick.length * 46}" preserveAspectRatio="none" height="${pick.length * 46}" role="img"
              aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${x.worst_drawdown}%`).join(". "))}">
@@ -624,10 +626,10 @@
         </svg>
       </div>
       ${pick.map((x) => `<div class="v2-hold"><div class="nm"><b>${esc(x.name)}</b>
-          <span>worst fall ${x.worst_drawdown}% along the way${x.since ? `, tested from ${esc(x.since)}` : ""}</span></div>
+          <span>worst fall ${x.worst_drawdown}% along the way, tested from ${esc(x.since || "unknown date")}</span></div>
         <div class="rt"><b class="num ${x.cagr < 0 ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}%</b><span class="v2-yr">a year</span></div></div>`).join("")}
-      ${sig ? `<div class="v2-legend">${sig}</div>` : ""}
-      <p class="v2-fineprint">From your own backtest${read ? `, read ${esc(read)}` : ""}. These are modelled past results with assumed costs, not a prediction and not permission to trade. The cash and hold readings describe where each rule stands today, nothing more.</p>
+      ${sig ? `<div class="v2-legend">${sig}</div><p class="v2-fineprint">Signal source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_signal.json">dated rule readings</a>.</p>` : ""}
+      <p class="v2-fineprint">Source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_lab.json">swing lab backtest</a>; ${read ? `fetched ${esc(read)}` : "fetch time unknown"}. These are modelled past results with assumed costs, not a prediction and not permission to trade. Cash and hold readings describe the rule on its stated observation date, not a current broker position.</p>
       <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button>
     </section>`;
   }
@@ -1260,11 +1262,6 @@
         const open = card.classList.toggle("open");
         t.textContent = open ? "Show less" : "Read the whole job";
       }
-      return;
-    }
-    if (t.id === "v2-flags") {
-      const list = document.getElementById("v2-flaglist");
-      if (list) { list.hidden = !list.hidden; t.textContent = list.hidden ? t.textContent.replace("Hide", "Show") : t.textContent.replace("Show", "Hide"); }
       return;
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
