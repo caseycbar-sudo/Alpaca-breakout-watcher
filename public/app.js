@@ -1155,6 +1155,54 @@
     $("#top-note").textContent = S ? "Workspace synced · " + clock(S.server_time) : "Connecting…";
   }
 
+  // Keep job drafts only in this tab's memory, never in storage or the shared board.
+  // Polling, filters and tab switches may rebuild the DOM while a select has focus.
+  const jobDrafts = new Map();
+  function jobFormKey(form) { return form.id === "job-form" ? "create" : form.dataset.jobUpdate; }
+  function jobFields(form) { return [...form.elements].filter(el => el.name && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)); }
+  function rememberJobDrafts() {
+    for (const form of view.querySelectorAll("#job-form, form[data-job-update]")) {
+      const fields = jobFields(form);
+      const dirty = fields.some(el => el.tagName === "SELECT"
+        ? el.value !== ([...el.options].find(o => o.defaultSelected)?.value ?? el.options[0]?.value ?? "")
+        : el.value !== el.defaultValue);
+      const key = jobFormKey(form);
+      const open = form.closest("details")?.open;
+      const edited = dirty || !!form.dataset.retryKey;
+      if (!edited && !open) { jobDrafts.delete(key); continue; }
+      jobDrafts.set(key, {
+        values: edited ? Object.fromEntries(fields.map(el => [el.name, el.value])) : {},
+        version: edited ? form.dataset.version : undefined, retryKey: form.dataset.retryKey,
+        open,
+      });
+    }
+  }
+  function restoreJobDrafts() {
+    for (const form of view.querySelectorAll("#job-form, form[data-job-update]")) {
+      const draft = jobDrafts.get(jobFormKey(form));
+      if (!draft) continue;
+      for (const field of jobFields(form)) {
+        if (Object.hasOwn(draft.values, field.name)) field.value = draft.values[field.name];
+      }
+      // Keep the version the draft was written against. Using the new version here
+      // would silently overwrite a teammate's intervening update on submission.
+      if (draft.version && form.dataset.version !== draft.version) {
+        const notice = document.createElement("p");
+        notice.className = "banner";
+        notice.textContent = "This job changed while you were editing. Your draft is kept; saving it cannot overwrite the newer version.";
+        const discard = document.createElement("button");
+        discard.type = "button"; discard.className = "btn small";
+        discard.dataset.discardJobDraft = "true";
+        discard.textContent = "Discard this draft and load latest";
+        form.prepend(notice, discard);
+      }
+      if (draft.version) form.dataset.version = draft.version;
+      if (draft.retryKey) form.dataset.retryKey = draft.retryKey;
+      const disclosure = form.closest("details");
+      if (disclosure) disclosure.open = draft.open;
+    }
+  }
+
   function typing() {
     const el = document.activeElement;
     return el && view.contains(el) && /^(INPUT|TEXTAREA)$/.test(el.tagName) && el.value;
@@ -1169,7 +1217,9 @@
     const atBottom = tab === "chat" && window.innerHeight + window.scrollY >= document.body.scrollHeight - 140;
     const firstChat = tab === "chat" && lastRendered.tab !== "chat";
     const draft = tab === "chat" ? $("#composer textarea")?.value : "";
+    rememberJobDrafts();
     view.innerHTML = RENDER[tab]();
+    restoreJobDrafts();
     lastRendered = { key, tab };
     measureChrome();
     if (tab === "chat") {
@@ -1264,6 +1314,12 @@
         t.textContent = open ? "Show less" : "Read the whole job";
       }
       return;
+    }
+    if (t.dataset.discardJobDraft) {
+      const form = t.closest("form");
+      form.reset(); delete form.dataset.retryKey;
+      jobDrafts.delete(jobFormKey(form));
+      return render(true);
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
     if (t.dataset.jobHistory) {
@@ -1386,7 +1442,8 @@
         await api("/api/tasks", { ...data, dependencies: ids, idempotency_key: form.dataset.retryKey });
         form.reset(); delete form.dataset.retryKey;
         await refresh(true); toast("Job created");
-      } catch (err) { toast(err.message, true); button.disabled = false; }
+      } catch (err) { toast(err.message, true); }
+      finally { if (button.isConnected) button.disabled = false; }
       return;
     }
     if (form.dataset.jobUpdate) {
@@ -1394,8 +1451,11 @@
       try {
         const result = await api(`/api/tasks/${form.dataset.jobUpdate}`, { ...data, expected_version: Number(form.dataset.version) });
         extraJobs = extraJobs.map(t=>t.id === result.task.id ? result.task : t);
+        form.reset(); // successful submission clears this draft before the next render
+        delete form.dataset.retryKey;
         await refresh(true); toast("Job updated");
-      } catch (err) { toast(err.message, true); button.disabled = false; }
+      } catch (err) { toast(err.message, true); }
+      finally { if (button.isConnected) button.disabled = false; }
       return;
     }
     if (form.dataset.answerForm) {
