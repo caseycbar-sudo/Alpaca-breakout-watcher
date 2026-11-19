@@ -1155,9 +1155,25 @@
     $("#top-note").textContent = S ? "Workspace synced · " + clock(S.server_time) : "Connecting…";
   }
 
-  // Keep job drafts only in this tab's memory, never in storage or the shared board.
-  // Polling, filters and tab switches may rebuild the DOM while a select has focus.
+  // Keep job drafts local to this browser tab, never in the shared board. The
+  // in-memory copy handles polling/filter re-renders; sessionStorage also lets a
+  // real page reload restore an unfinished form without carrying it to other tabs.
+  // Storage can be unavailable, so every access is best-effort.
+  const JOB_DRAFTS_STORAGE = "driftline-job-drafts-v1";
   const jobDrafts = new Map();
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(JOB_DRAFTS_STORAGE) || "[]");
+    if (Array.isArray(saved)) for (const entry of saved.slice(-50)) {
+      if (Array.isArray(entry) && typeof entry[0] === "string" && entry[1] && typeof entry[1] === "object") jobDrafts.set(entry[0], entry[1]);
+    }
+  } catch {}
+  function persistJobDrafts() {
+    try {
+      const saved = [...jobDrafts].filter(([, draft]) => Object.keys(draft.values || {}).length || draft.retryKey).slice(-50);
+      if (saved.length) sessionStorage.setItem(JOB_DRAFTS_STORAGE, JSON.stringify(saved));
+      else sessionStorage.removeItem(JOB_DRAFTS_STORAGE);
+    } catch {}
+  }
   function jobFormKey(form) { return form.id === "job-form" ? "create" : form.dataset.jobUpdate; }
   function jobFields(form) { return [...form.elements].filter(el => el.name && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)); }
   function rememberJobDrafts() {
@@ -1176,6 +1192,7 @@
         open,
       });
     }
+    persistJobDrafts();
   }
   function restoreJobDrafts() {
     for (const form of view.querySelectorAll("#job-form, form[data-job-update]")) {
@@ -1202,6 +1219,7 @@
       if (disclosure) disclosure.open = draft.open;
     }
   }
+  window.addEventListener("pagehide", rememberJobDrafts);
 
   function typing() {
     const el = document.activeElement;
@@ -1319,6 +1337,7 @@
       const form = t.closest("form");
       form.reset(); delete form.dataset.retryKey;
       jobDrafts.delete(jobFormKey(form));
+      persistJobDrafts();
       return render(true);
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
@@ -1441,6 +1460,7 @@
       try {
         await api("/api/tasks", { ...data, dependencies: ids, idempotency_key: form.dataset.retryKey });
         form.reset(); delete form.dataset.retryKey;
+        rememberJobDrafts();
         await refresh(true); toast("Job created");
       } catch (err) { toast(err.message, true); }
       finally { if (button.isConnected) button.disabled = false; }
@@ -1453,6 +1473,7 @@
         extraJobs = extraJobs.map(t=>t.id === result.task.id ? result.task : t);
         form.reset(); // successful submission clears this draft before the next render
         delete form.dataset.retryKey;
+        rememberJobDrafts();
         await refresh(true); toast("Job updated");
       } catch (err) { toast(err.message, true); }
       finally { if (button.isConnected) button.disabled = false; }
