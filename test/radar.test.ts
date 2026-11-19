@@ -85,15 +85,28 @@ describe("reading the radar", () => {
       generated_at: "2026-11-17T18:16:42Z",
       candidates: [],
       gates: [{
-        label: "Catalyst: verified news within 24 hours",
-        rule: "Requires verified news and rejects stale headlines",
+        label: "Catalyst",
+        rule: "verified news within 24 hours",
       }],
     }, "posted by the watcher");
     expect(scan.gates).toEqual([{
-      label: "Recent headline: published within 24 hours",
-      rule: "Requires a headline published in the scan lookback and rejects stale headlines",
+      label: "Recent headline",
+      rule: "Published within 24 hours of the scan; not evidence the news caused the move",
     }]);
     expect(JSON.stringify(scan.gates).toLowerCase()).not.toContain("verified news");
+  });
+
+  it("does not rewrite unrelated gates that mention verified news", () => {
+    const scan = radar.clean({
+      gates: [{
+        label: "Source quality",
+        rule: "Requires verified news and rejects anonymous posts",
+      }],
+    }, "posted by the watcher");
+    expect(scan.gates).toEqual([{
+      label: "Source quality",
+      rule: "Requires verified news and rejects anonymous posts",
+    }]);
   });
 
   it("says how old the scan is and when it has stopped being 'now'", async () => {
