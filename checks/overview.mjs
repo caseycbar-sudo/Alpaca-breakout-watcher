@@ -108,3 +108,11 @@ test('only one handler claims data-expand, so chat keeps its expand button', () 
   assert.match(appJs, /data-expand="\$\{m\.id\}"/);
   assert.doesNotMatch(appJs, /getElementById\(t\.dataset\.expand\)/);
 });
+
+test('the stale-draft discard button still has its own click handler', () => {
+  const appJs = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(appJs, /if \(t\.dataset\.discardJobDraft\)/,
+    'the rendered discard button must not become a no-op when nearby handlers change');
+  assert.match(appJs, /jobDrafts\.delete\(jobFormKey\(form\)\);[\s\S]*persistJobDrafts\(\);/,
+    'discard must remove and persist the saved draft before re-rendering');
+});
