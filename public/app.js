@@ -1310,6 +1310,13 @@
   view.addEventListener("click", async (e) => {
     const t = e.target.closest("button, a");
     if (!t) return;
+    if (t.dataset.discardJobDraft) {
+      const form = t.closest("form");
+      form.reset(); delete form.dataset.retryKey;
+      jobDrafts.delete(jobFormKey(form));
+      persistJobDrafts();
+      return render(true);
+    }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
     if (t.dataset.jobHistory) {
       try {
