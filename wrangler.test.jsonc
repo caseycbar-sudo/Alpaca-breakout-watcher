@@ -1,0 +1,20 @@
+{
+  // Separate test Worker only. Replace the unprovisioned IDs after resource approval.
+  // Never add routes, production secrets, AI, wake keys, or scheduled triggers here.
+  "name": "driftline-hub-test",
+  "main": "src/test-copy.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "keep_vars": false,
+  "vars": { "HUB_TEST_COPY": "synthetic-only" },
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "driftline-trading-hub-test",
+    "database_id": "UNPROVISIONED-TEST-DATABASE",
+    "migrations_dir": "migrations"
+  }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "UNPROVISIONED-TEST-OAUTH" }]
+}
