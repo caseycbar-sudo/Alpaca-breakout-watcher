@@ -629,5 +629,18 @@
    "Move vs. prior close: 0\u20132%"
   ],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-20T02:20:57.683363+00:00",
+  "tickers": 20,
+  "learning_trades": 1335,
+  "learning_avg_r": -0.393,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.618,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
  }
 ]
