@@ -642,5 +642,18 @@
   "promising": [],
   "avoid": [],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-21T02:17:57.698394+00:00",
+  "tickers": 20,
+  "learning_trades": 991,
+  "learning_avg_r": -0.3958,
+  "portfolio_trades": 1,
+  "portfolio_win_rate": 0.0,
+  "portfolio_avg_r": -1.0,
+  "model_test_auc": 0.613,
+  "promising": [],
+  "avoid": [],
+  "run": "study list"
  }
 ]
