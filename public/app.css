@@ -719,3 +719,88 @@ label { font-size:12px; color:#b0c4d5; }
 .job-detail[open] > summary { margin-bottom: 8px; }
 .job-h4 { margin: 12px 0 4px; font-size: 11px; font-weight: 750; letter-spacing: .06em;
           text-transform: uppercase; color: #7fa5bb; }
+
+/* Workspace facelift: motion describes the interface, not a market-data stream. */
+.command-deck { position:relative; overflow:hidden; padding:30px; border:1px solid #365361; border-radius:26px;
+  background:radial-gradient(ellipse at 85% 10%,#255b5f70,transparent 55%),linear-gradient(135deg,#152c3a,#101e30 65%);
+  box-shadow:0 24px 70px #0003; }
+.command-deck::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.14;
+  background-image:linear-gradient(#82c5c91a 1px,transparent 1px),linear-gradient(90deg,#82c5c91a 1px,transparent 1px); background-size:40px 40px; }
+.command-deck > * { position:relative; }
+.deck-heading,.activity-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.deck-eyebrow { color:#a5d5d7; font-size:12px; font-weight:750; letter-spacing:.12em; }
+.deck-stamp { color:#a7bbcb; font-size:12px; text-align:right; }
+.deck-intro { display:grid; grid-template-columns:minmax(0,1fr) 220px; align-items:center; gap:22px; padding:30px 0; }
+.deck-intro h1 { font-size:clamp(38px,5vw,62px); font-weight:750; letter-spacing:-.055em; line-height:1.04; color:#f2f9fc; }
+.deck-intro h1 em { color:#c7f590; font-style:normal; }
+.deck-intro p { color:#b5c9d6; font-size:16px; margin-top:18px; line-height:1.6; }
+.deck-emblem { width:210px; height:210px; position:relative; display:grid; place-items:center; isolation:isolate; }
+.orbit { position:absolute; inset:8px; border:1px solid #77bdb866; border-radius:50%; transform:rotate(-25deg); }
+.orbit-two { inset:25px; border-style:dashed; border-color:#c7f59055; }
+.orbit-three { inset:44px; border-color:#609dd566; }
+.orbit-one::after,.orbit-two::after { content:""; position:absolute; top:15px; left:26px; height:8px; width:8px; border-radius:50%; background:#c7f590; box-shadow:0 0 18px #c7f59055; }
+.orbit-two::after { background:#83baff; top:auto; bottom:9px; left:34px; }
+.orbit-core { font-size:58px; font-weight:800; line-height:1; color:#c7f590; text-align:center; }
+.orbit-core span { display:block; margin-top:10px; font-size:10px; letter-spacing:.16em; color:#a2bdce; }
+.deck-lanes { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.deck-lane { text-align:left; padding:17px; border:1px solid #395269; border-radius:16px; background:#0b1b2bd9; cursor:pointer; display:flex; flex-direction:column; color:#edf5fa; }
+.lane-count { font-size:34px; font-weight:750; line-height:1.1; font-variant-numeric:tabular-nums; color:var(--lane-color); }
+.deck-lane.blue { --lane-color:#99c7ff; }.deck-lane.mint { --lane-color:#8fe7c7; }.deck-lane.amber { --lane-color:#ffd48c; }.deck-lane.coral { --lane-color:#ffab99; }
+.lane-label { font-size:14px; font-weight:700; margin-top:10px; }
+.deck-lane small { color:#9eb7cb; font-size:12px; line-height:1.5; margin-top:4px; }
+.lane-link { display:block; font-size:12px; color:var(--lane-color); margin-top:auto; padding-top:15px; }
+.deck-footnote { font-size:12px; line-height:1.55; color:#a1b8ca; margin:10px 0 0; }
+.deck-radar { display:flex; gap:18px; align-items:center; width:100%; text-align:left; margin-top:24px; padding:20px; border:1px solid #47615a; border-radius:17px; background:#132b2a; color:#eaf7fb; cursor:pointer; }
+.radar-symbol { width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:1px solid #a5d1b6; background:repeating-radial-gradient(circle,transparent 0 8px,#8bcbb233 9px 10px); display:grid; place-items:center; }
+.radar-symbol i { width:6px; height:6px; border-radius:50%; background:#c7f590; }
+.radar-copy { display:flex; flex-direction:column; gap:5px; flex:1; }
+.radar-copy strong { font-size:20px; letter-spacing:-.025em; }
+.radar-copy > span:last-child { font-size:14px; color:#b4c9c7; line-height:1.5; }
+.radar-state { font-size:12px; color:#c7d5d4; max-width:155px; }
+.radar-state small { display:block; color:#c7f590; margin-top:8px; font-size:13px; }
+.deck-radar[data-scan-state="late"],.deck-radar[data-scan-state="missing"] { background:#292a27; border-color:#726447; }
+.deck-radar[data-scan-state="closed"] { background:#172635; border-color:#3d5369; }
+.activity-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:14px; }
+.activity-card { min-width:0; background:#102334; border:1px solid #2d455b; border-radius:22px; padding:24px; }
+.activity-heading { align-items:flex-start; margin-bottom:20px; }
+.activity-heading h2 { color:#edf5fa; font-size:23px; letter-spacing:-.035em; margin-top:6px; }
+.deck-text-link { padding:6px 0; border:0; color:#c7f590; background:none; cursor:pointer; font-size:14px; }
+.desk-people { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; padding-bottom:20px; }
+.desk-person { background:#182e41; border:1px solid #314d63; border-radius:14px; padding:12px 8px; color:#e5f0f8; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.desk-avatar { width:34px; height:34px; border:1px solid #83bdbd; background:#214948; border-radius:11px; display:grid; place-items:center; font-size:12px; font-weight:750; color:#baf0d9; }
+.desk-person strong { font-size:13px; }.desk-person small { font-size:12px; color:#a8bece; text-align:center; }
+.desk-work,.desk-messages { display:grid; gap:10px; }
+.desk-task { text-align:left; background:none; border:0; border-top:1px solid #2c4254; padding:15px 0 0; cursor:pointer; color:#e5f0f8; }
+.desk-task .status-pill { font-size:11px; }.desk-task strong { display:block; font-size:15px; line-height:1.5; margin:8px 0 4px; overflow-wrap:anywhere; }
+.desk-task small { font-size:12px; color:#a8bece; }
+.desk-message { text-align:left; border:1px solid #30495e; border-radius:14px; background:#142c3e; color:#e5f0f8; padding:15px; cursor:pointer; }
+.desk-message > span { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
+.desk-message strong { font-size:14px; }.desk-message small { color:#acc1d1; font-size:12px; }
+.desk-message p { font-size:14px; line-height:1.6; margin:8px 0; color:#c8d9e5; overflow-wrap:anywhere; }
+.desk-message > small { color:#c7f590; }
+.command-view .v2-hero { background:linear-gradient(120deg,#153a48,#112b3a); }
+.command-view .v2-fineprint { font-size:13px; color:#a9c3d3; }
+.command-view .v2-age,.command-view .v2-hero .cap { font-size:14px; }
+.command-view > .driftline { max-width:100%; overflow:hidden; }
+.command-view .v2-alert { border-radius:18px; }
+@media (prefers-reduced-motion:no-preference) {
+  .orbit-one { animation:deck-orbit 55s linear infinite; }.orbit-two { animation:deck-orbit 70s linear infinite reverse; }
+  .deck-lane,.desk-person,.desk-message,.desk-task,.deck-radar { transition:transform .18s ease,border-color .18s ease,background .18s ease; }
+  .deck-lane:hover,.desk-person:hover,.desk-message:hover { transform:translateY(-3px); border-color:#82b7b1; }
+  @keyframes deck-orbit { to { transform:rotate(335deg); } }
+}
+@media(max-width:760px) {
+  .activity-grid { grid-template-columns:minmax(0,1fr); }
+  .command-deck { padding:23px; }.deck-intro { grid-template-columns:minmax(0,1fr) 125px; gap:10px; }
+  .deck-emblem { width:125px; height:125px; }.orbit { inset:0; }.orbit-two { inset:12px; }.orbit-three { inset:26px; }.orbit-core { font-size:36px; }.orbit-core span { font-size:8px; }
+  .deck-lanes { grid-template-columns:repeat(2,minmax(0,1fr)); }.deck-lane { padding:15px; }
+  .deck-intro h1 { font-size:38px; }.deck-intro p { font-size:14px; }
+  .deck-radar { flex-wrap:wrap; padding:16px; gap:12px; }.radar-copy { flex-basis:calc(100% - 70px); }.radar-state { max-width:none; flex-basis:100%; padding-left:64px; }
+  .radar-state small { display:inline; margin-left:12px; }.activity-card { padding:20px; }
+}
+@media(max-width:430px) {
+  .command-deck { padding:20px 16px; }.deck-heading { align-items:flex-start; }.deck-heading .deck-eyebrow { max-width:150px; }
+  .deck-intro { grid-template-columns:minmax(0,1fr); padding:24px 0; }.deck-emblem { display:none; }
+  .deck-intro h1 { font-size:40px; }.deck-intro p br { display:none; }.deck-lane small { min-height:36px; }
+  .deck-stamp { max-width:110px; }.deck-eyebrow { font-size:11px; }.activity-heading h2 { font-size:21px; }
+}

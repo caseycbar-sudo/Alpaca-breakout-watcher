@@ -13,7 +13,7 @@
   const TABS = ["today", "jobs", "chat", "trades", "research", "rules", "ais"];
 
   let S = null; // latest state from the server
-  let tab = TABS.includes(sessionStorage.getItem("tab")) ? sessionStorage.getItem("tab") : "jobs";
+  let tab = TABS.includes(sessionStorage.getItem("tab")) ? sessionStorage.getItem("tab") : "today";
   let olderChat = []; // pages loaded with "Show earlier messages"
   let hasOlder = false;
   let lastRendered = { key: "", tab: "" };
@@ -474,8 +474,6 @@
     const warns = S.board.exceptions.filter((e) => e.level !== "stop");
     const s = S.board.snapshot;
     const r = S.board.rules;
-    const c = S.jobs?.counts || {};
-
     const amount = s && s.total_value !== null && s.total_value !== undefined
       ? `<div class="amt num">${esc(money(s.total_value))}</div>`
       : `<div class="amt none">No account numbers yet</div>`;
@@ -543,17 +541,6 @@
       <p class="v2-fineprint">${esc(r.daily_trigger_words || "Checked when an AI reports a snapshot or before an order. It is not watched continuously, so it limits new orders but does not cap a day's loss.")}</p>
     </section>`;
 
-    const work = `<section class="v2-card"><h2>Work in the hub</h2>
-      <p class="sub">Claude, ChatGPT and Grok, and what each is holding.</p>
-      <div class="v2-tiles">
-        <div class="v2-tile ${c.review ? "hot" : ""}"><b>${c.review || 0}</b><span>need review</span></div>
-        <div class="v2-tile"><b>${c.in_progress || 0}</b><span>in progress</span></div>
-        <div class="v2-tile"><b>${c.ready || 0}</b><span>ready</span></div>
-        <div class="v2-tile"><b>${c.done || 0}</b><span>done</span></div>
-      </div>
-      <button type="button" class="v2-more" data-tab-link="jobs">Open the job list</button>
-    </section>`;
-
     const needed = need.total
       ? `<section class="v2-card"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>`
       : "";
@@ -571,17 +558,76 @@
         </details>`
       : "";
 
-    return `<div class="v2">
-      ${hero}
+    return `<div class="v2 command-view">
       ${alert}
       ${needed}
       ${flagList}
+      ${workspaceDeck()}
+      ${activityDeck()}
       ${ticker()}
+      ${hero}
       ${held}
       ${labCard()}
-      ${work}
       ${rules}
       ${driftline()}
+    </div>`;
+  }
+
+  // A view of reported work, never an invented heartbeat or simulated market feed.
+  function workspaceDeck() {
+    const counts = S.jobs?.counts || {};
+    const v = S.radar;
+    const now = S.server_time;
+    const dated = typeof v?.generated_at === "string" && /[Tt ].*(?:[Zz]|[+-]\d{2}:?\d{2})$/.test(v.generated_at);
+    const scanAt = dated ? Date.parse(v.generated_at) : NaN;
+    const age = Number.isFinite(scanAt) && scanAt <= now ? Math.floor((now - scanAt) / 60000) : null;
+    const stamp = age === null ? "Scan time unavailable" : `Scan ${age < 1 ? "under a minute" : `${age} min`} ago`;
+    const knownCount = Number.isInteger(v?.candidate_count) && v.candidate_count >= 0;
+    const recent = age !== null && age <= 15 && !v?.stale;
+    const closed = v?.market?.is_open === false;
+    const phase = closed ? "Market closed at last scan" : !v ? "Waiting for a scan" : !recent ? "Scan needs a refresh" : v.market?.is_open === true ? "Market open at last scan" : "Session not reported";
+    const status = !v ? "missing" : closed ? "closed" : !recent ? "late" : "reported";
+    const n = knownCount ? v.candidate_count : null;
+    const title = n === null ? "Radar awaiting data" : n === 0 ? "No names qualified" : `${n} ${n === 1 ? "name" : "names"} qualified`;
+    const detail = n === 0 ? "The last scan found no setups that passed the filters." : n === null ? "Open Research to check the scanner’s last report." : "Open the scan to see the setups and headline timing.";
+    const lanes = [
+      ["ready", "Ready to build", "Work accepted by its owner", "blue"],
+      ["in_progress", "In progress", "Work reported as underway", "mint"],
+      ["review", "Independent review", "Evidence awaiting another pair of eyes", "amber"],
+      ["blocked", "Blocked", "A dependency needs attention", "coral"],
+    ];
+    return `<section class="command-deck" aria-labelledby="deck-title">
+      <div class="deck-heading"><span class="deck-eyebrow">THE DRIFTLINE WORKSPACE</span><span class="deck-stamp">State synced ${esc(new Date(now).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</span></div>
+      <div class="deck-intro"><div><h1 id="deck-title">See the work.<br><em>Find the next move.</em></h1><p>Research, decisions and your AI team.<br>One place to see what is moving forward.</p></div>
+        <div class="deck-emblem" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="orbit orbit-three"></span><span class="orbit-core">D<span>DRIFTLINE</span></span></div></div>
+      <div class="deck-lanes" aria-label="Reported project work">${lanes.map(([key,label,note,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span><small>${note}</small><span class="lane-link">View jobs</span></button>`).join("")}</div>
+      <p class="deck-footnote">${esc(counts.done || 0)} jobs completed at this sync. Agents work during their sessions; a job status does not mean someone is online.</p>
+      <button type="button" class="deck-radar" data-tab-link="research" data-scan-state="${status}">
+        <span class="radar-symbol" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR · ${esc(stamp)}</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
+        <span class="radar-state">${esc(phase)}<small>View research</small></span>
+      </button>
+      <p class="deck-footnote">Radar shows a saved scan. Prices and candidates do not update between reports.</p>
+    </section>`;
+  }
+
+  function activityDeck() {
+    const age = at => {
+      if (!Number.isFinite(at) || at > S.server_time) return "time unavailable";
+      const minutes = Math.floor((S.server_time - at) / 60000);
+      return minutes < 1 ? "just now" : minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} hr ago`;
+    };
+    const peopleHere = (S.connections || []).filter(c => c.agent_name).slice(0, 6);
+    const tasks = (S.jobs?.tasks || []).filter(t => ["in_progress", "review", "blocked"].includes(t.status))
+      .sort((a,b) => (b.updated_at || 0) - (a.updated_at || 0)).slice(0, 3);
+    const messages = (S.chat?.messages || []).filter(m => m.author_kind !== "system").slice(-3).reverse();
+    return `<div class="activity-grid">
+      <section class="activity-card"><div class="activity-heading"><div><p class="deck-eyebrow">PEOPLE & PROGRESS</p><h2>Your team’s desk</h2></div><button class="deck-text-link" type="button" data-tab-link="ais">Team</button></div>
+        <div class="desk-people">${peopleHere.length ? peopleHere.map(c => `<button type="button" data-tab-link="ais" class="desk-person"><span class="desk-avatar">${esc(c.agent_name.slice(0, 2))}</span><strong>${esc(c.agent_name)}</strong><small>Seen ${esc(age(c.last_seen))}</small></button>`).join("") : `<p class="sub">No team check-ins reported yet.</p>`}</div>
+        <div class="desk-work">${tasks.length ? tasks.map(t => `<button type="button" class="desk-task" data-deck-job-status="${esc(t.status)}"><span class="status-pill ${esc(t.status)}">${esc(({in_progress:"In progress",review:"Review",blocked:"Blocked"})[t.status])}</span><strong>${esc(t.title)}</strong><small>${esc(t.owner_id || "Unassigned")} · updated ${esc(age(t.updated_at))}</small></button>`).join("") : `<p class="sub">No work is currently reported as in progress, blocked or awaiting review.</p>`}</div>
+      </section>
+      <section class="activity-card"><div class="activity-heading"><div><p class="deck-eyebrow">THE CONVERSATION</p><h2>Latest at the Hub</h2></div><button class="deck-text-link" type="button" data-tab-link="chat">Open chat</button></div>
+        <div class="desk-messages">${messages.length ? messages.map(m => `<button class="desk-message" type="button" data-tab-link="chat"><span><strong>${esc(m.from || m.author_name || "Team")}</strong><small>${esc(age(m.at || m.created_at))}</small></span><p>${esc(String(m.body || "").replace(/\*\*|#{1,6}\s/g, "").slice(0, 190))}${String(m.body || "").length > 190 ? "…" : ""}</p><small>Read full message</small></button>`).join("") : `<p class="sub">The conversation will appear here after the next workspace sync.</p>`}</div>
+      </section>
     </div>`;
   }
 
@@ -1137,7 +1183,7 @@
     const minute = Math.floor(S.server_time / 60000);
     const slices = {
       jobs: [S.jobs, extraJobs, jobOwner, jobStatus, jobsCursor, minute],
-      today: [S.jobs?.counts, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, S.radar?.quotes, S.radar?.market?.is_open, minute],
+      today: [S.jobs, S.chat?.messages, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, S.radar, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
       research: [S.research, S.radar, Math.floor(minute / 5)],
@@ -1340,6 +1386,7 @@
       return render(true);
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
+    if (t.dataset.deckJobStatus) { jobOwner = "all"; jobStatus = t.dataset.deckJobStatus; return go("jobs"); }
     if (t.dataset.jobHistory) {
       try {
         const result = await api(`/api/tasks/${t.dataset.jobHistory}`);

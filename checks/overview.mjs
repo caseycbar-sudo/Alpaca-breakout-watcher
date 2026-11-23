@@ -116,3 +116,30 @@ test('the stale-draft discard button still has its own click handler', () => {
   assert.match(appJs, /jobDrafts\.delete\(jobFormKey\(form\)\);[\s\S]*persistJobDrafts\(\);/,
     'discard must remove and persist the saved draft before re-rendering');
 });
+
+test('workspace radar distinguishes missing, closed, stale and timestamped zero-result scans', () => {
+  const now = Date.parse('2026-11-23T16:00:00Z');
+  const radar = { generated_at: '2026-11-23T15:58:00Z', candidate_count: 0, market: { is_open: true } };
+  assert.match(render({server_time:now}), /data-scan-state="missing"/);
+  const fresh = render({server_time:now,radar});
+  assert.match(fresh, /No names qualified/);
+  assert.match(fresh, /Scan 2 min ago/);
+  assert.match(fresh, /data-scan-state="reported"/);
+  assert.match(render({server_time:now,radar:{...radar,market:{is_open:false}}}), /Market closed at last scan/);
+  assert.match(render({server_time:now,radar:{...radar,generated_at:'2026-11-23T14:00:00Z'}}), /data-scan-state="late"/);
+  const future = render({server_time:now,radar:{...radar,generated_at:'2026-11-24T15:58:00Z'}});
+  assert.match(future, /Scan time unavailable/);
+  assert.match(future, /data-scan-state="late"/);
+});
+
+test('activity preview uses actual API message fields, escapes content and excludes system notices', () => {
+  const html = render({server_time:1000000,chat:{messages:[
+    {author_kind:'system',author_name:'Hub',body:'internal wake notice',created_at:999999},
+    {author_kind:'agent',author_name:'Claude',body:'<img src=x onerror=alert(1)>',created_at:940000},
+  ]}});
+  assert.doesNotMatch(html, /internal wake notice|<img/);
+  assert.match(html, /&#60;img/);
+  assert.match(html, /Claude/);
+  assert.match(html, /1 min ago/);
+  assert.match(html, /Read full message/);
+});
