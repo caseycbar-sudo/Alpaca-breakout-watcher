@@ -1,24 +1,24 @@
 {
- "generated_at": "2026-11-21T02:18:21.486183+00:00",
+ "generated_at": "2026-11-23T05:29:47.210675+00:00",
  "sleeves": [
   {
    "sleeve": "A",
    "symbol": "QQQ",
-   "as_of": "2026-11-19",
-   "close": 645.04,
+   "as_of": "2026-11-20",
+   "close": 608.45,
    "length": 200,
-   "average": 682.0075,
-   "distance_pct": -5.42,
+   "average": 682.0747,
+   "distance_pct": -10.79,
    "signal": "CASH"
   },
   {
    "sleeve": "B",
    "symbol": "BTC-USD",
-   "as_of": "2026-11-21",
-   "close": 58882.85,
+   "as_of": "2026-11-23",
+   "close": 61417.85,
    "length": 50,
-   "average": 77112.0806,
-   "distance_pct": -23.64,
+   "average": 76162.7742,
+   "distance_pct": -19.36,
    "signal": "CASH"
   }
  ]
