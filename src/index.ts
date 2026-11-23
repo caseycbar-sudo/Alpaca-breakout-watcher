@@ -368,6 +368,14 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   if (m && method === "GET") return json(await db.getPlan(env, owner, decodeURIComponent(m[1])));
   m = path.match(/^\/api\/plans\/([^/]+)\/(approve|decline)$/);
   if (m && method === "POST") return json(await db.decidePlan(env, owner, decodeURIComponent(m[1]), m[2] === "approve"));
+  // Changing what kind of record something is belongs to Casey alone, so this is
+  // the only door to it. Without it the rule would be unenforceable in practice
+  // rather than strict: the AIs cannot do it and he would have had no way either.
+  m = path.match(/^\/api\/plans\/([^/]+)\/record-kind$/);
+  if (m && method === "POST") {
+    const body = await readJson(request);
+    return json(await db.savePlan(env, owner, { id: decodeURIComponent(m[1]), record_kind: body.record_kind }));
+  }
 
   if (path === "/api/rules" && method === "POST") return json(await db.newRulesVersion(env, owner, await readJson(request)));
 

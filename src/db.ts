@@ -754,10 +754,26 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
   const textFields = ["what_we_see", "why", "wrong_if", "good_until", "sources", "broker_status", "broker_order_ids", "expected_vs_happened", "lesson", "observed_source"] as const;
   const numFields = ["entry_price", "target_price", "stop_price", "size_dollars", "est_loss_at_stop", "filled_quantity", "fill_price", "exit_price", "fees", "result_dollars", "quantity", "average_cost", "observed_at"] as const;
   const changes: Record<string, unknown> = {};
-  if (kind !== existing.record_kind) changes.record_kind = kind;
-  // Reclassifying a mis-filed record has to clear what the old kind recorded,
-  // or an average cost stays behind in fill_price and still reads as a fill.
-  if (changes.record_kind === "existing_holding" && existing.fill_price !== null) changes.fill_price = null;
+  if (kind !== existing.record_kind) {
+    // Calling an existing record a holding takes the "Casey has not approved this
+    // order" stop off the board. My first answer was to announce it in chat, which
+    // records the change without preventing it: any AI could still clear a flag on
+    // a real order and leave a note saying it had. ChatGPT was right that an audit
+    // trail is not a permission check. So the conversion is Casey's, both ways.
+    // Creating a holding, reviewing one and updating what the broker shows all stay
+    // open to the AIs, because none of those can silence a flag on someone's order.
+    if (actor.kind !== "owner") {
+      throw new HubError(
+        403,
+        "owner_only",
+        `Only Casey can change what kind of record ${existing.id} is. Recording a new holding, reviewing one, or updating its quantity and average cost are open to you; turning an order already on the board into a holding is not.`,
+      );
+    }
+    changes.record_kind = kind;
+    // Reclassifying a mis-filed record has to clear what the old kind recorded,
+    // or an average cost stays behind in fill_price and still reads as a fill.
+    if (kind === "existing_holding" && existing.fill_price !== null) changes.fill_price = null;
+  }
   if (input.symbol !== undefined) {
     const s = textOrNull(input.symbol, 20)?.toUpperCase();
     if (!s) throw new HubError(400, "bad_plan", "symbol cannot be empty.");
@@ -781,7 +797,16 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
 
   if (Object.keys(changes).length === 0) return { ...(await getPlan(env, actor, existing.id)), created: false, review_reset: false };
 
-  const materialChanged = MATERIAL.some((f) => f in changes);
+  // A review is a check of a specific set of facts. Change the facts and the old
+  // verdict no longer describes anything that exists. Two cases beyond price and
+  // size, both from ChatGPT's review: a record that changes kind would otherwise
+  // carry a trade plan's approval onto a holding, or a holding's check onto a
+  // trade plan, which would read as approval to buy; and a holding whose quantity
+  // or average cost moved would keep a reviewer's acceptance of the old numbers.
+  const HOLDING_FACTS = ["quantity", "average_cost", "observed_at", "observed_source"] as const;
+  const kindChanged = "record_kind" in changes;
+  const holdingFactsChanged = kind === "existing_holding" && HOLDING_FACTS.some((f) => f in changes);
+  const materialChanged = MATERIAL.some((f) => f in changes) || kindChanged || holdingFactsChanged;
   const contentOnly = Object.keys(changes).some((f) => ["what_we_see", "why", "wrong_if", "good_until", "sources", ...MATERIAL].includes(f));
   if (contentOnly && actor.kind === "agent" && actor.id !== existing.author_id && existing.order_state === "none") {
     // Another AI may add outcome and order details, but the idea itself belongs to its author.
@@ -803,17 +828,24 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
     .run();
   await planEvent(env, existing.id, actor, reviewReset ? "changed the plan, so review and approval start over" : "updated the plan", changes);
   if (reviewReset) {
-    await systemMessage(env, `${actor.name} changed the price, size or symbol on plan ${existing.id} (${existing.symbol}). Its review and Casey's approval no longer apply and it needs a fresh review.`);
+    const what = kindChanged
+      ? "changed what kind of record"
+      : holdingFactsChanged
+        ? "changed the quantity, average cost or observation behind"
+        : "changed the price, size or symbol on";
+    await systemMessage(env, `${actor.name} ${what} ${existing.id} (${existing.symbol}). Its review and Casey's approval no longer apply and it needs a fresh review.`);
   }
-  // Calling a record an existing holding takes the "Casey has not approved this
-  // order" stop off the board. That is right for something he bought elsewhere
-  // and wrong for a real order, so it is never done quietly: the change is
-  // announced in the chat where Casey and the other AIs will see it.
-  if (changes.record_kind === "existing_holding") {
+  // Only Casey can get here, and the announcement stays anyway: the other AIs are
+  // reading the same board and need to know why a flag moved. Both directions, so
+  // a holding turned back into a trade plan is just as visible.
+  if (kindChanged) {
     await systemMessage(
       env,
-      `${actor.name} recorded ${existing.id} (${existing.symbol}) as a holding Casey already owned, not an order placed through the hub. ` +
-        `The board will stop asking him to approve it. If this was a real order, say so here.`,
+      changes.record_kind === "existing_holding"
+        ? `Casey recorded ${existing.id} (${existing.symbol}) as a holding he already owned, not an order placed through the hub. ` +
+            `The board will stop asking him to approve it. It needs a fresh review before it counts as checked.`
+        : `Casey changed ${existing.id} (${existing.symbol}) back to a trade plan. ` +
+            `Any review it had as a holding no longer applies and is not approval to buy anything.`,
     );
   }
   await touchAgent(env, actor, `updated plan ${existing.id}`);
