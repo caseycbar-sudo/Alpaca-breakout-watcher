@@ -61,6 +61,21 @@ export function setAssetStampsForTest(v: Partial<Record<AssetPath, string>> | nu
 
 const stamp = (path: AssetPath) => (assetStamps?.[path] ? `?v=${assetStamps[path]}` : "");
 
+// A preview of a pull request runs this same code against the test database.
+// It looks exactly like the real hub, which is the point and also the danger:
+// Casey must never read test numbers as his account. Set from previews.vars,
+// which production does not have, so forgetting it cannot mislabel the live hub.
+let previewLabel: string | null = null;
+export function primePreviewLabel(env: { HUB_ENV?: string }): void {
+  previewLabel = env.HUB_ENV === "preview" ? "preview" : null;
+}
+export function previewLabelForTest(): string | null { return previewLabel; }
+
+const PREVIEW_BANNER =
+  `<p class="test-banner" role="status"><strong>TEST COPY.</strong> ` +
+  `Made-up numbers, a separate database, and no connection to Casey's account. ` +
+  `The real hub is somewhere else.</p>`;
+
 function page(title: string, body: string, opts: { script?: boolean; status?: number; csp?: string; headers?: Headers } = {}): Response {
   const html = `<!doctype html>
 <html lang="en">
@@ -69,11 +84,12 @@ function page(title: string, body: string, opts: { script?: boolean; status?: nu
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0E3A4A">
-<title>${escapeHtml(title)}</title>
+<title>${escapeHtml(previewLabel ? `TEST · ${title}` : title)}</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/app.css${stamp("/app.css")}">
 </head>
 <body>
+${previewLabel ? PREVIEW_BANNER : ""}
 ${body}
 ${opts.script ? `<script src="/app.js${stamp("/app.js")}" defer></script>` : ""}
 </body>

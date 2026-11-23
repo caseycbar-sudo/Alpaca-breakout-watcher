@@ -21,5 +21,23 @@
       "migrations_dir": "migrations"
     }
   ],
-  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "fb0359bca6414f97908b8bc84c88b464" }]
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "fb0359bca6414f97908b8bc84c88b464" }],
+
+  // Every pull request gets its own Preview of this Worker at its own URL.
+  // Previews inherit nothing from production, which is why wrangler refused to
+  // deploy one at all while this block was missing: it will not quietly point
+  // test code at Casey's real board. These are the separate test resources.
+  // Nothing in here may ever name a database or namespace used above.
+  "previews": {
+    "vars": { "HUB_ENV": "preview" },
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "driftline-trading-hub-test",
+        "database_id": "0a8e15e6-c7a2-4e22-b2d8-518593c869b5"
+      }
+    ],
+    "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "4c9c1985ac9e448fa5931d9de60e4c74" }],
+    "ai": { "binding": "AI" }
+  }
 }
