@@ -26,6 +26,29 @@ interface HubEnv extends assistant.AssistantEnv {
 
 const OWNER_ID = "casey";
 
+// A Preview is this same Worker at a public address, for trying changes out. It
+// should have storage, assets and nothing that reaches outside: no watcher token
+// to accept scans with, and no wake keys, which would let a page anyone can open
+// ring Casey's AIs. previews.* declares what a Preview gets, but a dashboard
+// variable, keep_vars or a binding added later could still arrive, so the
+// handlers are handed only what a Preview is meant to have.
+//
+// HUB_URL is dropped on purpose rather than kept. Production may set it to the
+// live hub's address; inherited, it would make a Preview publish the live hub's
+// origin in its OAuth metadata and send people there to sign in. Dropped, the
+// address the request arrived on is used, which is the Preview's own.
+//
+// The idea is ChatGPT's, from its isolatedEnv in PR #28. Production is untouched:
+// this narrows nothing unless previews.vars says HUB_ENV is "preview".
+const PREVIEW_KEEPS = ["DB", "OAUTH_KV", "ASSETS", "AI", "HUB_ENV"] as const;
+
+export function previewEnv(env: HubEnv): HubEnv {
+  if (env.HUB_ENV !== "preview") return env;
+  const kept: Record<string, unknown> = {};
+  for (const key of PREVIEW_KEEPS) if (key in env) kept[key] = (env as unknown as Record<string, unknown>)[key];
+  return kept as unknown as HubEnv;
+}
+
 // ----------------------------------------------------------- the AI door
 
 const apiHandler = {
@@ -415,6 +438,8 @@ function providerFor(origin: string): OAuthProvider<HubEnv> {
 
 export default {
   fetch(request: Request, env: HubEnv, ctx: ExecutionContext): Promise<Response> | Response {
-    return providerFor(originFor(request, env)).fetch(request, env, ctx);
+    // Narrow first, so the Preview's own origin is what everything downstream sees.
+    const scoped = previewEnv(env);
+    return providerFor(originFor(request, scoped)).fetch(request, scoped, ctx);
   },
 } satisfies ExportedHandler<HubEnv>;
