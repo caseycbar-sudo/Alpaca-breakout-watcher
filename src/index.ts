@@ -9,6 +9,7 @@
 
 import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import * as assistant from "./assistant";
+import * as calendar from "./calendar";
 import * as auth from "./auth";
 import * as db from "./db";
 import * as news from "./news";
@@ -119,6 +120,15 @@ async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext
     try {
       const update = await news.receive(env, request);
       return json({ ok: true, items: update.items.length, feed_at: update.feed_at });
+    } catch (error) {
+      if (error instanceof HubError) return json({ error: error.code, message: error.message }, error.status);
+      throw error;
+    }
+  }
+  if (path === "/api/calendar" && request.method === "POST") {
+    try {
+      const update = await calendar.receive(env, request);
+      return json({ ok: true, events: update.events.length, checked_at: update.checked_at });
     } catch (error) {
       if (error instanceof HubError) return json({ error: error.code, message: error.message }, error.status);
       throw error;
@@ -299,7 +309,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   }
 
   if (path === "/api/state" && method === "GET") {
-    const [board, chat, open, answered, plans, rules, links, seen, lab, scan, headlines] = await Promise.all([
+    const [board, chat, open, answered, plans, rules, links, seen, lab, scan, headlines, macroCalendar] = await Promise.all([
       db.buildBoard(env),
       db.readChat(env, owner, { limit: 40, mark_read: false }),
       db.listDecisions(env, owner, { status: "open" }),
@@ -311,6 +321,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       research.getResearch(env).catch(() => null),
       radar.current(env).catch(() => null),
       news.current(env).catch(() => null),
+      calendar.current(env).catch(() => null),
     ]);
     return json({
       server_time: Date.now(),
@@ -326,6 +337,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       helpers: await assistant.status(env),
       radar: scan,
       news: headlines,
+      calendar: macroCalendar,
       research: lab && lab.summary ? { ...lab.summary, read_at: lab.fetched_at, problem: lab.problem ?? null } : { unavailable: lab?.problem ?? "The lab's results have not been read yet." },
       jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
