@@ -731,9 +731,10 @@ label { font-size:12px; color:#b0c4d5; }
 .deck-eyebrow { color:#a5d5d7; font-size:12px; font-weight:750; letter-spacing:.12em; }
 .deck-stamp { color:#a7bbcb; font-size:12px; text-align:right; }
 .deck-intro { display:grid; grid-template-columns:minmax(0,1fr) 220px; align-items:center; gap:22px; padding:30px 0; }
-.deck-intro h1 { font-size:clamp(38px,5vw,62px); font-weight:750; letter-spacing:-.055em; line-height:1.04; color:#f2f9fc; }
+/* Was clamp(38px,5vw,62px). It shouted over the live cards, which are the point. */
+.deck-intro h1 { font-size:clamp(28px,3.1vw,40px); font-weight:720; letter-spacing:-.04em; line-height:1.08; color:#f2f9fc; }
 .deck-intro h1 em { color:#c7f590; font-style:normal; }
-.deck-intro p { color:#b5c9d6; font-size:16px; margin-top:18px; line-height:1.6; }
+.deck-intro p { color:#b5c9d6; font-size:15px; margin-top:13px; line-height:1.55; }
 .deck-emblem { width:210px; height:210px; position:relative; display:grid; place-items:center; isolation:isolate; }
 .orbit { position:absolute; inset:8px; border:1px solid #77bdb866; border-radius:50%; transform:rotate(-25deg); }
 .orbit-two { inset:25px; border-style:dashed; border-color:#c7f59055; }
@@ -794,7 +795,7 @@ label { font-size:12px; color:#b0c4d5; }
   .command-deck { padding:23px; }.deck-intro { grid-template-columns:minmax(0,1fr) 125px; gap:10px; }
   .deck-emblem { width:125px; height:125px; }.orbit { inset:0; }.orbit-two { inset:12px; }.orbit-three { inset:26px; }.orbit-core { font-size:36px; }.orbit-core span { font-size:8px; }
   .deck-lanes { grid-template-columns:repeat(2,minmax(0,1fr)); }.deck-lane { padding:15px; }
-  .deck-intro h1 { font-size:38px; }.deck-intro p { font-size:14px; }
+  .deck-intro h1 { font-size:28px; }.deck-intro p { font-size:14px; }
   .deck-radar { flex-wrap:wrap; padding:16px; gap:12px; }.radar-copy { flex-basis:calc(100% - 70px); }.radar-state { max-width:none; flex-basis:100%; padding-left:64px; }
   .radar-state small { display:inline; margin-left:12px; }.activity-card { padding:20px; }
 }
@@ -827,3 +828,37 @@ label { font-size:12px; color:#b0c4d5; }
 .radar-symbol[data-scan-ring="closed"] i,
 .radar-symbol[data-scan-ring="unknown"] i { background:#6e879b; }
 .radar-symbol[data-scan-ring="due"] i { background:#83baff; }
+
+/* The lab, as figures. Palette validated against this surface with the dataviz
+   checker; colour-blind separation sits in the band that needs a second cue, so
+   every segment is labelled and no meaning rests on hue alone. */
+.lab-findings .lab-fig { margin:18px 0 0; }
+.lab-findings figcaption { font-size:15px; font-weight:650; color:#e7f1f8; margin-bottom:10px; }
+.lab-findings svg { display:block; width:100%; }
+.lab-key { list-style:none; display:flex; flex-wrap:wrap; gap:6px 18px; margin:10px 0 0; padding:0; }
+.lab-key li { display:flex; align-items:baseline; gap:7px; font-size:14px; color:#cfe0ec; }
+.lab-key b { font-variant-numeric:tabular-nums; color:#f2f9fc; }
+.lab-key small { color:#90a9bd; font-size:12px; }
+.lab-chip { width:10px; height:10px; border-radius:3px; flex:0 0 10px; }
+.lab-chip[data-tone="good"] { background:#27a07d; }
+.lab-chip[data-tone="bad"] { background:#c86448; }
+.lab-chip[data-tone="flat"] { background:#4487c9; }
+.lab-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.lab-sub { font-size:13px; color:#b7cada; margin:0 0 6px; }
+.lab-note { font-size:12px; color:#90a9bd; margin:4px 0 0; line-height:1.45; }
+.lab-why { font-size:13px; color:#cfe0ec; line-height:1.55; margin:14px 0 0;
+  padding:12px 14px; border-left:3px solid #4487c9; background:#0d2232; border-radius:0 10px 10px 0; }
+.lab-tick { fill:#90a9bd; font-size:10px; font-family:inherit; }
+.lab-val { fill:#e7f1f8; font-size:9.5px; font-family:inherit; font-variant-numeric:tabular-nums; }
+@media(max-width:620px){ .lab-pair { grid-template-columns:minmax(0,1fr); gap:22px; } }
+
+/* One strategy, one block: name, its own bar, its own caveat. The bar carries an
+   explicit height here because .v2-figure svg{height:auto} stretched the old shared
+   figure well past its viewBox and parted the bars from their names. */
+.v2-strat { padding:12px 0; border-bottom:1px solid #ffffff10; }
+.v2-strat:last-of-type { border-bottom:0; }
+.v2-strat .hd { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.v2-strat .hd b { font-size:14.5px; font-weight:680; color:var(--t1); min-width:0; overflow-wrap:anywhere; }
+.v2-strat .hd .num { flex:0 0 auto; font-size:14px; font-weight:680; }
+.v2-dbar { display:block; width:100%; height:12px; margin:8px 0 6px; }
+.v2-strat .ft { display:block; font-size:11.5px; color:var(--t3); }

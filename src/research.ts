@@ -149,6 +149,28 @@ function targetSweep(raw: unknown) {
     .filter((x) => x.target_pct !== null);
 }
 
+/** The stop-width experiment. Dollars lead, because R is defined by the stop:
+ *  widen it and every R shrinks toward zero whether or not a trade went better.
+ *  Both are carried so the hub can show that they disagree, which is the point. */
+function stopSweep(raw: unknown) {
+  return arr(raw)
+    .map((x) => {
+      const o = obj(x);
+      return {
+        stop_pct: num(o.stop_pct),
+        target_pct: num(o.target_pct),
+        trades: num(o.trades),
+        win_rate: round(num(o.win_rate), 1),
+        avg_r: round(num(o.avg_r), 3),
+        stopped_out_rate: round(num(o.stopped_out_rate), 1),
+        target_hit_rate: round(num(o.target_hit_rate), 1),
+        avg_dollars: round(num(o.avg_dollars), 3),
+        total_dollars: round(num(o.total_dollars), 2),
+      };
+    })
+    .filter((x) => x.stop_pct !== null && x.avg_dollars !== null);
+}
+
 function dayShape(raw: unknown) {
   const d = obj(raw);
   const day = (v: unknown) => {
@@ -302,6 +324,7 @@ export interface Summary {
   lookahead_warning: string | null;
   how_trades_ended: ReturnType<typeof outcomes>;
   target_sweep: ReturnType<typeof targetSweep>;
+  stop_sweep: ReturnType<typeof stopSweep>;
   day_shape: ReturnType<typeof dayShape>;
   model_factors: ReturnType<typeof factors>;
   your_gates: ReturnType<typeof gates>;
@@ -350,6 +373,7 @@ export function summarize(raw: unknown, now = Date.now()): Summary {
       : null,
     how_trades_ended: outcomes(analytics.outcomes),
     target_sweep: targetSweep(analytics.target_sweep),
+    stop_sweep: stopSweep(analytics.stop_pct_sweep),
     day_shape: dayShape(analytics.days),
     model_factors: factors(obj(d.model).factors),
     your_gates: gates(patterns.gate_review),

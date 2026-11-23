@@ -571,6 +571,7 @@
       ${workspaceDeck()}
       ${activityDeck()}
       ${held}
+      ${labFindings()}
       ${labCard()}
       ${rules}
       ${driftline()}
@@ -663,7 +664,7 @@
       <div class="deck-lanes" aria-label="Reported project work">${lanes.map(([key,label,note,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span><small>${note}</small><span class="lane-link">View jobs</span></button>`).join("")}</div>
       <p class="deck-footnote">${esc(counts.done || 0)} jobs completed at this sync. Agents work during their sessions; a job status does not mean someone is online.</p>
       <button type="button" class="deck-radar" data-tab-link="research" data-scan-state="${status}">
-        <span class="radar-symbol" data-scan-ring="${esc(clock.state)}" style="--fraction:${clock.fraction.toFixed(4)}" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
+        <span class="radar-symbol" data-scan-ring="${esc(clock.state)}" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
         <span class="radar-state">${esc(phase)}<small>View research</small></span>
       </button>
       <p class="deck-footnote scan-clock" data-scan-clock>
@@ -697,6 +698,86 @@
   }
 
   // The lab, as a picture on the front page rather than a paragraph three taps away.
+  // What the lab found, as pictures rather than a table three taps away. Casey
+  // asked to understand what he is looking at, so each figure answers one
+  // question and says what it rests on. Palette checked with the dataviz
+  // validator against this surface rather than chosen by eye: #27a07d, #c86448
+  // and #4487c9 pass the lightness band, chroma floor, normal-vision separation
+  // and contrast. Colour-blind separation lands at 7.4, inside the band that is
+  // only legal with secondary encoding, so every segment carries its own label.
+  const LAB_GOOD = "#27a07d", LAB_BAD = "#c86448", LAB_FLAT = "#4487c9";
+
+  function labFindings() {
+    const r = S.research;
+    const ended = (r?.how_trades_ended || []).filter((x) => Number.isFinite(x.share_pct) && x.share_pct > 0);
+    const sweep = (r?.stop_sweep || []).filter((x) => Number.isFinite(x.avg_dollars) && Number.isFinite(x.avg_r));
+    if (!ended.length && !sweep.length) return "";
+    const total = ended.reduce((n, x) => n + (x.trades || 0), 0);
+
+    // One stacked bar, because the question is "what share of trades did what".
+    // Colour by what the ending means, so it reads the same if the order changes.
+    const tone = (label) => /target/i.test(label) ? LAB_GOOD : /stop/i.test(label) ? LAB_BAD : LAB_FLAT;
+    const share = (v) => `${Number(v).toFixed(1)}%`;
+    let x = 0;
+    const endedFig = !ended.length ? "" : `
+      <figure class="lab-fig">
+        <figcaption>How ${esc(total.toLocaleString())} trades ended</figcaption>
+        <svg viewBox="0 0 300 26" height="26" preserveAspectRatio="none" role="img"
+             aria-label="${esc(ended.map((e) => `${e.label}, ${e.share_pct}%`).join(". "))}">
+          ${ended.map((e) => {
+            const w = Math.max(1.5, (e.share_pct / 100) * 300);
+            const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0.5, w - 2).toFixed(2)}" height="26" rx="4" fill="${tone(e.label)}"/>`;
+            x += w;
+            return seg;
+          }).join("")}
+        </svg>
+        <ul class="lab-key">
+          ${ended.map((e) => `<li><i class="lab-chip" data-tone="${/target/i.test(e.label) ? "good" : /stop/i.test(e.label) ? "bad" : "flat"}"></i>
+            <b>${esc(share(e.share_pct))}</b> ${esc(e.label.toLowerCase())}<small>${esc((e.trades || 0).toLocaleString())} trades</small></li>`).join("")}
+        </ul>
+      </figure>`;
+
+    // Two charts, not one with two scales. They share an axis of stop widths and
+    // disagree on purpose: that disagreement is the finding. A single chart with
+    // two y-scales would let either line be drawn to tell either story.
+    const bars = (rows, value, tint, fmt) => {
+      const span = Math.max(...rows.map((d) => Math.abs(value(d))), 1e-9);
+      return rows.map((d, i) => {
+        const h = Math.max(2, (Math.abs(value(d)) / span) * 46);
+        // Baseline at 62 with 16 of headroom, so the tallest bar's own label
+        // still has somewhere to sit. It used to clip off the top of the box.
+        return `<g><rect x="${i * 42 + 6}" y="${(62 - h).toFixed(1)}" width="30" height="${h.toFixed(1)}" rx="3" fill="${tint(d)}"/>
+          <text x="${i * 42 + 21}" y="76" text-anchor="middle" class="lab-tick">${esc(d.stop_pct)}%</text>
+          <text x="${i * 42 + 21}" y="${(58 - h).toFixed(1)}" text-anchor="middle" class="lab-val">${esc(fmt(value(d)))}</text></g>`;
+      }).join("");
+    };
+    const sweepFig = !sweep.length ? "" : `
+      <figure class="lab-fig lab-sweep">
+        <figcaption>Does a wider stop help? The two usual measures disagree.</figcaption>
+        <div class="lab-pair">
+          <div><p class="lab-sub">Judged by R, the trader's usual measure</p>
+            <svg viewBox="0 0 ${sweep.length * 42} 80" height="86" role="img"
+                 aria-label="Average R by stop width: ${esc(sweep.map((d) => `${d.stop_pct}% stop, ${d.avg_r}R`).join("; "))}">
+              ${bars(sweep, (d) => d.avg_r, () => LAB_FLAT, (v) => v.toFixed(2))}
+            </svg>
+            <p class="lab-note">Shorter is better here, so a wider stop looks like a fix.</p></div>
+          <div><p class="lab-sub">Judged by money, on the same $40 trade</p>
+            <svg viewBox="0 0 ${sweep.length * 42} 80" height="86" role="img"
+                 aria-label="Average dollars by stop width: ${esc(sweep.map((d) => `${d.stop_pct}% stop, ${d.avg_dollars} dollars`).join("; "))}">
+              ${bars(sweep, (d) => d.avg_dollars, () => LAB_BAD, (v) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(2)}`)}
+            </svg>
+            <p class="lab-note">Every bar is a loss, and the widest stops lose most.</p></div>
+        </div>
+        <p class="lab-why">R is measured in units of your stop, so widening the stop shrinks every R whether or not a trade went better. The money is the same trades, same size, no such trick.</p>
+      </figure>`;
+
+    return `<section class="v2-card lab-findings"><h2>What the lab found</h2>
+      <p class="sub">From Casey's own backtest${r?.window?.start ? `, ${esc(r.window.start)} to ${esc(r.window.end)}` : ""}. Modelled costs included. What the rules would have done, not what any trade will do.</p>
+      ${endedFig}${sweepFig}
+      <button type="button" class="v2-more" data-tab-link="research">Open the whole lab</button>
+    </section>`;
+  }
+
   function labCard() {
     const sw = S.research?.swing;
     const rows = (sw?.strategies || []).filter((x) => Number.isFinite(x.cagr));
@@ -725,24 +806,24 @@
     const read = Number.isFinite(readMs) ? sinceWords(Math.max(0, Math.round((Date.now() - readMs) / 1000))) : null;
     return `<section class="v2-card"><h2>Your slow lab</h2>
       ${problemHtml}<p class="sub">${rows.length === 1 ? "One strategy result" : `The best and the worst of ${rows.length} strategies`} over the reported historical windows, with assumed costs.</p>
-      <div class="v2-figure">
-        <svg viewBox="0 0 360 ${pick.length * 46}" preserveAspectRatio="none" height="${pick.length * 46}" role="img"
-             aria-label="${esc(pick.map((x) => `${x.name}: ${x.cagr}% a year, worst fall ${drawdown(x)}`).join(". "))}">
-          <defs>
-            <linearGradient id="v2up" x1="0" x2="1"><stop offset="0" stop-color="#19b98c"/><stop offset="1" stop-color="#3ee6b0"/></linearGradient>
-            <linearGradient id="v2dn" x1="1" x2="0"><stop offset="0" stop-color="#e0603c"/><stop offset="1" stop-color="#ff8f6b"/></linearGradient>
-          </defs>
-          ${pick.map((x, i) => {
-            const y = i * 46 + 22, w = (Math.abs(x.cagr) / span) * 170, neg = x.cagr < 0;
-            return `<rect x="0" y="${y}" width="360" height="14" rx="7" fill="#06202d"/>
-              <rect x="${(neg ? 180 - w : 180).toFixed(1)}" y="${y + 2}" width="${Math.max(2, w).toFixed(1)}" height="10" rx="4" fill="url(#${neg ? "v2dn" : "v2up"})"/>
-              <rect x="179.6" y="${y}" width="0.8" height="14" fill="#2d6076"/>`;
-          }).join("")}
-        </svg>
-      </div>
-      ${pick.map((x) => `<div class="v2-hold"><div class="nm"><b>${esc(x.name)}</b>
-          <span>worst fall ${drawdown(x)} along the way, tested from ${esc(x.since || "unknown date")}</span></div>
-        <div class="rt"><b class="num ${x.cagr < 0 ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}%</b><span class="v2-yr">a year</span></div></div>`).join("")}
+      ${pick.map((x) => {
+        // The bar used to be one tall figure above the rows. CSS height:auto stretched
+        // it past its own viewBox and the bars drifted away from the names they belonged
+        // to. Each row now carries its own bar, at a height CSS cannot stretch.
+        const w = (Math.abs(x.cagr) / span) * 170, neg = x.cagr < 0;
+        return `<div class="v2-strat">
+          <div class="hd"><b>${esc(x.name)}</b>
+            <span class="num ${neg ? "v2-neg" : "v2-pos"}">${x.cagr > 0 ? "+" : ""}${esc(String(x.cagr))}% a year</span></div>
+          <svg class="v2-dbar" viewBox="0 0 360 12" preserveAspectRatio="none" role="img"
+               aria-label="${esc(`${x.name}: ${x.cagr}% a year, worst fall ${drawdown(x)}`)}">
+            <rect x="0" y="0" width="360" height="12" rx="6" fill="#06202d"/>
+            <rect x="${(neg ? 180 - w : 180).toFixed(1)}" y="2" width="${Math.max(2, w).toFixed(1)}" height="8" rx="4"
+                  fill="${neg ? "#e0603c" : "#19b98c"}"/>
+            <rect x="179.6" y="0" width="0.8" height="12" fill="#2d6076"/>
+          </svg>
+          <span class="ft">worst fall ${drawdown(x)} along the way, tested from ${esc(x.since || "unknown date")}</span>
+        </div>`;
+      }).join("")}
       ${sig ? `<div class="v2-legend">${sig}</div><p class="v2-fineprint">Signal source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_signal.json">dated rule readings (raw data)</a>.</p>` : ""}
       <p class="v2-fineprint">Source: <a href="https://raw.githubusercontent.com/caseycbar-sudo/Alpaca-breakout-watcher/main/docs/data/swing_lab.json">swing lab backtest (raw data)</a>; ${read ? `fetched ${esc(read)}` : "fetch time unknown"}. These are modelled past results with assumed costs, not a prediction and not permission to trade. Cash and hold readings describe the rule on its stated observation date, not a current broker position.</p>
       <button type="button" class="v2-more" data-tab-link="research">See the whole lab</button>
@@ -1417,6 +1498,9 @@
       }
       document.getElementById("app").dataset.state = "ready";
       render(force);
+      // The ring fill cannot ship in markup: the CSP drops style attributes.
+      // Fill it here so it is never briefly empty waiting for the next tick.
+      tickScanClock();
     } catch (e) {
       $("#top-note").textContent = "Update failed · showing last loaded data";
       if (!S) view.innerHTML = `<p class="pad">The hub could not load. Check your connection and <button type="button" class="linkish" id="retry">try again</button>.</p>`;

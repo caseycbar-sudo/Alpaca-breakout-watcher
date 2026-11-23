@@ -57,14 +57,14 @@ test('daily trigger retains the non-continuous monitoring caveat', () => {
 test('missing drawdown is explicit in both the visible row and accessible chart label', () => {
   for (const value of [null, undefined, NaN, Infinity]) {
     const html = render({research:research({strategies:[{name:'Missing drawdown',cagr:5,worst_drawdown:value,since:'2019-01-01'}]})});
-    assert.match(html, /<span>worst fall not reported along the way/);
+    assert.match(html, /class="ft">worst fall not reported along the way/);
     assert.match(html, /aria-label="Missing drawdown: 5% a year, worst fall not reported"/);
     assert.doesNotMatch(html, /null%|undefined%|NaN%|Infinity%/);
   }
 });
 test('zero drawdown remains a reported zero in both visible and accessible output', () => {
   const html = render({research:research({strategies:[{name:'Zero drawdown',cagr:5,worst_drawdown:0,since:'2019-01-01'}]})});
-  assert.match(html, /<span>worst fall 0% along the way/);
+  assert.match(html, /class="ft">worst fall 0% along the way/);
   assert.match(html, /aria-label="Zero drawdown: 5% a year, worst fall 0%"/);
 });
 
@@ -220,4 +220,78 @@ test('the radar card shows one age, and it is the live one', () => {
   assert.doesNotMatch(card, /MARKET RADAR · \$\{/, 'no render-time age in the radar header');
   assert.doesNotMatch(card, /Scan \$\{age/, 'no frozen age string anywhere on the card');
   assert.match(card, /data-scan-elapsed/, 'the age must come from the ticking element');
+});
+
+test('nothing rendered carries an inline style attribute, which the CSP drops', () => {
+  // This has bitten twice: chart bars drew as slivers, and the scan ring shipped
+  // with style="--fraction" that production would have silently discarded. The
+  // policy is default-src 'none' with style-src 'self' and no unsafe-inline, so a
+  // style attribute in markup is parsed and ignored. Geometry goes in SVG
+  // attributes or CSS classes; anything dynamic is set through CSSOM.
+  const states = [{}, {radar:{generated_at:'2026-11-23T15:58:00Z',candidate_count:0,market:{is_open:true}},server_time:Date.parse('2026-11-23T16:00:00Z')}];
+  for (const s of states) {
+    const html = render(s);
+    assert.doesNotMatch(html, /\sstyle\s*=\s*["']/, 'rendered markup must not set style attributes');
+  }
+  assert.match(appJsSource, /setProperty\("--fraction"/, 'the ring fill must be set through CSSOM');
+});
+
+// Casey asked to understand what he is looking at. These pin the honesty of the
+// figures: no meaning carried by colour alone, no invented numbers, and the
+// disagreement between R and money kept visible rather than resolved into one
+// flattering line.
+const labState = {
+  research: {
+    window: { start: '2026-07-26', end: '2026-11-23' },
+    how_trades_ended: [
+      { label: 'Target hit', trades: 113, share_pct: 11.4, avg_r: 2.06 },
+      { label: 'Stopped out', trades: 553, share_pct: 55.8, avg_r: -1.19 },
+      { label: 'Closed at session end', trades: 323, share_pct: 32.6, avg_r: 0.11 },
+    ],
+    stop_sweep: [
+      { stop_pct: 1, avg_r: -0.263, avg_dollars: -0.105 },
+      { stop_pct: 20, avg_r: -0.024, avg_dollars: -0.194 },
+    ],
+  },
+};
+
+test('every segment of the lab figures is labelled, so colour never carries it alone', () => {
+  const html = render(labState);
+  for (const bit of ['11.4%', '55.8%', '32.6%', 'target hit', 'stopped out', '113 trades']) {
+    assert.ok(html.includes(bit), `missing ${bit}`);
+  }
+});
+
+test('the lab figures keep R and money side by side instead of picking the kind one', () => {
+  const html = render(labState);
+  assert.match(html, /Judged by R/);
+  assert.match(html, /Judged by money/);
+  assert.match(html, /−\$0\.19/, 'the money bars must show the loss');
+  assert.match(html, /-0\.02/, 'the R bars must show the flattering number too');
+  assert.match(html, /R is measured in units of your stop/);
+});
+
+test('the lab card says what it rests on and never predicts', () => {
+  const html = render(labState);
+  assert.match(html, /2026-07-26/);
+  assert.match(html, /not what any trade will do/);
+  assert.match(html, /983|1,?\d{3}|989|\d+ trades/);
+});
+
+test('missing lab data renders nothing rather than an empty frame', () => {
+  assert.ok(!render({}).includes('What the lab found'));
+  assert.ok(!render({ research: { how_trades_ended: [], stop_sweep: [] } }).includes('What the lab found'));
+});
+
+test('no bar label is drawn outside its own chart box', () => {
+  // The tallest bar's value label clipped off the top of the viewBox. Only
+  // visible by looking at it, so it gets an invariant rather than another look.
+  const html = render(labState);
+  for (const svg of html.match(/<svg viewBox="0 0 [\d.]+ (\d+)"[\s\S]*?<\/svg>/g) || []) {
+    const height = Number(svg.match(/viewBox="0 0 [\d.]+ (\d+)"/)[1]);
+    for (const m of svg.matchAll(/<(?:text|rect)[^>]*\sy="([-\d.]+)"/g)) {
+      const y = Number(m[1]);
+      assert.ok(y >= 0 && y <= height, `y=${y} outside 0..${height}`);
+    }
+  }
 });
