@@ -558,19 +558,75 @@
         </details>`
       : "";
 
+    // Order is a judgement about what Casey needs first on a phone. Stop flags,
+    // then anything waiting on him, then his money. The workspace deck is good
+    // and it is still an orientation panel: it was sitting above the account
+    // total, so the balance had six screens of scrolling in front of it.
     return `<div class="v2 command-view">
       ${alert}
       ${needed}
       ${flagList}
+      ${hero}
+      ${ticker()}
       ${workspaceDeck()}
       ${activityDeck()}
-      ${ticker()}
-      ${hero}
       ${held}
       ${labCard()}
       ${rules}
       ${driftline()}
     </div>`;
+  }
+
+  // Casey asked for the hub to have moving parts. The one thing here that can
+  // honestly move every second is the clock: how long since the watcher last
+  // scanned, and how long until it scans again. That is the hub's own time, not
+  // market data, so it can tick without pretending a price is updating. Prices
+  // and candidates still only change when a scan arrives.
+  const SCAN_EVERY_MS = 5 * 60 * 1000;
+
+  /** Exported shape for checks: where we are in the scan cycle, from the clock alone. */
+  function scanClock(now, generatedAt, isOpen) {
+    const at = typeof generatedAt === "string" && /[Tt ].*(?:[Zz]|[+-]\d{2}:?\d{2})$/.test(generatedAt)
+      ? Date.parse(generatedAt) : NaN;
+    if (!Number.isFinite(at) || at > now) return { state: "unknown", since: null, until: null, fraction: 0 };
+    const since = Math.floor((now - at) / 1000);
+    if (isOpen === false) return { state: "closed", since, until: null, fraction: 0 };
+    const until = Math.ceil((at + SCAN_EVERY_MS - now) / 1000);
+    // Past due is not an error worth shouting about: a scan can land a little late.
+    if (until <= 0) return { state: "due", since, until: 0, fraction: 1 };
+    return { state: "waiting", since, until, fraction: Math.min(1, (now - at) / SCAN_EVERY_MS) };
+  }
+
+  function countdownWords(clock) {
+    if (clock.state === "unknown") return "Scan time unavailable";
+    if (clock.state === "closed") return "Next scan when the market reopens";
+    if (clock.state === "due") return "Next scan due now";
+    const m = Math.floor(clock.until / 60), s = clock.until % 60;
+    return `Next scan in ${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function elapsedWords(clock) {
+    if (clock.since === null) return "Last scan time unavailable";
+    if (clock.since < 60) return `Last scan ${clock.since}s ago`;
+    const m = Math.floor(clock.since / 60);
+    return m < 60 ? `Last scan ${m} min ago` : `Last scan ${Math.floor(m / 60)} hr ago`;
+  }
+
+  // Patch the text in place once a second. A full re-render every second would
+  // fight anything Casey is typing and churn the whole page for two numbers.
+  function tickScanClock() {
+    const host = view.querySelector("[data-scan-clock]");
+    if (!host || !S) return;
+    const clock = scanClock(Date.now(), S.radar?.generated_at, S.radar?.market?.is_open);
+    const next = host.querySelector("[data-scan-next]");
+    const elapsed = host.querySelector("[data-scan-elapsed]");
+    const ring = host.querySelector("[data-scan-ring]");
+    if (next) next.textContent = countdownWords(clock);
+    if (elapsed) elapsed.textContent = elapsedWords(clock);
+    if (ring) {
+      ring.style.setProperty("--fraction", clock.fraction.toFixed(4));
+      ring.dataset.scanRing = clock.state;
+    }
   }
 
   // A view of reported work, never an invented heartbeat or simulated market feed.
@@ -581,12 +637,16 @@
     const dated = typeof v?.generated_at === "string" && /[Tt ].*(?:[Zz]|[+-]\d{2}:?\d{2})$/.test(v.generated_at);
     const scanAt = dated ? Date.parse(v.generated_at) : NaN;
     const age = Number.isFinite(scanAt) && scanAt <= now ? Math.floor((now - scanAt) / 60000) : null;
-    const stamp = age === null ? "Scan time unavailable" : `Scan ${age < 1 ? "under a minute" : `${age} min`} ago`;
+    // No frozen age anywhere on this card. It used to print one in the header
+    // at render time while the live clock below kept counting, so the same
+    // card showed "Scan 1 min ago" and "Last scan 3 min ago" two inches apart.
+    // One age, and it is the one that stays true. Found by looking at it.
     const knownCount = Number.isInteger(v?.candidate_count) && v.candidate_count >= 0;
     const recent = age !== null && age <= 15 && !v?.stale;
     const closed = v?.market?.is_open === false;
     const phase = closed ? "Market closed at last scan" : !v ? "Waiting for a scan" : !recent ? "Scan needs a refresh" : v.market?.is_open === true ? "Market open at last scan" : "Session not reported";
     const status = !v ? "missing" : closed ? "closed" : !recent ? "late" : "reported";
+    const clock = scanClock(now, v?.generated_at, v?.market?.is_open);
     const n = knownCount ? v.candidate_count : null;
     const title = n === null ? "Radar awaiting data" : n === 0 ? "No names qualified" : `${n} ${n === 1 ? "name" : "names"} qualified`;
     const detail = n === 0 ? "The last scan found no setups that passed the filters." : n === null ? "Open Research to check the scanner’s last report." : "Open the scan to see the setups and headline timing.";
@@ -603,10 +663,15 @@
       <div class="deck-lanes" aria-label="Reported project work">${lanes.map(([key,label,note,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span><small>${note}</small><span class="lane-link">View jobs</span></button>`).join("")}</div>
       <p class="deck-footnote">${esc(counts.done || 0)} jobs completed at this sync. Agents work during their sessions; a job status does not mean someone is online.</p>
       <button type="button" class="deck-radar" data-tab-link="research" data-scan-state="${status}">
-        <span class="radar-symbol" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR · ${esc(stamp)}</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
+        <span class="radar-symbol" data-scan-ring="${esc(clock.state)}" style="--fraction:${clock.fraction.toFixed(4)}" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
         <span class="radar-state">${esc(phase)}<small>View research</small></span>
       </button>
-      <p class="deck-footnote">Radar shows a saved scan. Prices and candidates do not update between reports.</p>
+      <p class="deck-footnote scan-clock" data-scan-clock>
+        <span data-scan-elapsed>${esc(elapsedWords(clock))}</span>
+        <span class="scan-dot" aria-hidden="true"></span>
+        <span data-scan-next>${esc(countdownWords(clock))}</span>
+        <span class="scan-note">The clock is live. The prices are not: they change only when a scan lands.</span>
+      </p>
     </section>`;
   }
 
@@ -1600,6 +1665,11 @@
   setInterval(() => {
     if (document.visibilityState === "visible") refresh(false);
   }, 15000);
+  // One second, text only, no re-render. Stops while the tab is hidden so a
+  // phone in a pocket is not running a clock nobody is reading.
+  setInterval(() => {
+    if (document.visibilityState === "visible") tickScanClock();
+  }, 1000);
 
   refresh(true);
 })();

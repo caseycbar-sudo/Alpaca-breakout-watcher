@@ -804,3 +804,26 @@ label { font-size:12px; color:#b0c4d5; }
   .deck-intro h1 { font-size:40px; }.deck-intro p br { display:none; }.deck-lane small { min-height:36px; }
   .deck-stamp { max-width:110px; }.deck-eyebrow { font-size:11px; }.activity-heading h2 { font-size:21px; }
 }
+
+/* The scan clock. The only honestly live thing on this page is time, so it is
+   the only thing allowed to move on its own: seconds since the last scan, and
+   the ring filling toward the next one. No price animates anywhere. */
+.scan-clock { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px; }
+.scan-clock [data-scan-elapsed] { font-variant-numeric:tabular-nums; }
+.scan-clock [data-scan-next] { font-variant-numeric:tabular-nums; color:#c7f590; font-weight:650; }
+.scan-dot { width:4px; height:4px; border-radius:50%; background:#5d7a8e; }
+.scan-note { flex-basis:100%; color:#8ba4b8; }
+
+/* The ring is the fill, drawn with a conic gradient so it needs no SVG and no
+   per-frame work: one custom property changes once a second. */
+.radar-symbol { position:relative; background:none; }
+.radar-symbol::before { content:""; position:absolute; inset:-3px; border-radius:50%;
+  background:conic-gradient(#c7f590 calc(var(--fraction,0) * 360deg), #2b4a52 0);
+  -webkit-mask:radial-gradient(circle, transparent 0 60%, #000 61%);
+  mask:radial-gradient(circle, transparent 0 60%, #000 61%); }
+.radar-symbol[data-scan-ring="due"]::before { background:conic-gradient(#83baff 360deg, #83baff 0); }
+.radar-symbol[data-scan-ring="closed"]::before,
+.radar-symbol[data-scan-ring="unknown"]::before { background:conic-gradient(#3d5369 360deg, #3d5369 0); }
+.radar-symbol[data-scan-ring="closed"] i,
+.radar-symbol[data-scan-ring="unknown"] i { background:#6e879b; }
+.radar-symbol[data-scan-ring="due"] i { background:#83baff; }
