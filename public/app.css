@@ -112,6 +112,20 @@ a { color: var(--tide); }
 .banner { margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: 15.5px; background: #fdf3cf; }
 .banner.stop { background: #fbe4e1; color: #7c1810; }
 
+/* A preview is a copy of the hub with invented numbers in it. It has to be
+   impossible to mistake for the real one at a glance on a phone, so this sits
+   above everything, in both colour schemes, and does not scroll away. */
+.test-banner {
+  position: sticky; top: 0; z-index: 90;
+  margin: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(14px + env(safe-area-inset-left, 0px));
+  padding-right: calc(14px + env(safe-area-inset-right, 0px));
+  font-size: 15px; line-height: 1.35; text-align: center;
+  background: #7c1810; color: #ffe9e4;
+  border-bottom: 3px solid #ffb4a6;
+}
+.test-banner strong { color: #fff; letter-spacing: 0.02em; }
+
 .tagline { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .tagline.good { background: #dcefe4; color: #1c4f37; }
 .tagline.warn { background: #fdf0bf; color: #6a4e00; }

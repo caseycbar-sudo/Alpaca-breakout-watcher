@@ -1,0 +1,20 @@
+{
+  // Only for applying migrations to the Preview database. A Preview deploy does
+  // not run migrations, so a pull request that adds one applies it here first:
+  //
+  //   npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc
+  //
+  // database_name and database_id must stay equal to previews.d1_databases in
+  // wrangler.jsonc, and must never equal the live hub's database. A check in
+  // checks/preview-isolation.mjs fails the build if either of those slips.
+  "name": "driftline-trading-hub-preview-migrations",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "driftline-trading-hub-test",
+      "database_id": "0a8e15e6-c7a2-4e22-b2d8-518593c869b5",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
