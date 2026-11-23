@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T05:29:47.210675+00:00",
+ "generated_at": "2026-11-23T06:23:51.389709+00:00",
  "sleeves": [
   {
    "sleeve": "A",
@@ -15,9 +15,9 @@
    "sleeve": "B",
    "symbol": "BTC-USD",
    "as_of": "2026-11-23",
-   "close": 61417.85,
+   "close": 61418.1,
    "length": 50,
-   "average": 76162.7742,
+   "average": 76162.7792,
    "distance_pct": -19.36,
    "signal": "CASH"
   }
