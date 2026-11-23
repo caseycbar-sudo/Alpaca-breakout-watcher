@@ -377,6 +377,10 @@ export async function buildBoard(env: Env, at = now()) {
   const historicalNotices: Array<{ text: string }> = [];
   const historicalDetails: Array<{ text: string }> = [];
   let snapshot: Record<string, unknown> | null = null;
+  // Symbols the broker snapshot has already flagged as unprotected. An existing
+  // holding would otherwise warn about the same missing stop a second time, and
+  // the snapshot's version is the better evidence: it comes from the account.
+  const noStopFromBroker = new Set<string>();
 
   if (!snap) {
     exceptions.push({ level: "warn", text: "No account snapshot has been reported yet, so the account numbers are blank." });
@@ -425,6 +429,7 @@ export async function buildBoard(env: Env, at = now()) {
       for (const p of positionsOut) {
         if (p.coverage === "none") exceptions.push({ level: "warn", text: `${p.symbol} has no stop order protecting it.` });
         if (p.coverage === "partial") exceptions.push({ level: "warn", text: `${p.symbol} is only partly covered by a stop order.` });
+        if (p.coverage === "none" || p.coverage === "partial") noStopFromBroker.add(String(p.symbol).toUpperCase());
       }
     }
     // Keep each reporter/source history separate. A new connection cannot silently
@@ -526,16 +531,29 @@ export async function buildBoard(env: Env, at = now()) {
   }
 
   const loose = await env.DB.prepare(
-    `SELECT id, symbol, review_state, order_state, protection_state FROM plans
+    `SELECT id, symbol, record_kind, review_state, order_state, protection_state FROM plans
      WHERE (order_state NOT IN ('none','closed','rejected','expired','canceled') AND review_state != 'authorized')
-        OR (order_state IN ('filled','partially_filled') AND protection_state != 'confirmed')`,
-  ).all<{ id: string; symbol: string; review_state: string; order_state: string; protection_state: string }>();
+        OR (order_state IN ('filled','partially_filled') AND protection_state != 'confirmed')
+        OR (record_kind = 'existing_holding' AND order_state != 'closed' AND protection_state != 'confirmed')`,
+  ).all<{ id: string; symbol: string; record_kind: string; review_state: string; order_state: string; protection_state: string }>();
   for (const p of loose.results) {
-    if (p.review_state !== "authorized" && !["none", "closed", "rejected", "expired", "canceled"].includes(p.order_state)) {
+    // An existing holding was bought outside the hub, so there is no order here
+    // for Casey to have approved and nothing to call unapproved. Saying otherwise
+    // put a red stop on the board for a position he already owned. See job #15.
+    const bought = p.record_kind !== "existing_holding";
+    if (bought && p.review_state !== "authorized" && !["none", "closed", "rejected", "expired", "canceled"].includes(p.order_state)) {
       exceptions.push({ level: "stop", text: `Plan ${p.id} (${p.symbol}) has an order recorded but Casey has not approved the plan.` });
     }
-    if (["filled", "partially_filled"].includes(p.order_state) && p.protection_state !== "confirmed") {
+    if (bought && ["filled", "partially_filled"].includes(p.order_state) && p.protection_state !== "confirmed") {
       exceptions.push({ level: "warn", text: `Plan ${p.id} (${p.symbol}) has filled and its stop is not confirmed yet.` });
+    }
+    // The missing stop is the real risk, and it survives the reclassification.
+    // Only the duplicate is dropped: when the broker snapshot already said this
+    // symbol is unprotected, that line is on the board and says it better.
+    if (!bought && p.order_state !== "closed" && p.protection_state !== "confirmed" && !noStopFromBroker.has(p.symbol.toUpperCase())) {
+      // Keyed by symbol, so two records of the same holding say it once.
+      noStopFromBroker.add(p.symbol.toUpperCase());
+      exceptions.push({ level: "warn", text: `${p.symbol} is recorded as already owned and its stop is not confirmed yet.` });
     }
   }
 
@@ -616,9 +634,15 @@ export interface PlanRow {
   result_dollars: number | null;
   expected_vs_happened: string | null;
   lesson: string | null;
+  record_kind: string;
+  quantity: number | null;
+  average_cost: number | null;
+  observed_at: number | null;
+  observed_source: string | null;
 }
 
 const MATERIAL = ["symbol", "entry_price", "target_price", "stop_price", "size_dollars"] as const;
+const RECORD_KINDS = ["trade_plan", "existing_holding"];
 const ORDER_STATES = ["none", "submission_pending", "working", "partially_filled", "filled", "rejected", "expired", "canceled", "unknown", "closed"];
 const PROTECTION_STATES = ["not_applicable", "pending", "confirmed", "degraded", "unknown"];
 
@@ -667,6 +691,17 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
   const existing = id ? await env.DB.prepare(`SELECT * FROM plans WHERE id = ?1`).bind(id).first<PlanRow>() : null;
   const stamp = now();
 
+  const kind = input.record_kind !== undefined ? String(input.record_kind) : existing?.record_kind ?? "trade_plan";
+  if (!RECORD_KINDS.includes(kind)) {
+    throw new HubError(400, "bad_plan", `record_kind must be one of: ${RECORD_KINDS.join(", ")}.`);
+  }
+  // A holding bought outside the hub has no fill here. Its cost is an average over
+  // however many buys the broker shows, and putting that number in fill_price made
+  // it read as a single broker fill that never happened. See job #15.
+  if (kind === "existing_holding" && numOrNull(input.fill_price) !== null) {
+    throw new HubError(400, "bad_plan", "An existing holding has no fill price from this hub. Put the broker's average cost in average_cost instead.");
+  }
+
   const size = input.size_dollars !== undefined ? numOrNull(input.size_dollars) : existing?.size_dollars ?? null;
   if (size !== null && size > rules.max_per_trade + 1e-9) {
     throw new HubError(
@@ -697,25 +732,32 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
     const newId = id ?? (await nextPlanId(env, stamp));
     await env.DB.prepare(
       `INSERT INTO plans (id, created_at, updated_at, author_id, author_name, symbol, what_we_see, why, entry_price, target_price,
-                          stop_price, size_dollars, est_loss_at_stop, wrong_if, good_until, sources, rules_version)
-       VALUES (?1,?2,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16)`,
+                          stop_price, size_dollars, est_loss_at_stop, wrong_if, good_until, sources, rules_version,
+                          record_kind, quantity, average_cost, observed_at, observed_source)
+       VALUES (?1,?2,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21)`,
     )
       .bind(
         newId, stamp, actor.id, actor.name, symbol, see, textOrNull(input.why, 2000),
         numOrNull(input.entry_price), numOrNull(input.target_price), numOrNull(input.stop_price), size,
         numOrNull(input.est_loss_at_stop), textOrNull(input.wrong_if, 1000), textOrNull(input.good_until, 60),
         textOrNull(input.sources, 2000), rules.version,
+        kind, numOrNull(input.quantity), numOrNull(input.average_cost),
+        numOrNull(input.observed_at), textOrNull(input.observed_source, 500),
       )
       .run();
-    await planEvent(env, newId, actor, "created the plan");
-    await touchAgent(env, actor, `drafted plan ${newId}`);
+    await planEvent(env, newId, actor, kind === "existing_holding" ? "recorded a holding Casey already owned" : "created the plan");
+    await touchAgent(env, actor, kind === "existing_holding" ? `recorded holding ${newId}` : `drafted plan ${newId}`);
     return { ...(await getPlan(env, actor, newId)), created: true, review_reset: false };
   }
 
   // Update. Work out what actually changes.
-  const textFields = ["what_we_see", "why", "wrong_if", "good_until", "sources", "broker_status", "broker_order_ids", "expected_vs_happened", "lesson"] as const;
-  const numFields = ["entry_price", "target_price", "stop_price", "size_dollars", "est_loss_at_stop", "filled_quantity", "fill_price", "exit_price", "fees", "result_dollars"] as const;
+  const textFields = ["what_we_see", "why", "wrong_if", "good_until", "sources", "broker_status", "broker_order_ids", "expected_vs_happened", "lesson", "observed_source"] as const;
+  const numFields = ["entry_price", "target_price", "stop_price", "size_dollars", "est_loss_at_stop", "filled_quantity", "fill_price", "exit_price", "fees", "result_dollars", "quantity", "average_cost", "observed_at"] as const;
   const changes: Record<string, unknown> = {};
+  if (kind !== existing.record_kind) changes.record_kind = kind;
+  // Reclassifying a mis-filed record has to clear what the old kind recorded,
+  // or an average cost stays behind in fill_price and still reads as a fill.
+  if (changes.record_kind === "existing_holding" && existing.fill_price !== null) changes.fill_price = null;
   if (input.symbol !== undefined) {
     const s = textOrNull(input.symbol, 20)?.toUpperCase();
     if (!s) throw new HubError(400, "bad_plan", "symbol cannot be empty.");
@@ -763,6 +805,17 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
   if (reviewReset) {
     await systemMessage(env, `${actor.name} changed the price, size or symbol on plan ${existing.id} (${existing.symbol}). Its review and Casey's approval no longer apply and it needs a fresh review.`);
   }
+  // Calling a record an existing holding takes the "Casey has not approved this
+  // order" stop off the board. That is right for something he bought elsewhere
+  // and wrong for a real order, so it is never done quietly: the change is
+  // announced in the chat where Casey and the other AIs will see it.
+  if (changes.record_kind === "existing_holding") {
+    await systemMessage(
+      env,
+      `${actor.name} recorded ${existing.id} (${existing.symbol}) as a holding Casey already owned, not an order placed through the hub. ` +
+        `The board will stop asking him to approve it. If this was a real order, say so here.`,
+    );
+  }
   await touchAgent(env, actor, `updated plan ${existing.id}`);
   return { ...(await getPlan(env, actor, existing.id)), created: false, review_reset: reviewReset };
 }
@@ -788,7 +841,12 @@ export async function reviewPlan(env: Env, actor: Actor, input: Record<string, u
   if (actor.id === plan.author_id) {
     throw new HubError(403, "own_plan", "A plan cannot be reviewed by the one who wrote it. Another AI or Casey has to look at it.");
   }
-  if (plan.order_state !== "none") throw new HubError(409, "too_late", `Plan ${plan.id} already has an order recorded, so it can no longer be reviewed.`);
+  // "Too late" means an order is already out and a review cannot change it. An
+  // existing holding never had an order here, so there is nothing to be late for,
+  // and blocking it left Casey's two real positions unchecked. See job #15.
+  if (plan.record_kind !== "existing_holding" && plan.order_state !== "none") {
+    throw new HubError(409, "too_late", `Plan ${plan.id} already has an order recorded, so it can no longer be reviewed.`);
+  }
   if (plan.review_state === "declined") throw new HubError(409, "declined", `Casey declined plan ${plan.id}.`);
   if (verdict === "objected" && !comment) throw new HubError(400, "bad_review", "An objection needs a comment saying what is wrong.");
   if (verdict === "reviewed" && plan.review_state === "authorized") {

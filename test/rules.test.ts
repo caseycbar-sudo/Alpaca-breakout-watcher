@@ -165,6 +165,80 @@ describe("trade plans", () => {
   });
 });
 
+// Casey's QQQ and PSQ were bought in Robinhood before this hub existed. Recorded
+// as trade plans they raised a red "Casey has not approved" on the board, could
+// not be reviewed at all, and carried an average cost in fill_price. Job #15.
+describe("holdings Casey already owned", () => {
+  const qqq = {
+    symbol: "QQQ", record_kind: "existing_holding",
+    what_we_see: "Already owned in Robinhood, bought before the hub existed.",
+    quantity: 0.025793, average_cost: 756.02,
+    observed_at: 1795000000000, observed_source: "snapshot #27, Robinhood connection",
+  };
+  const psq = { ...qqq, symbol: "PSQ", quantity: 1, average_cost: 26.61 };
+
+  it("keeps the average cost out of fill_price", async () => {
+    const { plan } = await db.savePlan(env, grok, qqq);
+    expect(plan.record_kind).toBe("existing_holding");
+    expect(plan.average_cost).toBe(756.02);
+    expect(plan.quantity).toBe(0.025793);
+    expect(plan.fill_price).toBe(null);
+    expect(plan.observed_source).toContain("snapshot #27");
+    await rejects(db.savePlan(env, grok, { ...psq, fill_price: 26.61 }), "bad_plan");
+  });
+
+  it("does not call a holding Casey already owns an unapproved order", async () => {
+    const { plan } = await db.savePlan(env, grok, psq);
+    const board = await db.buildBoard(env);
+    const mine = board.exceptions.filter((e) => e.text.includes(plan.id));
+    expect(mine.filter((e) => e.level === "stop")).toEqual([]);
+    expect(mine.some((e) => e.text.includes("has not approved"))).toBe(false);
+  });
+
+  it("still says out loud that the holding has no stop", async () => {
+    await db.savePlan(env, grok, qqq);
+    const board = await db.buildBoard(env);
+    // The missing stop is the real risk and has to stay visible.
+    expect(board.exceptions.some((e) => e.level === "warn" && e.text.includes("QQQ") && e.text.includes("stop"))).toBe(true);
+    // Said once, however many records of QQQ exist and whoever noticed first.
+    expect(board.exceptions.filter((e) => e.text.includes("QQQ") && e.text.includes("already owned")).length).toBeLessThanOrEqual(1);
+  });
+
+  it("stops warning once the stop on that holding is confirmed", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...qqq, symbol: "VOO" });
+    expect((await db.buildBoard(env)).exceptions.some((e) => e.text.includes("VOO"))).toBe(true);
+    const confirmed = await db.savePlan(env, grok, { id: plan.id, protection_state: "confirmed" });
+    expect(confirmed.plan.protection_state).toBe("confirmed");
+    expect((await db.buildBoard(env)).exceptions.some((e) => e.text.includes("VOO"))).toBe(false);
+  });
+
+  it("can be checked by another AI instead of answering too_late", async () => {
+    const { plan } = await db.savePlan(env, grok, qqq);
+    await db.savePlan(env, grok, { id: plan.id, order_state: "filled" });
+    const checked = await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches snapshot #27" });
+    expect(checked.plan.review_state).toBe("reviewed");
+    expect(checked.plan.reviewed_by).toBe("Claude");
+  });
+
+  it("clears the stale fill price when a mis-filed record is reclassified", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "PSQ", what_we_see: "Recorded as a plan by mistake" });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "filled", fill_price: 26.61 });
+    const fixed = await db.savePlan(env, grok, { id: plan.id, record_kind: "existing_holding", average_cost: 26.61, quantity: 1 });
+    expect(fixed.plan.record_kind).toBe("existing_holding");
+    expect(fixed.plan.fill_price).toBe(null);
+    expect(fixed.plan.average_cost).toBe(26.61);
+    const board = await db.buildBoard(env);
+    expect(board.exceptions.some((e) => e.level === "stop" && e.text.includes(plan.id))).toBe(false);
+    // Taking a red flag off the board is announced, never silent.
+    const { messages } = await db.readChat(env, claude, { limit: 5 });
+    expect(messages.some((m: any) => m.body.includes(plan.id) && m.body.includes("already owned"))).toBe(true);
+  });
+
+  it("refuses a record kind it does not know", async () => {
+    await rejects(db.savePlan(env, grok, { ...qqq, record_kind: "whatever" }), "bad_plan");
+  });
+});
+
 describe("rules and questions", () => {
   it("starts with the limits Casey approved", async () => {
     const rules = await db.currentRules(env);
