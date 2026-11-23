@@ -325,3 +325,15 @@ test('no bar label is drawn outside its own chart box', () => {
     }
   }
 });
+
+test('a fresh news feed still says when it was last checked', () => {
+  // Every other state names its own age. Fresh did not, so a feed delivered 14
+  // minutes ago, one minute under the stale line, looked identical to a live one.
+  const feed = (over) => ({ stale:false, age_minutes:14, items:[{headline:'A thing happened',
+    source:'Wire', url:'https://example.com/a', symbols:['QQQ'],
+    published_at:'2026-11-23T16:00:00Z', first_seen_at:'2026-11-23T16:00:00Z'}], ...over });
+  const html = render({news:feed()});
+  assert.match(html, /data-news-state="fresh"/);
+  assert.match(html, /checked 14 min ago/i);
+  assert.match(render({news:feed({age_minutes:0})}), /under a minute ago/i);
+});

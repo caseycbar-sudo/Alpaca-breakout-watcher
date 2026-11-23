@@ -876,10 +876,13 @@ label { font-size:12px; color:#b0c4d5; }
 .flash-card h2 {
   font: 600 18px/1.2 var(--text);
   margin: 0 0 8px;
-  background: linear-gradient(90deg, #65ddcf, #e5bf7e);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #9fe8dc;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .flash-card h2 {
+    background: linear-gradient(90deg, #65ddcf, #e5bf7e);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
 }
 .flash-card .sub { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 10px; }
 .news-item, .event {
@@ -892,23 +895,17 @@ label { font-size:12px; color:#b0c4d5; }
 .news-strip .news-item { display: grid; gap: 5px; padding: 13px 0; }
 .news-strip .news-item div { display: grid; grid-template-columns: minmax(42px, auto) 1fr; gap: 10px; align-items: start; }
 .news-strip .news-item a { color: inherit; font-weight: 650; line-height: 1.35; }
-.news-strip .news-item p { margin: 0; color: var(--muted); font-size: 13px; }
+.news-strip .news-item p { margin: 0; color: var(--t3); font-size: 13px; }
 .event em { font-style: normal; color: #e5bf7e; font-size: 13px; margin-left: 8px; }
 
-.v2-hero {
-  background: linear-gradient(145deg, #153335 0%, #0e2030 100%);
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 12px 40px rgba(101, 221, 207, 0.12);
-  border: 1px solid rgba(101, 221, 207, 0.2);
-}
-.v2-hero .amt { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
-.v2-split div { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 10px; }
+/* A second .v2-hero block lived here and quietly overrode the one at the top of
+   this file, flattening the hero to a plain gradient. The original is the designed
+   one; duplicate-selector.mjs now fails the build if a block shadows another. */
 
 /* Research desk: sources and saved observations share a clear reading path. */
 .intel-desk { margin:16px 0 32px; padding:28px; border:1px solid #3d636e; border-radius:26px; background:radial-gradient(ellipse at top right,#23545566,transparent 50%),#0e2233; color:#e7f1f8; }
 .intel-top { display:flex; gap:24px; justify-content:space-between; align-items:center; }
-.intel-top h1 { font-size:clamp(36px,5vw,58px); line-height:1.04; letter-spacing:-.045em; margin:14px 0; }
+.intel-top h1 { font-size:clamp(27px,3.1vw,38px); line-height:1.08; letter-spacing:-.04em; margin:14px 0; }
 .intel-top h1 em { color:#c7f590; font-style:normal; }
 .intel-top p:not(.deck-eyebrow) { font-size:16px; line-height:1.6; color:#b8cfdc; max-width:43em; }
 .intel-emblem { width:190px; height:150px; flex:0 0 190px; display:flex; flex-direction:column; justify-content:center; text-align:center; border:1px solid #609a9b; border-radius:50%; color:#c7f590; font-size:32px; font-weight:750; background:repeating-radial-gradient(ellipse,#244b4e33 0 15px,#88c2bf22 16px 17px); transform:rotate(-9deg); }

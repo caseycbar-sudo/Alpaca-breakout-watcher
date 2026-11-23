@@ -566,7 +566,7 @@
         ? `<section class="v2-card news-strip" data-news-state="stale"><h2>News touching your radar</h2><p class="banner">The feed last reached the Hub ${esc(String(feed.age_minutes))} minutes ago. These headlines may be old.</p>${rows}</section>`
         : !feed.items.length
           ? `<section class="v2-card news-strip" data-news-state="empty"><h2>News touching your radar</h2><p class="sub">The watcher checked, but no tagged headline matched a radar, watchlist or held symbol.</p></section>`
-          : `<section class="v2-card news-strip" data-news-state="fresh"><h2>News touching your radar</h2><p class="sub">What was reported, without a bullish or bearish label.</p>${rows}</section>`;
+          : `<section class="v2-card news-strip" data-news-state="fresh"><h2>News touching your radar</h2><p class="sub">What was reported, without a bullish or bearish label. Feed checked ${esc(feed.age_minutes < 1 ? "under a minute ago" : `${feed.age_minutes} min ago`)}.</p>${rows}</section>`;
 
     // The flag lines are short summaries. The full records, with their source, date and
     // account-match caveats, live in historical_details and historical_notices. The
