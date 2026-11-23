@@ -687,7 +687,7 @@
     ];
     return `<section class="command-deck" aria-labelledby="deck-title">
       <div class="deck-heading"><span class="deck-eyebrow">THE DRIFTLINE WORKSPACE</span><span class="deck-stamp">State synced ${esc(new Date(now).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</span></div>
-      <div class="deck-intro"><div><h1 id="deck-title">See the work.<br><em>Find the next move.</em></h1><p>Research, decisions and your AI team.<br>One place to see what is moving forward.</p></div>
+      <div class="deck-intro"><div><h1 id="deck-title">See the work.<br><em>Find the next move.</em></h1><p>Research, decisions and your AI team. <br>One place to see what is moving forward.</p></div>
         <div class="deck-emblem" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="orbit orbit-three"></span><span class="orbit-core">D<span>DRIFTLINE</span></span></div></div>
       <div class="deck-lanes" aria-label="Reported project work">${lanes.map(([key,label,note,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span><small>${note}</small><span class="lane-link">View jobs</span></button>`).join("")}</div>
       <p class="deck-footnote">${esc(counts.done || 0)} jobs completed at this sync. Agents work during their sessions; a job status does not mean someone is online.</p>

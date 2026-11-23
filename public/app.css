@@ -802,7 +802,11 @@ label { font-size:12px; color:#b0c4d5; }
 @media(max-width:430px) {
   .command-deck { padding:20px 16px; }.deck-heading { align-items:flex-start; }.deck-heading .deck-eyebrow { max-width:150px; }
   .deck-intro { grid-template-columns:minmax(0,1fr); padding:24px 0; }.deck-emblem { display:none; }
-  .deck-intro h1 { font-size:40px; }.deck-intro p br { display:none; }.deck-lane small { min-height:36px; }
+  /* This used to set 40px, larger than the 28px one breakpoint wider, so the
+     headline was at its biggest on the smallest screen, which is the phone
+     Casey reads it on. The break stays hidden here; the markup carries a
+     space before it so the sentence does not run together when it goes. */
+  .deck-intro h1 { font-size:25px; }.deck-intro p br { display:none; }.deck-lane small { min-height:36px; }
   .deck-stamp { max-width:110px; }.deck-eyebrow { font-size:11px; }.activity-heading h2 { font-size:21px; }
 }
 

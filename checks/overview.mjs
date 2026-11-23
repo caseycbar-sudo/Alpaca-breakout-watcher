@@ -337,3 +337,27 @@ test('a fresh news feed still says when it was last checked', () => {
   assert.match(html, /checked 14 min ago/i);
   assert.match(render({news:feed({age_minutes:0})}), /under a minute ago/i);
 });
+
+test('the deck headline never grows as the screen gets smaller', () => {
+  // The narrowest breakpoint set 40px against 28px one step wider, so the headline
+  // was largest on a phone, which is where Casey actually reads it.
+  const css = readFileSync(new URL('../public/app.css', import.meta.url), 'utf8');
+  const sizeAt = (maxWidth) => {
+    const block = css.slice(css.indexOf(`@media(max-width:${maxWidth}px)`));
+    const m = block.slice(0, block.indexOf('\n}')).match(/\.deck-intro h1 \{[^}]*font-size:(\d+)px/);
+    return m ? Number(m[1]) : null;
+  };
+  const wide = sizeAt(760), narrow = sizeAt(430);
+  assert.ok(wide && narrow, 'expected a headline size at both breakpoints');
+  assert.ok(narrow <= wide, `headline is ${narrow}px on phones but ${wide}px on tablets`);
+});
+
+test('hiding the subtitle break does not run two sentences together', () => {
+  const css = readFileSync(new URL('../public/app.css', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  if (!/\.deck-intro p br \{\s*display:\s*none/.test(css)) return; // break is shown; nothing to guard
+  const m = src.match(/<p>Research[^<]*<br>/);
+  assert.ok(m, 'expected the deck subtitle to carry a break');
+  assert.ok(/\s<br>$/.test(m[0]),
+    'the break is hidden on narrow screens, so the text needs a space before it or the sentences collide');
+});
