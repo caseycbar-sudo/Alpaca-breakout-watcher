@@ -361,3 +361,61 @@ test('hiding the subtitle break does not run two sentences together', () => {
   assert.ok(/\s<br>$/.test(m[0]),
     'the break is hidden on narrow screens, so the text needs a space before it or the sentences collide');
 });
+
+test('a scan that stopped days ago says so instead of reporting a stale count', () => {
+  // The live failure: Saturday's scan reported market closed and zero candidates.
+  // On Monday the card still read "Market closed at last scan" and "No names
+  // qualified", which is calm, confident and describes nothing that is true.
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now, radar: {
+    generated_at: '2026-11-22T06:24:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.match(html, /The scanner has stopped/);
+  assert.doesNotMatch(html, /Market closed at last scan/);
+  assert.doesNotMatch(html, /No names qualified/);
+  assert.match(html, /1 day/);
+  assert.doesNotMatch(html, /Next scan due now/);
+  assert.doesNotMatch(html, /Next scan in /);
+});
+
+test('a long gap is reported in days and hours, never in raw minutes', () => {
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const at = (iso) => render({ server_time: now,
+    radar: { generated_at: iso, candidate_count: 0, market: { is_open: true } } });
+  assert.match(at('2026-11-21T18:00:00Z'), /2 days/);
+  assert.match(at('2026-11-23T15:00:00Z'), /3 hours/);
+  assert.match(at('2026-11-23T17:30:00Z'), /30 minutes/);
+  assert.doesNotMatch(at('2026-11-21T18:00:00Z'), /\d{3,} min/);
+});
+
+test('a recent scan reporting a closed market still says the market was closed', () => {
+  // The late state must not swallow the ordinary weekend case.
+  const now = Date.parse('2026-11-22T12:05:00Z');
+  const html = render({ server_time: now, radar: {
+    generated_at: '2026-11-22T12:00:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.match(html, /Market closed at last scan/);
+  assert.doesNotMatch(html, /The scanner has stopped/);
+});
+
+test('a stopped scanner takes away the all-clear', () => {
+  // Nothing flags a stopped watcher, because raising flags is the thing it stopped
+  // doing. So the top of the page read "Nothing needs you" through a two-day outage.
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const dead = render({ server_time: now, radar: {
+    generated_at: '2026-11-22T06:24:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.doesNotMatch(dead, /Nothing needs you/);
+  assert.match(dead, /The scanner has stopped/);
+
+  // A healthy scan still gets the all-clear, so this cannot quietly suppress it.
+  const live = render({ server_time: now, radar: {
+    generated_at: '2026-11-23T17:58:00Z', candidate_count: 0, market: { is_open: true } } });
+  assert.match(live, /Nothing needs you/);
+});
+
+test('a real thing waiting on Casey still outranks the stopped scanner', () => {
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now,
+    radar: { generated_at: '2026-11-22T06:24:00Z', candidate_count: 0, market: { is_open: false } },
+    need: { total: 1, questions: [{}], approvals: [] } });
+  assert.match(html, /waiting on you/);
+  assert.doesNotMatch(html, /Nothing needs you/);
+});

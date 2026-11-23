@@ -512,6 +512,11 @@
     // but the screen answers its question before it lists its caveats.
     const flagCount = S.board.exceptions.length;
     const alsoFlagged = flagCount ? ` ${count(flagCount, "thing", "things")} also flagged below.` : "";
+    // Seconds since the last scan, but only when it has been long enough to count
+    // as stopped. null the rest of the time, so the all-clear is unaffected.
+    const stopClock = scanClock(S.server_time || Date.now(), S.radar?.generated_at, S.radar?.market?.is_open);
+    const scanStopped = stopClock.state === "late" ? stopClock.since : null;
+
     const alert = stops.length
       ? `<section class="v2-alert"><div class="ic">!</div><div>
            <h3>Stop and look</h3><p>${esc(stops[0].text)}</p>
@@ -528,7 +533,15 @@
                <h3>${count(flagCount, "thing", "things")} flagged</h3>
                <p>${esc(warns[0].text)}</p>
 </div></section>`
-          : `<section class="v2-alert calm"><div class="ic">✓</div><div>
+          : scanStopped
+            // The all-clear used to be given while the scanner had been dead for two
+            // days. Nothing was flagged, because a stopped watcher raises no flags:
+            // that is what stopped means. The first line Casey reads should not say
+            // calm while the instrument feeding this page is not running.
+            ? `<section class="v2-alert"><div class="ic">!</div><div>
+                 <h3>The scanner has stopped</h3>
+                 <p>Nothing has been scanned for ${esc(longSince(scanStopped))}. The hub is working; the watcher that feeds it is not, so the market numbers below are from then.</p></div></section>`
+            : `<section class="v2-alert calm"><div class="ic">✓</div><div>
                <h3>Nothing needs you</h3>
                <p>No order can be placed from this hub, and no trading engine is running.</p></div></section>`;
 
@@ -610,14 +623,23 @@
   const SCAN_EVERY_MS = 5 * 60 * 1000;
 
   /** Exported shape for checks: where we are in the scan cycle, from the clock alone. */
+  // Three missed cycles. One late scan is weather; three is a stopped scanner.
+  const LATE_AFTER_MS = 3 * SCAN_EVERY_MS;
+
   function scanClock(now, generatedAt, isOpen) {
     const at = typeof generatedAt === "string" && /[Tt ].*(?:[Zz]|[+-]\d{2}:?\d{2})$/.test(generatedAt)
       ? Date.parse(generatedAt) : NaN;
     if (!Number.isFinite(at) || at > now) return { state: "unknown", since: null, until: null, fraction: 0 };
     const since = Math.floor((now - at) / 1000);
-    if (isOpen === false) return { state: "closed", since, until: null, fraction: 0 };
+    // isOpen is what the LAST scan saw, not what is true now. A Saturday scan still
+    // says closed on Monday, so trusting it hides a stopped scanner behind a calm
+    // "market closed". Only treat closed as closed while the scan is still recent.
+    if (isOpen === false && since * 1000 < LATE_AFTER_MS) return { state: "closed", since, until: null, fraction: 0 };
     const until = Math.ceil((at + SCAN_EVERY_MS - now) / 1000);
-    // Past due is not an error worth shouting about: a scan can land a little late.
+    // A scan can land a little late, which is not worth shouting about. A scan that
+    // has not landed in three cycles has stopped, and saying "due now" then implies
+    // one is coming. The scanner was dead for two days reading exactly that.
+    if (since * 1000 >= LATE_AFTER_MS) return { state: "late", since, until: null, fraction: 1 };
     if (until <= 0) return { state: "due", since, until: 0, fraction: 1 };
     return { state: "waiting", since, until, fraction: Math.min(1, (now - at) / SCAN_EVERY_MS) };
   }
@@ -626,8 +648,17 @@
     if (clock.state === "unknown") return "Scan time unavailable";
     if (clock.state === "closed") return "Next scan when the market reopens";
     if (clock.state === "due") return "Next scan due now";
+    if (clock.state === "late") return "No scan arriving. The scanner has stopped.";
     const m = Math.floor(clock.until / 60), s = clock.until % 60;
     return `Next scan in ${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function longSince(seconds) {
+    if (!Number.isFinite(seconds)) return "an unknown time";
+    const m = Math.floor(seconds / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
+    if (d >= 1) return `${d} ${d === 1 ? "day" : "days"}`;
+    if (h >= 1) return `${h} ${h === 1 ? "hour" : "hours"}`;
+    return `${Math.max(1, m)} ${m === 1 ? "minute" : "minutes"}`;
   }
 
   function elapsedWords(clock) {
@@ -673,12 +704,29 @@
     const knownCount = Number.isInteger(v?.candidate_count) && v.candidate_count >= 0;
     const recent = age !== null && age <= 15 && !v?.stale;
     const closed = v?.market?.is_open === false;
-    const phase = closed ? "Market closed at last scan" : !v ? "Waiting for a scan" : !recent ? "Scan needs a refresh" : v.market?.is_open === true ? "Market open at last scan" : "Session not reported";
-    const status = !v ? "missing" : closed ? "closed" : !recent ? "late" : "reported";
     const clock = scanClock(now, v?.generated_at, v?.market?.is_open);
+    // A stopped scanner outranks everything the last scan reported, including its
+    // own "market closed". Saturday's scan said closed, so on Monday this card read
+    // "Market closed at last scan" while the market was open and nothing was running.
+    const dead = clock.state === "late";
+    const phase = !v ? "Waiting for a scan"
+      : dead ? `Nothing for ${esc(longSince(clock.since))}`
+      : closed ? "Market closed at last scan"
+      : !recent ? "Scan needs a refresh"
+      : v.market?.is_open === true ? "Market open at last scan" : "Session not reported";
+    // dead and !recent are the same 15-minute threshold, so they share one state
+    // name. What changed is the wording, not the number of states.
+    const status = !v ? "missing" : dead || !recent ? "late" : closed ? "closed" : "reported";
     const n = knownCount ? v.candidate_count : null;
-    const title = n === null ? "Radar awaiting data" : n === 0 ? "No names qualified" : `${n} ${n === 1 ? "name" : "names"} qualified`;
-    const detail = n === 0 ? "The last scan found no setups that passed the filters." : n === null ? "Open Research to check the scanner’s last report." : "Open the scan to see the setups and headline timing.";
+    const title = dead ? "The scanner has stopped"
+      : n === null ? "Radar awaiting data"
+      : n === 0 ? "No names qualified"
+      : `${n} ${n === 1 ? "name" : "names"} qualified`;
+    const detail = dead
+      ? `Nothing has been scanned for ${longSince(clock.since)}, so every number here is from then and none of it describes the market now.`
+      : n === 0 ? "The last scan found no setups that passed the filters."
+      : n === null ? "Open Research to check the scanner’s last report."
+      : "Open the scan to see the setups and headline timing.";
     const lanes = [
       ["ready", "Ready to build", "Work accepted by its owner", "blue"],
       ["in_progress", "In progress", "Work reported as underway", "mint"],
