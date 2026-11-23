@@ -3,8 +3,13 @@ import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const source = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-const functions = source.slice(source.indexOf('  function renderToday()'), source.indexOf('  function messageHtml('));
+const functions = source.slice(source.indexOf('  function newsRow('), source.indexOf('  function messageHtml('));
 const escape = v => String(v ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const zoned = value => {
+  if (typeof value !== 'string' || !/(?:[zZ]|[+-]\d\d:\d\d)$/.test(value)) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 export function render(overrides = {}) {
   const state = {
     board: { exceptions: [], historical_details: [], historical_notices: [], snapshot: null,
@@ -12,9 +17,9 @@ export function render(overrides = {}) {
     research: null, ...overrides,
   };
   const need = overrides.need || { total: 0, questions: [], approvals: [] };
-  return new Function('S','needsYou','esc','count','money','ticker','coverageTag','slipFor','approvalSlip','sinceWords','driftline',
+  return new Function('S','needsYou','esc','count','money','ticker','coverageTag','slipFor','approvalSlip','sinceWords','driftline','zonedMs',
     `${functions}; return renderToday();`)(state, () => need, escape, (n,s,p) => `${n} ${n === 1 ? s : p}`, n => `$${n}`,
-    () => '', () => '', () => '<p>Pending question</p>', () => '<p>Pending approval</p>', n => `${n} seconds ago`, () => '');
+    () => '', () => '', () => '<p>Pending question</p>', () => '<p>Pending approval</p>', n => `${n} seconds ago`, () => '', zoned);
 }
 const board = (extra = {}) => ({ exceptions: [], snapshot: null, rules: { max_positions: 2, slots_left: 2 }, ...extra });
 const research = (extra = {}) => ({ read_at: Date.now(), swing: { strategies: [{ name: 'Synthetic strategy', cagr: 2, worst_drawdown: -8, since: '2019-01-01' }], ...extra } });
@@ -144,6 +149,31 @@ test('activity preview uses actual API message fields, escapes content and exclu
   assert.match(html, /Claude/);
   assert.match(html, /1 min ago/);
   assert.match(html, /Read full message/);
+});
+
+test('news distinguishes unavailable, stale, empty and fresh states without sentiment labels', () => {
+  const now = Date.parse('2026-11-23T16:00:00Z');
+  assert.match(render({server_time:now}), /data-news-state="unavailable"/);
+  assert.match(render({server_time:now,news:{stale:true,age_minutes:18,items:[]}}), /data-news-state="stale"/);
+  assert.match(render({server_time:now,news:{stale:false,age_minutes:1,items:[]}}), /data-news-state="empty"/);
+  const fresh = render({server_time:now,news:{stale:false,age_minutes:1,items:[{
+    headline:'Company files 8-K', source:'Alpaca News', url:'https://example.com/item', symbols:['ABC'],
+    published_at:'2026-11-23T15:58:00Z', first_seen_at:'2026-11-23T15:59:00Z',
+  }]}});
+  assert.match(fresh, /data-news-state="fresh"/);
+  assert.match(fresh, /Company files 8-K/);
+  assert.match(fresh, /without a bullish or bearish label/);
+  assert.doesNotMatch(fresh, /BUY|SELL|positive catalyst/i);
+});
+
+test('news content is escaped and links are isolated from the Hub tab', () => {
+  const html = render({server_time:Date.parse('2026-11-23T16:00:00Z'),news:{stale:false,items:[{
+    headline:'<img src=x onerror=alert(1)>', source:'<wire>', url:'https://example.com/?q=&quot;', symbols:['ABC'],
+    published_at:'2026-11-23T15:58:00Z', first_seen_at:'2026-11-23T15:59:00Z',
+  }]}});
+  assert.doesNotMatch(html, /<img/);
+  assert.match(html, /&#60;img/);
+  assert.match(html, /target="_blank" rel="noopener noreferrer"/);
 });
 
 // Casey asked for moving parts. The clock is the only thing that can honestly

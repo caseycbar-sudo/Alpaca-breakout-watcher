@@ -473,6 +473,14 @@
       ${s.note ? `<p class="stamp">Note from ${esc(s.reported_by)}: ${esc(s.note)}</p>` : ""}`;
   }
 
+  function newsRow(item) {
+    const at = zonedMs(item.published_at);
+    const seconds = at === null ? null : Math.max(0, Math.floor((S.server_time - at) / 1000));
+    return `<article class="news-item"><div><b>${esc((item.symbols || []).join(", "))}</b>
+      <a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.headline)}</a></div>
+      <p><span class="age" data-news-at="${esc(item.published_at)}">${esc(sinceWords(seconds))}</span> · ${esc(item.source)}</p></article>`;
+  }
+
   function renderToday() {
     const need = needsYou();
     const stops = S.board.exceptions.filter((e) => e.level === "stop");
@@ -550,6 +558,16 @@
       ? `<section class="v2-card"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>`
       : "";
 
+    const feed = S.news;
+    const rows = (feed?.items || []).slice(0, 5).map(newsRow).join("");
+    const newsPanel = !feed
+      ? `<section class="v2-card news-strip" data-news-state="unavailable"><h2>News touching your radar</h2><p class="sub">No watcher news has reached the Hub yet. This is unavailable, not a quiet market.</p></section>`
+      : feed.stale
+        ? `<section class="v2-card news-strip" data-news-state="stale"><h2>News touching your radar</h2><p class="banner">The feed last reached the Hub ${esc(String(feed.age_minutes))} minutes ago. These headlines may be old.</p>${rows}</section>`
+        : !feed.items.length
+          ? `<section class="v2-card news-strip" data-news-state="empty"><h2>News touching your radar</h2><p class="sub">The watcher checked, but no tagged headline matched a radar, watchlist or held symbol.</p></section>`
+          : `<section class="v2-card news-strip" data-news-state="fresh"><h2>News touching your radar</h2><p class="sub">What was reported, without a bullish or bearish label.</p>${rows}</section>`;
+
     // The flag lines are short summaries. The full records, with their source, date and
     // account-match caveats, live in historical_details and historical_notices. The
     // first version of this screen read neither, which quietly dropped the only place
@@ -573,6 +591,7 @@
       ${flagList}
       ${hero}
       ${ticker()}
+      ${newsPanel}
       ${workspaceDeck()}
       ${activityDeck()}
       ${held}
@@ -633,6 +652,10 @@
       ring.style.setProperty("--fraction", clock.fraction.toFixed(4));
       ring.dataset.scanRing = clock.state;
     }
+    view.querySelectorAll("[data-news-at]").forEach((node) => {
+      const at = zonedMs(node.dataset.newsAt);
+      node.textContent = sinceWords(at === null ? null : Math.max(0, Math.floor((Date.now() - at) / 1000)));
+    });
   }
 
   // A view of reported work, never an invented heartbeat or simulated market feed.

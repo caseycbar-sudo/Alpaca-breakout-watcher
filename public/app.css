@@ -889,6 +889,10 @@ label { font-size:12px; color:#b0c4d5; }
 }
 .news-item:last-child, .event:last-child { border-bottom: 0; }
 .news-item .age, .event span { color: var(--drift); font-size: 13px; }
+.news-strip .news-item { display: grid; gap: 5px; padding: 13px 0; }
+.news-strip .news-item div { display: grid; grid-template-columns: minmax(42px, auto) 1fr; gap: 10px; align-items: start; }
+.news-strip .news-item a { color: inherit; font-weight: 650; line-height: 1.35; }
+.news-strip .news-item p { margin: 0; color: var(--muted); font-size: 13px; }
 .event em { font-style: normal; color: #e5bf7e; font-size: 13px; margin-left: 8px; }
 
 .v2-hero {
