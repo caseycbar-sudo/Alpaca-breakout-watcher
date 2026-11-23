@@ -419,3 +419,30 @@ test('a real thing waiting on Casey still outranks the stopped scanner', () => {
   assert.match(html, /waiting on you/);
   assert.doesNotMatch(html, /Nothing needs you/);
 });
+
+test('a quiet scanner outside its own hours is not called stopped', () => {
+  // The first version of the stopped-scanner notice fired on any gap over 15
+  // minutes. The watcher only runs weekdays 08:00-22:59 UTC, so that notice would
+  // have claimed a stoppage every single night and all weekend. A warning that
+  // cries wolf nightly is worse than no warning.
+  const saturday = Date.parse('2026-11-21T19:00:00Z');      // Saturday
+  const weekend = render({ server_time: saturday, radar: {
+    generated_at: '2026-11-20T22:55:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.doesNotMatch(weekend, /The scanner has stopped/);
+  assert.match(weekend, /Nothing needs you/);
+
+  const overnight = Date.parse('2026-11-24T04:00:00Z');     // Tuesday, pre-window
+  const night = render({ server_time: overnight, radar: {
+    generated_at: '2026-11-23T22:55:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.doesNotMatch(night, /The scanner has stopped/);
+});
+
+test('the same gap inside scanning hours is still called stopped', () => {
+  // Monday mid-session with Sunday's scan: the real failure, and it must survive
+  // the fix above rather than being silenced along with the false alarms.
+  const monday = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: monday, radar: {
+    generated_at: '2026-11-22T06:24:00Z', candidate_count: 0, market: { is_open: false } } });
+  assert.match(html, /The scanner has stopped/);
+  assert.doesNotMatch(html, /Nothing needs you/);
+});

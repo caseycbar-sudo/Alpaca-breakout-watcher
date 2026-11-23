@@ -702,6 +702,56 @@ export async function savePlan(env: Env, actor: Actor, input: Record<string, unk
     throw new HubError(400, "bad_plan", "An existing holding has no fill price from this hub. Put the broker's average cost in average_cost instead.");
   }
 
+  // Calling a record an existing holding takes the unapproved-order stop off the
+  // board. The owner-only guard covered RECLASSIFYING an existing record, but not
+  // CREATING one as a holding in the first place, so any agent with hub:log could
+  // record a live order as something Casey already owned and the warning would
+  // never appear. Found by ChatGPT in review. The claim now has to carry evidence:
+  // a holding is a report of what a broker showed, so it must say what was held,
+  // what it cost, when that was seen and who saw it.
+  // Permission is decided before evidence. Reversed, an agent with no right to
+  // reclassify someone else's order was told which fields to supply instead of
+  // being refused: a worse error, and a hint toward the bypass.
+  if (existing && kind !== existing.record_kind && actor.kind !== "owner") {
+    throw new HubError(
+      403,
+      "owner_only",
+      `Only Casey can change what kind of record ${existing.id} is. Recording a new holding, reviewing one, or updating its quantity and average cost are open to you; turning an order already on the board into a holding is not.`,
+    );
+  }
+
+  if (kind === "existing_holding") {
+    const facts = {
+      quantity: input.quantity !== undefined ? numOrNull(input.quantity) : existing?.quantity ?? null,
+      average_cost: input.average_cost !== undefined ? numOrNull(input.average_cost) : existing?.average_cost ?? null,
+      observed_at: input.observed_at !== undefined ? numOrNull(input.observed_at) : existing?.observed_at ?? null,
+      observed_source: input.observed_source !== undefined
+        ? textOrNull(input.observed_source, 500) : existing?.observed_source ?? null,
+    };
+    const missing: string[] = [];
+    if (facts.quantity === null || !(facts.quantity > 0)) missing.push("quantity (shares held, above zero)");
+    if (facts.average_cost === null || facts.average_cost < 0) missing.push("average_cost (the broker's average cost per share)");
+    if (facts.observed_at === null || !Number.isFinite(facts.observed_at) || facts.observed_at <= 0 || facts.observed_at > stamp + 60_000) {
+      missing.push("observed_at (when the broker numbers were seen, not in the future)");
+    }
+    if (!facts.observed_source) missing.push("observed_source (which snapshot or connection reported it)");
+    if (missing.length) {
+      throw new HubError(400, "bad_plan",
+        `An existing holding is a record of what a broker actually showed, and recording one takes the unapproved-order warning off the board. ` +
+        `So it needs the evidence for that claim. Missing: ${missing.join("; ")}.`);
+    }
+    // A holding has no order of its own in this hub. Accepting order or fill fields
+    // on one is the same bypass by another route: it would let a working order be
+    // filed as a holding and still carry its order state.
+    const ORDER_ONLY = ["order_state", "broker_order_ids", "broker_status", "filled_quantity", "filled_at", "exit_price", "result_dollars"] as const;
+    const offered = ORDER_ONLY.filter((f) => input[f] !== undefined && input[f] !== null && input[f] !== "none");
+    if (offered.length) {
+      throw new HubError(400, "bad_plan",
+        `A holding Casey already owned has no order in this hub, so it cannot carry ${offered.join(", ")}. ` +
+        `If this is an order the hub placed or tracked, record it as a trade_plan.`);
+    }
+  }
+
   const size = input.size_dollars !== undefined ? numOrNull(input.size_dollars) : existing?.size_dollars ?? null;
   if (size !== null && size > rules.max_per_trade + 1e-9) {
     throw new HubError(

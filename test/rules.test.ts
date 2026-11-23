@@ -214,7 +214,9 @@ describe("holdings Casey already owned", () => {
 
   it("can be checked by another AI instead of answering too_late", async () => {
     const { plan } = await db.savePlan(env, grok, qqq);
-    await db.savePlan(env, grok, { id: plan.id, order_state: "filled" });
+    // This used to set order_state "filled" on the holding as incidental setup.
+    // A holding cannot carry an order state any more, and that refusal is the
+    // point of the provenance guard, so the review is tested on its own.
     const checked = await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches snapshot #27" });
     expect(checked.plan.review_state).toBe("reviewed");
     expect(checked.plan.reviewed_by).toBe("Claude");
@@ -223,7 +225,7 @@ describe("holdings Casey already owned", () => {
   it("clears the stale fill price when a mis-filed record is reclassified", async () => {
     const { plan } = await db.savePlan(env, grok, { symbol: "PSQ", what_we_see: "Recorded as a plan by mistake" });
     await db.savePlan(env, grok, { id: plan.id, order_state: "filled", fill_price: 26.61 });
-    const fixed = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", average_cost: 26.61, quantity: 1 });
+    const fixed = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", average_cost: 26.61, quantity: 1, observed_at: Date.now() - 60_000, observed_source: "snapshot #37, Robinhood read" });
     expect(fixed.plan.record_kind).toBe("existing_holding");
     expect(fixed.plan.fill_price).toBe(null);
     expect(fixed.plan.average_cost).toBe(26.61);
@@ -243,6 +245,52 @@ describe("holdings Casey already owned", () => {
 // PR #30 caught that any AI could clear the "Casey has not approved this order"
 // stop simply by relabelling the order as something he already owned. Changing
 // the kind of a record that exists is Casey's, in both directions. Job #15.
+describe("recording a holding needs the evidence for it", () => {
+  // ChatGPT found this in review of the merged job #15. The owner-only guard
+  // stopped an agent RECLASSIFYING a flagged order into a holding, but nothing
+  // stopped an agent CREATING one as a holding outright, with no broker facts at
+  // all. Since the board suppresses the unapproved-order stop for every holding,
+  // that was a way for any agent with hub:log to file a live order and have the
+  // warning never appear. The claim now has to carry its evidence.
+  const facts = { quantity: 2, average_cost: 31.4, observed_at: 1795000000000, observed_source: "snapshot #37" };
+  const base = { symbol: "TSTB", record_kind: "existing_holding", what_we_see: "Owned before the hub." };
+
+  for (const [missing, patch] of [
+    ["quantity", { quantity: undefined }],
+    ["a positive quantity", { quantity: 0 }],
+    ["average_cost", { average_cost: undefined }],
+    ["observed_at", { observed_at: undefined }],
+    ["observed_source", { observed_source: undefined }],
+    ["an observed_at that is not in the future", { observed_at: Date.now() + 86_400_000 }],
+  ] as const) {
+    it(`refuses a holding recorded without ${missing}`, async () => {
+      await rejects(db.savePlan(env, grok, { ...base, ...facts, ...patch }), "bad_plan");
+    });
+  }
+
+  it("still records a holding that brings its evidence", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...base, ...facts });
+    expect(plan.record_kind).toBe("existing_holding");
+    expect(plan.quantity).toBe(2);
+  });
+
+  it("refuses order and fill fields on a holding, which was the other way in", async () => {
+    // A working order filed as a holding would otherwise keep its order state and
+    // still escape the warning.
+    for (const field of ["order_state", "broker_status", "filled_quantity", "exit_price", "result_dollars"]) {
+      await rejects(db.savePlan(env, grok, { ...base, ...facts, [field]: field === "order_state" ? "working" : 1 }), "bad_plan");
+    }
+  });
+
+  it("keeps the unapproved-order warning on a plan an agent cannot relabel", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTC", what_we_see: "A real order." });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "working" });
+    await rejects(db.savePlan(env, grok, { id: plan.id, record_kind: "existing_holding", ...facts }), "owner_only");
+    const board = await db.buildBoard(env);
+    expect(board.exceptions.some((e) => e.level === "stop" && e.text.includes(plan.id))).toBe(true);
+  });
+});
+
 describe("who may change what kind of record something is", () => {
   const holding = {
     symbol: "TSTA", record_kind: "existing_holding",
@@ -283,7 +331,7 @@ describe("who may change what kind of record something is", () => {
     const { plan } = await db.savePlan(env, grok, { symbol: "TSTF", what_we_see: "Mis-filed as a plan" });
     await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Checked as a trade plan" });
     await db.decidePlan(env, casey, plan.id, true);
-    const converted = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", quantity: 1, average_cost: 10 });
+    const converted = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", quantity: 1, average_cost: 10, observed_at: Date.now() - 60_000, observed_source: "snapshot #37, Robinhood read" });
     expect(converted.plan.record_kind).toBe("existing_holding");
     expect(converted.review_reset).toBe(true);
     expect(converted.plan.review_state).toBe("draft");

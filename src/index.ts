@@ -389,7 +389,18 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   m = path.match(/^\/api\/plans\/([^/]+)\/record-kind$/);
   if (m && method === "POST") {
     const body = await readJson(request);
-    return json(await db.savePlan(env, owner, { id: decodeURIComponent(m[1]), record_kind: body.record_kind }));
+    // This forwarded record_kind alone, so when recording a holding began to
+    // require the broker facts behind it, Casey's own correction button had no
+    // way to send them and every reclassification failed. The guard is right;
+    // the route was simply deaf to the rest of the form.
+    return json(await db.savePlan(env, owner, {
+      id: decodeURIComponent(m[1]),
+      record_kind: body.record_kind,
+      quantity: body.quantity,
+      average_cost: body.average_cost,
+      observed_at: body.observed_at,
+      observed_source: body.observed_source,
+    }));
   }
 
   if (path === "/api/rules" && method === "POST") return json(await db.newRulesVersion(env, owner, await readJson(request)));

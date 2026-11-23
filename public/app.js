@@ -626,6 +626,16 @@
   // Three missed cycles. One late scan is weather; three is a stopped scanner.
   const LATE_AFTER_MS = 3 * SCAN_EVERY_MS;
 
+  // The scanner's own schedule: cron "*/5 8-22 * * 1-5" in the watcher, so weekdays
+  // 08:00 to 22:59 UTC. Outside that window no scan is due, and calling the scanner
+  // stopped then is a false alarm. The first version of this notice would have cried
+  // wolf every night and all weekend, which is how a warning gets ignored.
+  function scanExpected(now) {
+    const d = new Date(now);
+    const day = d.getUTCDay(), hour = d.getUTCHours();
+    return day >= 1 && day <= 5 && hour >= 8 && hour <= 22;
+  }
+
   function scanClock(now, generatedAt, isOpen) {
     const at = typeof generatedAt === "string" && /[Tt ].*(?:[Zz]|[+-]\d{2}:?\d{2})$/.test(generatedAt)
       ? Date.parse(generatedAt) : NaN;
@@ -639,7 +649,10 @@
     // A scan can land a little late, which is not worth shouting about. A scan that
     // has not landed in three cycles has stopped, and saying "due now" then implies
     // one is coming. The scanner was dead for two days reading exactly that.
-    if (since * 1000 >= LATE_AFTER_MS) return { state: "late", since, until: null, fraction: 1 };
+    if (since * 1000 >= LATE_AFTER_MS) {
+      // Overdue only counts against the hours the scanner actually runs.
+      return { state: scanExpected(now) ? "late" : "idle", since, until: null, fraction: 1 };
+    }
     if (until <= 0) return { state: "due", since, until: 0, fraction: 1 };
     return { state: "waiting", since, until, fraction: Math.min(1, (now - at) / SCAN_EVERY_MS) };
   }
@@ -649,6 +662,7 @@
     if (clock.state === "closed") return "Next scan when the market reopens";
     if (clock.state === "due") return "Next scan due now";
     if (clock.state === "late") return "No scan arriving. The scanner has stopped.";
+    if (clock.state === "idle") return "Outside scanning hours. The next run is due when the market reopens.";
     const m = Math.floor(clock.until / 60), s = clock.until % 60;
     return `Next scan in ${m}:${String(s).padStart(2, "0")}`;
   }

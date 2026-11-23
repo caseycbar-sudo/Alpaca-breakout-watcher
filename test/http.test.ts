@@ -314,7 +314,10 @@ describe("the AI door", () => {
 
     expect((await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "nonsense" })).status).toBe(400);
 
-    const res = await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "existing_holding" });
+    // A holding without the broker facts behind it is refused, whoever files it.
+    expect((await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "existing_holding" })).status).toBe(400);
+
+    const res = await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "existing_holding", quantity: 2, average_cost: 31.4, observed_at: Date.now() - 30_000, observed_source: "snapshot #37, Robinhood read" });
     expect(res.status).toBe(200);
     expect(((await res.json()) as any).plan.record_kind).toBe("existing_holding");
 
