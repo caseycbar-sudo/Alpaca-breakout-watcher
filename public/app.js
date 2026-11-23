@@ -481,6 +481,36 @@
       <p><span class="age" data-news-at="${esc(item.published_at)}">${esc(sinceWords(seconds))}</span> · ${esc(item.source)}</p></article>`;
   }
 
+  function calendarPanel() {
+    const feed = S.calendar;
+    const sourceLine = (feed?.sources || []).map((source) =>
+      `<span class="calendar-source ${esc(source.status)}">${esc(source.name)}: ${esc(source.status)}</span>`
+    ).join("");
+    if (!feed) return `<section class="v2-card calendar-panel" data-calendar-state="unavailable">
+      <h2>Next five trading days</h2>
+      <p class="sub">No official calendar has reached the Hub yet. This is unavailable, not an empty schedule.</p>
+    </section>`;
+    const rows = (feed.events || []).map((event) => {
+      const at = zonedMs(event.event_at);
+      const when = at === null ? "time unavailable" : new Date(at).toLocaleString([], {
+        weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"
+      });
+      return `<article class="calendar-event"><time datetime="${esc(event.event_at)}">${esc(when)}</time>
+        <div><b>${esc(event.kind)}</b><a href="${esc(event.url)}" target="_blank" rel="noopener noreferrer">${esc(event.title)}</a>
+        <p>${esc(event.source)}${event.period ? ` · ${esc(event.period)}` : ""} · first seen ${esc(sinceWords(Math.max(0, Math.floor((S.server_time - Date.parse(event.first_seen_at)) / 1000))))}</p></div></article>`;
+    }).join("");
+    const late = feed.stale || (feed.sources || []).some((source) => source.status !== "ok");
+    const state = feed.stale ? "stale" : !feed.events.length ? "empty" : late ? "partial" : "fresh";
+    const note = feed.stale
+      ? `<p class="banner">Calendar data last reached the Hub ${esc(String(feed.age_minutes))} minutes ago. Recheck the official schedules before acting.</p>`
+      : !feed.events.length
+        ? `<p class="sub">The official sources were checked; no scheduled event matched these five trading days.</p>`
+        : `<p class="sub">Scheduled facts only—no bullish, bearish or trade recommendation labels.</p>`;
+    return `<section class="v2-card calendar-panel" data-calendar-state="${state}">
+      <h2>Next five trading days</h2>${note}<div class="calendar-sources">${sourceLine}</div>${rows}
+    </section>`;
+  }
+
   function renderToday() {
     const need = needsYou();
     const stops = S.board.exceptions.filter((e) => e.level === "stop");
@@ -571,6 +601,7 @@
       ? `<section class="v2-card"><h2>Needs you</h2>${need.questions.map(slipFor).join("")}${need.approvals.map(approvalSlip).join("")}</section>`
       : "";
 
+    const macroPanel = calendarPanel();
     const feed = S.news;
     const rows = (feed?.items || []).slice(0, 5).map(newsRow).join("");
     const newsPanel = !feed
@@ -605,6 +636,7 @@
       ${hero}
       ${ticker()}
       ${newsPanel}
+      ${macroPanel}
       ${workspaceDeck()}
       ${activityDeck()}
       ${held}
