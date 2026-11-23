@@ -13,8 +13,8 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "driftline-trading-hub-test",
-    "database_id": "UNPROVISIONED-TEST-DATABASE",
+    "database_id": "0a8e15e6-c7a2-4e22-b2d8-518593c869b5",
     "migrations_dir": "migrations"
   }],
-  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "UNPROVISIONED-TEST-OAUTH" }]
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "4c9c1985ac9e448fa5931d9de60e4c74" }]
 }
