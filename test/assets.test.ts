@@ -62,10 +62,10 @@ describe("recovering asset stamps", () => {
         : new Response('', { headers: { etag: path === '/app.css' ? 'cssOK' : 'jsOK' } });
     } } };
     await pages.primeAssetStamp(env);
-    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK' });
+    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK', '/research-desk.js': 'jsOK' });
     fail = false;
     await pages.primeAssetStamp(env);
-    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK', '/app.css': 'cssOK' });
+    expect(pages.assetStampsForTest()).toEqual({ '/app.js': 'jsOK', '/app.css': 'cssOK', '/research-desk.js': 'jsOK' });
     expect(paths.filter(p => p === '/app.js')).toHaveLength(1);
     expect(paths.filter(p => p === '/app.css')).toHaveLength(2);
   });

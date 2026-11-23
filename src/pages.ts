@@ -33,7 +33,7 @@ const CSP_CONSENT =
  *  leaves app.js identical, so the stylesheet URL would not have moved and the bug
  *  would have survived its own fix. Each file now carries its own content's stamp.
  */
-const ASSET_PATHS = ["/app.js", "/app.css"] as const;
+const ASSET_PATHS = ["/app.js", "/app.css", "/research-desk.js"] as const;
 type AssetPath = (typeof ASSET_PATHS)[number];
 let assetStamps: Partial<Record<AssetPath, string>> | null = null;
 
@@ -91,7 +91,7 @@ function page(title: string, body: string, opts: { script?: boolean; status?: nu
 <body>
 ${previewLabel ? PREVIEW_BANNER : ""}
 ${body}
-${opts.script ? `<script src="/app.js${stamp("/app.js")}" defer></script>` : ""}
+${opts.script ? `<script src="/research-desk.js${stamp("/research-desk.js")}" defer></script><script src="/app.js${stamp("/app.js")}" defer></script>` : ""}
 </body>
 </html>`;
   const headers = new Headers(opts.headers);

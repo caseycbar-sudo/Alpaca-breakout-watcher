@@ -13,6 +13,7 @@ import * as auth from "./auth";
 import * as db from "./db";
 import * as radar from "./radar";
 import * as research from "./research";
+import { getPolicy } from "./policy";
 import { handleMcp } from "./mcp";
 import * as pages from "./pages";
 import * as tasks from "./tasks";
@@ -92,7 +93,7 @@ function redirect(to: string, cookie?: string): Response {
   return new Response(null, { status: 303, headers });
 }
 
-const STATIC = new Set(["/app.css", "/app.js", "/favicon.svg"]);
+const STATIC = new Set(["/app.css", "/app.js", "/research-desk.js", "/favicon.svg"]);
 
 async function defaultFetch(request: Request, env: HubEnv, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
@@ -317,6 +318,8 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
   }
+
+  if (path === "/api/context/policy" && method === "GET") return json(await getPolicy());
 
   if (path === "/api/tasks" && method === "GET") {
     return json(await tasks.listTasks(env, owner, {

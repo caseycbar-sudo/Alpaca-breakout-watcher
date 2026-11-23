@@ -20,6 +20,11 @@
   let openHistories = new Set();
   let historyCache = {};
   let expandedMessages = new Set();
+  let researchSymbol = "";
+  let researchCategory = "all";
+  let researchCostDraft = null;
+  let researchCostResult = "";
+  let researchPolicy = null;
 
   // ------------------------------------------------------------ helpers
 
@@ -1248,14 +1253,15 @@
 
   function renderResearch() {
     const r = S.research;
+    const desk = globalThis.HubResearchDesk?.render({...S, policy: researchPolicy}, researchSymbol, researchCategory) || "";
     if (!r || r.unavailable) {
-      return radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
+      return desk + radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
         <p class="sub">The hub reads the results your watcher publishes, so every trade idea here can be checked against your own history.</p>
         <p class="banner">${esc(r?.unavailable || "Not read yet.")}</p>
         <div class="actions"><button type="button" class="btn" id="lab-refresh">Try again</button></div></section>`;
     }
     const age = r.age_days === null ? "" : r.age_days === 0 ? "today" : r.age_days === 1 ? "yesterday" : `${r.age_days} days ago`;
-    return radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
+    return desk + radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
         <p class="sub">What your own rules actually did, replayed over past market days. This is where a trade idea gets checked against evidence instead of opinion.</p>
         <p class="lead">${esc(r.headline)}</p>
         ${r.stale ? `<p class="banner">The lab last ran ${esc(age)}. These findings are getting old, so the market it studied may not be the one you are trading.</p>` : ""}
@@ -1332,7 +1338,7 @@
       today: [S.jobs, S.chat?.messages, S.board, S.decisions.open, S.plans.filter((p) => p.review_state === "reviewed"), S.connections, S.radar, minute],
       chat: [S.chat.messages.map((m) => m.id), olderChat.length, [...expandedMessages]],
       trades: [S.plans, [...openHistories], Object.keys(historyCache).length, Math.floor(minute / 5)],
-      research: [S.research, S.radar, Math.floor(minute / 5)],
+      research: [S.research, S.radar, S.board?.snapshot?.positions, researchSymbol, researchCategory, Math.floor(minute / 5)],
       rules: [S.rules],
       ais: [S.connections, S.connector_address, S.helpers, Math.floor(minute / 5)],
     };
@@ -1434,9 +1440,19 @@
     const atBottom = tab === "chat" && window.innerHeight + window.scrollY >= document.body.scrollHeight - 140;
     const firstChat = tab === "chat" && lastRendered.tab !== "chat";
     const draft = tab === "chat" ? $("#composer textarea")?.value : "";
+    const costForm = tab === "research" ? $("#research-cost-form") : null;
+    if (costForm) researchCostDraft = Object.fromEntries(new FormData(costForm));
     rememberJobDrafts();
     view.innerHTML = RENDER[tab]();
     restoreJobDrafts();
+    if (tab === "research" && researchCostDraft) {
+      const form = $("#research-cost-form");
+      for (const [name, value] of Object.entries(researchCostDraft)) {
+        const field = form?.elements.namedItem(name);
+        if (field) field.value = value;
+      }
+      if (researchCostResult) $("#research-cost-result").textContent = researchCostResult;
+    }
     lastRendered = { key, tab };
     measureChrome();
     if (tab === "chat") {
@@ -1535,6 +1551,22 @@
       return render(true);
     }
     if (t.dataset.jobOwner) { jobOwner = t.dataset.jobOwner; return go("jobs"); }
+    if (t.hasAttribute("data-research-symbol")) {
+      researchSymbol = globalThis.HubResearchDesk.symbol(t.dataset.researchSymbol);
+      return render(true);
+    }
+    if (t.dataset.researchCategory) {
+      researchCategory = globalThis.HubResearchDesk.CATEGORIES.some(([id]) => id === t.dataset.researchCategory) ? t.dataset.researchCategory : "all";
+      return render(true);
+    }
+    if (t.id === "research-policy-refresh") {
+      t.disabled = true;
+      t.textContent = "Reading policy documents…";
+      try { researchPolicy = await api("/api/context/policy"); return render(true); }
+      catch (error) { toast(error.message, true); }
+      finally { if (t.isConnected) { t.disabled = false; t.textContent = "Read recent policy documents"; } }
+      return;
+    }
     if (t.dataset.deckJobStatus) { jobOwner = "all"; jobStatus = t.dataset.deckJobStatus; return go("jobs"); }
     if (t.dataset.jobHistory) {
       try {
@@ -1662,6 +1694,20 @@
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
     const button = form.querySelector('button[type="submit"]');
+    if (form.id === "research-symbol-form") {
+      const value = globalThis.HubResearchDesk.symbol(data.symbol);
+      if (String(data.symbol).trim() && !value) return toast("Enter a stock or ETF ticker, using letters, numbers, dots or dashes.", true);
+      researchSymbol = value;
+      return render(true);
+    }
+    if (form.id === "research-cost-form") {
+      const result = globalThis.HubResearchDesk.costModel(...["position","target","stop","cost"].map(k => data[k] === "" ? NaN : Number(data[k])));
+      if (!result) return toast("Use positive position, target and stop values, a stop under 100%, and nonnegative costs.", true);
+      researchCostDraft = data;
+      researchCostResult = `Net target ${money(result.gain)} · Modeled stop loss ${money(result.loss)} · ${result.breakEven === null ? "Costs consume the entire target; no positive target outcome in this model." : `Break-even win rate ${result.breakEven.toFixed(1)}% in this two-outcome model.`}`;
+      $("#research-cost-result").textContent = researchCostResult;
+      return;
+    }
     if (form.id === "job-form") {
       const dependencies = String(data.dependencies || "").trim();
       const ids = dependencies ? dependencies.split(",").map(v=>Number(v.trim())) : [];
