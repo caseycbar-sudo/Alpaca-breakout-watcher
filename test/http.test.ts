@@ -33,6 +33,7 @@ describe("before Casey has set the hub up", () => {
     expect(home.status).toBe(303);
     expect(home.headers.get("Location")).toBe("/setup");
     expect((await call("/api/state")).status).toBe(401);
+    expect((await call("/api/context/policy")).status).toBe(401);
   });
 
   it("refuses a wrong setup code and a short passphrase", async () => {
