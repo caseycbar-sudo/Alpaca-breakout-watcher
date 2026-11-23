@@ -28,6 +28,13 @@
   // deploy one at all while this block was missing: it will not quietly point
   // test code at Casey's real board. These are the separate test resources.
   // Nothing in here may ever name a database or namespace used above.
+  //
+  // Every Preview shares THIS database and THIS namespace. Separate URLs are not
+  // separate state: two pull requests open at once read and write the same test
+  // rows, and one that deletes or rewrites fixtures will pull them out from under
+  // the other. Keep test fixtures additive, or give a branch its own database by
+  // overriding previews.d1_databases and wrangler.preview-migrations.jsonc
+  // together, which checks/preview-isolation.mjs requires to stay in step.
   "previews": {
     "vars": { "HUB_ENV": "preview" },
     "d1_databases": [
