@@ -112,7 +112,12 @@ function createServer() {
           },
           waiting_on_casey: {
             questions: decisions.map((d) => ({ id: d.id, from: d.author_name, question: d.question })),
-            plans_to_approve: plans.plans.filter((p) => p.review_state === "reviewed").map((p) => ({ id: p.id, symbol: p.symbol })),
+            // Casey approves orders before they are placed. A holding he already
+            // owns has nothing left to approve, so a checked one must not appear
+            // here as a decision waiting on him. See job #15.
+            plans_to_approve: plans.plans
+              .filter((p) => p.review_state === "reviewed" && p.record_kind !== "existing_holding")
+              .map((p) => ({ id: p.id, symbol: p.symbol })),
           },
           board_flags: board.exceptions,
           historical_notice_count: board.historical_notices.length,
@@ -262,9 +267,17 @@ function createServer() {
     "save_plan",
     {
       description:
-        "Create a trade plan, or update one by passing its id. A new plan needs symbol and what_we_see. The hub refuses a size above the current per-trade limit. Changing symbol, entry_price, target_price, stop_price or size_dollars on a plan that was already reviewed or approved resets it to draft, so it needs a fresh review and a fresh approval from Casey. Only the plan's author can change the idea itself; any AI with this permission can record order status, fills and the outcome. This records what happened. It does not place or change any order.",
+        "Create a trade plan, or update one by passing its id. A new plan needs symbol and what_we_see. For something Casey already owns that was bought outside the hub, pass record_kind 'existing_holding' with quantity, average_cost and where the numbers came from: that is a record of reality, not a proposal, so it never asks Casey to approve it, and it does not use fill_price. The hub refuses a size above the current per-trade limit. Changing symbol, entry_price, target_price, stop_price or size_dollars on a plan that was already reviewed or approved resets it to draft, so it needs a fresh review and a fresh approval from Casey. Only the plan's author can change the idea itself; any AI with this permission can record order status, fills and the outcome. This records what happened. It does not place or change any order.",
       inputSchema: {
         id: z.string().max(60).optional().describe("Omit to create a new plan. Pass an existing id to update it."),
+        record_kind: z
+          .enum(["trade_plan", "existing_holding"])
+          .optional()
+          .describe("Defaults to trade_plan. Use existing_holding for something Casey already owns that was not bought through the hub."),
+        quantity: z.number().optional().describe("Shares held, for an existing holding. From the broker."),
+        average_cost: z.number().optional().describe("The broker's average cost per share for an existing holding. Not a fill price: a holding can be several buys."),
+        observed_at: z.number().optional().describe("Unix milliseconds when the broker numbers were observed."),
+        observed_source: z.string().max(500).optional().describe("Where the numbers came from, for example a snapshot id and the connection that reported it."),
         symbol: z.string().max(20).optional(),
         what_we_see: z.string().max(2000).optional().describe("One or two plain sentences on what you noticed."),
         why: z.string().max(2000).optional().describe("Why you expect it to move."),

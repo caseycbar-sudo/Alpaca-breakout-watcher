@@ -165,6 +165,170 @@ describe("trade plans", () => {
   });
 });
 
+// Casey's QQQ and PSQ were bought in Robinhood before this hub existed. Recorded
+// as trade plans they raised a red "Casey has not approved" on the board, could
+// not be reviewed at all, and carried an average cost in fill_price. Job #15.
+describe("holdings Casey already owned", () => {
+  const qqq = {
+    symbol: "QQQ", record_kind: "existing_holding",
+    what_we_see: "Already owned in Robinhood, bought before the hub existed.",
+    quantity: 0.025793, average_cost: 756.02,
+    observed_at: 1795000000000, observed_source: "snapshot #27, Robinhood connection",
+  };
+  const psq = { ...qqq, symbol: "PSQ", quantity: 1, average_cost: 26.61 };
+
+  it("keeps the average cost out of fill_price", async () => {
+    const { plan } = await db.savePlan(env, grok, qqq);
+    expect(plan.record_kind).toBe("existing_holding");
+    expect(plan.average_cost).toBe(756.02);
+    expect(plan.quantity).toBe(0.025793);
+    expect(plan.fill_price).toBe(null);
+    expect(plan.observed_source).toContain("snapshot #27");
+    await rejects(db.savePlan(env, grok, { ...psq, fill_price: 26.61 }), "bad_plan");
+  });
+
+  it("does not call a holding Casey already owns an unapproved order", async () => {
+    const { plan } = await db.savePlan(env, grok, psq);
+    const board = await db.buildBoard(env);
+    const mine = board.exceptions.filter((e) => e.text.includes(plan.id));
+    expect(mine.filter((e) => e.level === "stop")).toEqual([]);
+    expect(mine.some((e) => e.text.includes("has not approved"))).toBe(false);
+  });
+
+  it("still says out loud that the holding has no stop", async () => {
+    await db.savePlan(env, grok, qqq);
+    const board = await db.buildBoard(env);
+    // The missing stop is the real risk and has to stay visible.
+    expect(board.exceptions.some((e) => e.level === "warn" && e.text.includes("QQQ") && e.text.includes("stop"))).toBe(true);
+    // Said once, however many records of QQQ exist and whoever noticed first.
+    expect(board.exceptions.filter((e) => e.text.includes("QQQ") && e.text.includes("already owned")).length).toBeLessThanOrEqual(1);
+  });
+
+  it("stops warning once the stop on that holding is confirmed", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...qqq, symbol: "VOO" });
+    expect((await db.buildBoard(env)).exceptions.some((e) => e.text.includes("VOO"))).toBe(true);
+    const confirmed = await db.savePlan(env, grok, { id: plan.id, protection_state: "confirmed" });
+    expect(confirmed.plan.protection_state).toBe("confirmed");
+    expect((await db.buildBoard(env)).exceptions.some((e) => e.text.includes("VOO"))).toBe(false);
+  });
+
+  it("can be checked by another AI instead of answering too_late", async () => {
+    const { plan } = await db.savePlan(env, grok, qqq);
+    await db.savePlan(env, grok, { id: plan.id, order_state: "filled" });
+    const checked = await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches snapshot #27" });
+    expect(checked.plan.review_state).toBe("reviewed");
+    expect(checked.plan.reviewed_by).toBe("Claude");
+  });
+
+  it("clears the stale fill price when a mis-filed record is reclassified", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "PSQ", what_we_see: "Recorded as a plan by mistake" });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "filled", fill_price: 26.61 });
+    const fixed = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", average_cost: 26.61, quantity: 1 });
+    expect(fixed.plan.record_kind).toBe("existing_holding");
+    expect(fixed.plan.fill_price).toBe(null);
+    expect(fixed.plan.average_cost).toBe(26.61);
+    const board = await db.buildBoard(env);
+    expect(board.exceptions.some((e) => e.level === "stop" && e.text.includes(plan.id))).toBe(false);
+    // Taking a red flag off the board is announced, never silent.
+    const { messages } = await db.readChat(env, claude, { limit: 5 });
+    expect(messages.some((m: any) => m.body.includes(plan.id) && m.body.includes("already owned"))).toBe(true);
+  });
+
+  it("refuses a record kind it does not know", async () => {
+    await rejects(db.savePlan(env, grok, { ...qqq, record_kind: "whatever" }), "bad_plan");
+  });
+});
+
+// An announcement records a change; it does not prevent one. ChatGPT's review of
+// PR #30 caught that any AI could clear the "Casey has not approved this order"
+// stop simply by relabelling the order as something he already owned. Changing
+// the kind of a record that exists is Casey's, in both directions. Job #15.
+describe("who may change what kind of record something is", () => {
+  const holding = {
+    symbol: "TSTA", record_kind: "existing_holding",
+    what_we_see: "Already owned, bought outside the hub.",
+    quantity: 3, average_cost: 11.5, observed_at: 1795000000000, observed_source: "snapshot #27",
+  };
+
+  it("lets any AI record a new holding, which silences nothing", async () => {
+    const { plan } = await db.savePlan(env, grok, holding);
+    expect(plan.record_kind).toBe("existing_holding");
+  });
+
+  it("refuses an AI turning someone else's order into a holding", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTD", what_we_see: "A real order" });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "working" });
+    await rejects(db.savePlan(env, claude, { id: plan.id, record_kind: "existing_holding" }), "owner_only");
+  });
+
+  it("refuses the author doing it to their own order, which was the easy way round", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTD", what_we_see: "A real order" });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "filled" });
+    await rejects(db.savePlan(env, grok, { id: plan.id, record_kind: "existing_holding" }), "owner_only");
+  });
+
+  it("keeps a refused order flagged on the board afterwards", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTE", what_we_see: "An order nobody approved" });
+    await db.savePlan(env, grok, { id: plan.id, order_state: "working" });
+    await rejects(db.savePlan(env, grok, { id: plan.id, record_kind: "existing_holding" }), "owner_only");
+    const board = await db.buildBoard(env);
+    const flag = board.exceptions.find((e) => e.text.includes(plan.id));
+    expect(flag?.level).toBe("stop");
+    expect(flag?.text).toContain("has not approved");
+    const { plan: after } = await db.getPlan(env, claude, plan.id);
+    expect(after.record_kind).toBe("trade_plan");
+  });
+
+  it("lets Casey do it, and sends the record back for a fresh review", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTF", what_we_see: "Mis-filed as a plan" });
+    await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Checked as a trade plan" });
+    await db.decidePlan(env, casey, plan.id, true);
+    const converted = await db.savePlan(env, casey, { id: plan.id, record_kind: "existing_holding", quantity: 1, average_cost: 10 });
+    expect(converted.plan.record_kind).toBe("existing_holding");
+    expect(converted.review_reset).toBe(true);
+    expect(converted.plan.review_state).toBe("draft");
+    expect(converted.plan.reviewed_by).toBe(null);
+  });
+
+  it("does not let a holding's review become approval to buy", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTG" });
+    await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches the snapshot" });
+    const back = await db.savePlan(env, casey, { id: plan.id, record_kind: "trade_plan" });
+    expect(back.plan.record_kind).toBe("trade_plan");
+    expect(back.plan.review_state).toBe("draft");
+    expect(back.plan.reviewed_by).toBe(null);
+  });
+
+  it("sends a checked holding back for review when the broker numbers change", async () => {
+    for (const field of [{ quantity: 4 }, { average_cost: 12.25 }, { observed_source: "snapshot #31" }, { observed_at: 1795400000000 }]) {
+      const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTH" });
+      await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches the snapshot" });
+      const changed = await db.savePlan(env, grok, { id: plan.id, ...field });
+      expect(changed.review_reset, Object.keys(field)[0]).toBe(true);
+      expect(changed.plan.review_state, Object.keys(field)[0]).toBe("draft");
+    }
+  });
+
+  it("refuses to let Casey approve a holding, because there is no order to approve", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTJ" });
+    await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches the snapshot" });
+    // Reviewed by a second AI, which for a trade plan is exactly the state that
+    // makes approval available. A holding must not inherit that.
+    const { plan: checked } = await db.getPlan(env, claude, plan.id);
+    expect(checked.review_state).toBe("reviewed");
+    await rejects(db.decidePlan(env, casey, plan.id, true), "nothing_to_approve");
+    const { plan: after } = await db.getPlan(env, claude, plan.id);
+    expect(after.review_state).toBe("reviewed");
+  });
+
+  it("still lets an AI update a holding's facts without owner permission", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTI" });
+    const updated = await db.savePlan(env, claude, { id: plan.id, quantity: 5, observed_source: "snapshot #31" });
+    expect(updated.plan.quantity).toBe(5);
+    expect(updated.plan.record_kind).toBe("existing_holding");
+  });
+});
+
 describe("rules and questions", () => {
   it("starts with the limits Casey approved", async () => {
     const rules = await db.currentRules(env);

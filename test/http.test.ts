@@ -297,4 +297,27 @@ describe("the AI door", () => {
     expect(text).toContain("hello agents");
     expect(text).not.toMatch(/pbkdf2|token_hash|passphrase"/);
   });
+
+  // The rule that only Casey may reclassify a record is only a rule if he has a
+  // door to do it through. Without this route the AIs are blocked and so is he,
+  // and the two holdings he already owns stay flagged forever. Job #15.
+  it("gives Casey, and only Casey, a way to say he already owns something", async () => {
+    const state = (await (await call("/api/state", { headers: asCasey() })).json()) as any;
+    const plan = state.plans[0];
+
+    const signedOut = await call(`/api/plans/${plan.id}/record-kind`, {
+      method: "POST", headers: { "Content-Type": "application/json", Origin: BASE },
+      body: JSON.stringify({ record_kind: "existing_holding" }),
+    });
+    expect(signedOut.status).toBe(401);
+
+    expect((await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "nonsense" })).status).toBe(400);
+
+    const res = await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "existing_holding" });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as any).plan.record_kind).toBe("existing_holding");
+
+    const back = await post(`/api/plans/${plan.id}/record-kind`, { record_kind: "trade_plan" });
+    expect(((await back.json()) as any).plan.record_kind).toBe("trade_plan");
+  });
 });

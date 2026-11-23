@@ -729,9 +729,13 @@
       <p class="state">${esc(orderWords(p))}</p>
       ${p.lesson ? `<p class="state"><strong>What we learned:</strong> ${esc(p.lesson)}</p>` : ""}
       <div class="actions">
-        ${p.review_state === "reviewed" ? `<button type="button" class="btn primary" data-plan-act="approve" data-plan="${esc(p.id)}">Approve this plan</button>` : ""}
+        ${p.review_state === "reviewed" && p.record_kind !== "existing_holding"
+          ? `<button type="button" class="btn primary" data-plan-act="approve" data-plan="${esc(p.id)}">Approve this plan</button>` : ""}
         ${canDecline ? `<button type="button" class="btn${p.review_state === "reviewed" ? "" : " small"}" data-plan-act="decline" data-plan="${esc(p.id)}">Decline</button>` : ""}
         <button type="button" class="btn small" data-plan-history="${esc(p.id)}">${openHistories.has(p.id) ? "Hide the history" : "Show the history"}</button>
+        ${p.record_kind === "existing_holding"
+          ? `<button type="button" class="btn small" data-plan-kind="trade_plan" data-plan="${esc(p.id)}">This is not something I already own</button>`
+          : `<button type="button" class="btn small" data-plan-kind="existing_holding" data-plan="${esc(p.id)}">I already own this, it was not ordered here</button>`}
       </div>
       ${history ? `<ul class="history">${history.map((h) => `<li><strong>${esc(h.actor_name)}</strong> ${esc(h.action)} <span class="quiet">${esc(clock(h.at))}</span></li>`).join("")}</ul>` : ""}
     </article>`;
@@ -1379,6 +1383,22 @@
       }
       t.disabled = true;
       return act(() => api(`/api/plans/${encodeURIComponent(id)}/${t.dataset.planAct}`, {}), t.dataset.planAct === "approve" ? "Approved" : "Declined");
+    }
+    if (t.dataset.planKind) {
+      // Same two-tap arming as approve and decline. This moves a red flag on and
+      // off the board, so it should be as hard to do by accident as approving is.
+      const id = t.dataset.plan, kind = t.dataset.planKind;
+      if (!t.dataset.armed) {
+        t.dataset.armed = "1";
+        t.textContent = "Tap again to change it";
+        setTimeout(() => { if (t.isConnected) render(true); }, 5000);
+        return;
+      }
+      t.disabled = true;
+      return act(
+        () => api(`/api/plans/${encodeURIComponent(id)}/record-kind`, { record_kind: kind }),
+        kind === "existing_holding" ? "Recorded as something you already own" : "Changed back to a trade plan",
+      );
     }
     if (t.dataset.planHistory) {
       const id = t.dataset.planHistory;
