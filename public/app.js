@@ -729,7 +729,8 @@
       <p class="state">${esc(orderWords(p))}</p>
       ${p.lesson ? `<p class="state"><strong>What we learned:</strong> ${esc(p.lesson)}</p>` : ""}
       <div class="actions">
-        ${p.review_state === "reviewed" ? `<button type="button" class="btn primary" data-plan-act="approve" data-plan="${esc(p.id)}">Approve this plan</button>` : ""}
+        ${p.review_state === "reviewed" && p.record_kind !== "existing_holding"
+          ? `<button type="button" class="btn primary" data-plan-act="approve" data-plan="${esc(p.id)}">Approve this plan</button>` : ""}
         ${canDecline ? `<button type="button" class="btn${p.review_state === "reviewed" ? "" : " small"}" data-plan-act="decline" data-plan="${esc(p.id)}">Decline</button>` : ""}
         <button type="button" class="btn small" data-plan-history="${esc(p.id)}">${openHistories.has(p.id) ? "Hide the history" : "Show the history"}</button>
         ${p.record_kind === "existing_holding"

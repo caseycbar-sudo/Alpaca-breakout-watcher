@@ -309,6 +309,18 @@ describe("who may change what kind of record something is", () => {
     }
   });
 
+  it("refuses to let Casey approve a holding, because there is no order to approve", async () => {
+    const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTJ" });
+    await db.reviewPlan(env, claude, { id: plan.id, verdict: "reviewed", comment: "Matches the snapshot" });
+    // Reviewed by a second AI, which for a trade plan is exactly the state that
+    // makes approval available. A holding must not inherit that.
+    const { plan: checked } = await db.getPlan(env, claude, plan.id);
+    expect(checked.review_state).toBe("reviewed");
+    await rejects(db.decidePlan(env, casey, plan.id, true), "nothing_to_approve");
+    const { plan: after } = await db.getPlan(env, claude, plan.id);
+    expect(after.review_state).toBe("reviewed");
+  });
+
   it("still lets an AI update a holding's facts without owner permission", async () => {
     const { plan } = await db.savePlan(env, grok, { ...holding, symbol: "TSTI" });
     const updated = await db.savePlan(env, claude, { id: plan.id, quantity: 5, observed_source: "snapshot #31" });

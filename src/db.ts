@@ -902,6 +902,17 @@ export async function decidePlan(env: Env, actor: Actor, id: unknown, approve: b
   ownerOnly(actor, "approve or decline a plan");
   const { plan } = await getPlan(env, actor, id);
   if (approve) {
+    // Approval means "go ahead and place this order". A holding Casey already
+    // owns has no order to place, so approving one would be an authorization
+    // attached to nothing, sitting on the board looking like permission to buy.
+    // Checking a holding is review; it is not approval. ChatGPT's point on #30.
+    if (plan.record_kind === "existing_holding") {
+      throw new HubError(
+        409,
+        "nothing_to_approve",
+        `${plan.id} (${plan.symbol}) is recorded as something you already own, so there is no order to approve. Another AI can still check the numbers on it.`,
+      );
+    }
     if (plan.review_state !== "reviewed") {
       throw new HubError(
         409,
