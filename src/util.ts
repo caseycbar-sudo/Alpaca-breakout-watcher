@@ -6,6 +6,8 @@ export interface Env {
   OAUTH_PROVIDER: import("@cloudflare/workers-oauth-provider").OAuthHelpers;
   /** Optional fixed public address. When unset, the address the request arrived on is used. */
   HUB_URL?: string;
+  /** "preview" only in a pull request's Preview, from previews.vars. Production never sets it. */
+  HUB_ENV?: string;
 }
 
 export const SCOPES = ["hub:read", "hub:chat", "hub:log", "hub:snapshot"] as const;

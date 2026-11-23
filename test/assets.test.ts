@@ -70,3 +70,36 @@ describe("recovering asset stamps", () => {
     expect(paths.filter(p => p === '/app.css')).toHaveLength(2);
   });
 });
+
+// A Preview runs the live code against the test database at a public URL. It has
+// to announce itself, or made-up numbers read as Casey's account. See job #14.
+describe("telling a preview apart from the real hub", () => {
+  const shellWith = (env: { HUB_ENV?: string }) => {
+    pages.primePreviewLabel(env);
+    return pages.appShell().text();
+  };
+
+  it("marks every page of a preview, in the title and on the page", async () => {
+    const html = await shellWith({ HUB_ENV: "preview" });
+    expect(html).toContain("<title>TEST · ");
+    expect(html).toContain("TEST COPY.");
+    expect(html).toContain("no connection to Casey's account");
+    // Above the app, not buried under it, so a phone shows it first.
+    expect(html.indexOf("TEST COPY.")).toBeLessThan(html.indexOf('id="app"'));
+  });
+
+  it("leaves the real hub alone, including when the variable is missing or odd", async () => {
+    for (const env of [{}, { HUB_ENV: "production" }, { HUB_ENV: "" }]) {
+      const html = await shellWith(env);
+      expect(html).not.toContain("TEST COPY.");
+      expect(html).toContain("<title>Driftline Trading Hub<");
+    }
+  });
+
+  it("stops marking pages as soon as an isolate serves the real hub again", async () => {
+    await shellWith({ HUB_ENV: "preview" });
+    expect(pages.previewLabelForTest()).toBe("preview");
+    await shellWith({});
+    expect(pages.previewLabelForTest()).toBe(null);
+  });
+});
