@@ -1061,7 +1061,9 @@
     const approved = p.review_state === "authorized";
     const declined = p.review_state === "declined";
     const history = openHistories.has(p.id) ? historyCache[p.id] : null;
-    const canDecline = !declined && p.order_state === "none";
+    // A holding has no order to decline, and decidePlan refuses it, so the
+    // button should not be offered either. Job #17.
+    const canDecline = !declined && p.order_state === "none" && p.record_kind !== "existing_holding";
     const lapsed = planLapsed(p, at, snap);
     return `<article class="plan${lapsed ? " lapsed" : ""}" id="plan-${esc(p.id)}"${lapsed ? ' data-plan-lapsed="true"' : ""}>
       <div class="plan-head"><h3>${esc(p.symbol)}</h3>${lapsed ? `<span class="plan-tag">Out of date</span>` : ""}<span class="id">Plan ${esc(p.id)} by ${esc(p.author_name)}, ${esc(ago(p.created_at))}</span></div>

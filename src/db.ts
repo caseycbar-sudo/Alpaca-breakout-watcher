@@ -951,6 +951,17 @@ export async function reviewPlan(env: Env, actor: Actor, input: Record<string, u
 export async function decidePlan(env: Env, actor: Actor, id: unknown, approve: boolean) {
   ownerOnly(actor, "approve or decline a plan");
   const { plan } = await getPlan(env, actor, id);
+  // Declining a holding means marking something Casey owns as "declined", which
+  // says nothing about anything. Approve was already refused for holdings; this
+  // closes the other half, so neither verdict is offered where neither applies.
+  // The owner-only conversion control stays the way to say a record is misfiled.
+  if (!approve && plan.record_kind === "existing_holding") {
+    throw new HubError(
+      409,
+      "nothing_to_decline",
+      `${plan.id} (${plan.symbol}) is recorded as something you already own, so there is no order to decline. If it should not be filed as a holding, change what kind of record it is instead.`,
+    );
+  }
   if (approve) {
     // Approval means "go ahead and place this order". A holding Casey already
     // owns has no order to place, so approving one would be an authorization

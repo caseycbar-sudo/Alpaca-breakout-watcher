@@ -404,3 +404,20 @@ describe("rules and questions", () => {
     expect(await db.listDecisions(env, claude, { status: "open" })).toHaveLength(0);
   });
 });
+
+describe("declining a holding", () => {
+  const facts = { quantity: 2, average_cost: 31.4, observed_at: 1795000000000, observed_source: "snapshot #37" };
+
+  it("is refused, the same way approving one is", async () => {
+    const { plan } = await db.savePlan(env, grok, {
+      symbol: "TSTD", record_kind: "existing_holding", what_we_see: "Owned before the hub.", ...facts });
+    await rejects(db.decidePlan(env, casey, plan.id, false), "nothing_to_decline");
+    await rejects(db.decidePlan(env, casey, plan.id, true), "nothing_to_approve");
+  });
+
+  it("still works on a real trade plan, so the guard cannot disarm the page", async () => {
+    const { plan } = await db.savePlan(env, grok, { symbol: "TSTE", what_we_see: "A real idea." });
+    const out = await db.decidePlan(env, casey, plan.id, false);
+    expect(out.plan.review_state).toBe("declined");
+  });
+});

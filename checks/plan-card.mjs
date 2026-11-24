@@ -116,3 +116,22 @@ test('a live plan carries no out-of-date wording at all', () => {
   assert.doesNotMatch(html, /Out of date/);
   assert.doesNotMatch(html, /data-plan-lapsed/);
 });
+
+test('a holding offers neither verdict, because neither applies to it', () => {
+  // Approve was refused for holdings when the record type landed; Decline was
+  // left behind, where it would have marked something Casey owns as "declined".
+  const holding = plan({ record_kind: 'existing_holding' });
+  assert.doesNotMatch(holding, /data-plan-act="decline"/);
+  assert.doesNotMatch(holding, /data-plan-act="approve"/);
+
+  // A real trade plan still gets both, so this cannot quietly disarm the page.
+  const trade = plan();
+  assert.match(trade, /data-plan-act="decline"/);
+  assert.match(trade, /data-plan-act="approve"/);
+});
+
+test('a holding still offers the way to say it is misfiled', () => {
+  // Removing both verdicts must not leave Casey with no way to correct a record.
+  const holding = plan({ record_kind: 'existing_holding' });
+  assert.match(holding, /data-plan-kind="trade_plan"/);
+});
