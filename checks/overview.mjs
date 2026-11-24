@@ -526,3 +526,19 @@ test('Casey\'s own delay is absent until it has actually been measured', () => {
 test('no filings data at all renders nothing rather than an empty frame', () => {
   assert.doesNotMatch(render({}), /data-filings-state/);
 });
+
+test('every panel class the Overview renders exists in the stylesheet', () => {
+  // The filings panel shipped with class="card", which this stylesheet has never
+  // defined, so it rendered as bare text between two properly framed cards. An
+  // undefined class fails silently in exactly the way an undefined variable does.
+  const css = readFileSync(new URL('../public/app.css', import.meta.url), 'utf8');
+  const defined = new Set([...css.matchAll(/\.([a-z][a-z0-9-]*)/gi)].map((m) => m[1]));
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now, filings: {
+    checked_at: now, ok: true, error: null, items: [], measured_on: 0,
+    median_pickup_seconds: null, median_to_casey_seconds: null } });
+  const used = new Set();
+  for (const m of html.matchAll(/class="([^"]+)"/g)) m[1].split(/\s+/).filter(Boolean).forEach((c) => used.add(c));
+  const missing = [...used].filter((c) => !defined.has(c));
+  assert.deepStrictEqual(missing, [], `classes with no rule anywhere: ${missing.join(', ')}`);
+});

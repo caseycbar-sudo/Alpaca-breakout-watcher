@@ -841,7 +841,7 @@
       state = `<p class="sub">Checked ${esc(when(f.checked_at))}. These are filings, not advice, and a filing often follows a move rather than causing one.</p>`;
     }
 
-    return `<section class="card filings" data-filings-state="${esc(!f.checked_at ? "never" : !f.ok ? "failed" : f.items.length ? "filings" : "quiet")}">
+    return `<section class="v2-card filings" data-filings-state="${esc(!f.checked_at ? "never" : !f.ok ? "failed" : f.items.length ? "filings" : "quiet")}">
       <h2>Company filings, and how late you are</h2>
       ${measure}
       ${state}
