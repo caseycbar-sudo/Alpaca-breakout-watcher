@@ -446,3 +446,18 @@ test('the same gap inside scanning hours is still called stopped', () => {
   assert.match(html, /The scanner has stopped/);
   assert.doesNotMatch(html, /Nothing needs you/);
 });
+
+test('the research symbol pattern survives being written into HTML', () => {
+  // The source read pattern="...[A-Za-z0-9.\-]..." but it sits in a template
+  // literal, which ate the backslash, so the browser received an unescaped
+  // hyphen and rejected the whole pattern under the v flag it uses for this
+  // attribute. Every render logged a SyntaxError. Checking the source text is
+  // not enough: what matters is the string that reaches the attribute.
+  const src = readFileSync(new URL('../public/research-desk.js', import.meta.url), 'utf8');
+  const m = src.match(/pattern="([^"]+)"/);
+  assert.ok(m, 'expected a pattern attribute on the symbol input');
+  // eslint-disable-next-line no-new-func
+  const emitted = new Function('return `' + m[1] + '`')();
+  assert.doesNotThrow(() => new RegExp(emitted, 'v'),
+    `the emitted pattern ${emitted} is not a valid regular expression under the v flag`);
+});

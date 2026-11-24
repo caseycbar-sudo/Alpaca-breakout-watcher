@@ -969,3 +969,13 @@ label { font-size:12px; color:#b0c4d5; }
   color:var(--t2); background:#e0a33c12; border-left:3px solid #e0a33c; border-radius:0 8px 8px 0;
 }
 .plan-lapsed b { color:var(--t1); }
+
+/* A dossier with no saved scan behind it. Four "Not reported" boxes read as a
+   broken page; a sentence saying why reads as an honest one. */
+.intel-blank {
+  margin:14px 0 4px; padding:14px 16px; border-radius:12px;
+  background:#ffffff08; border:1px solid #ffffff12;
+}
+.intel-blank p { margin:0 0 10px; font-size:14px; line-height:1.55; color:var(--t2); }
+.intel-blank p:last-child { margin-bottom:0; }
+.intel-blank b { color:var(--t1); }
