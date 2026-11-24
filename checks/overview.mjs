@@ -21,6 +21,14 @@ export function render(overrides = {}) {
     `${functions}; return renderToday();`)(state, () => need, escape, (n,s,p) => `${n} ${n === 1 ? s : p}`, n => `$${n}`,
     () => '', () => '', () => '<p>Pending question</p>', () => '<p>Pending approval</p>', n => `${n} seconds ago`, () => '', zoned);
 }
+
+// The swing lab moved to the Research tab, where research belongs, so these
+// states are checked on the card itself rather than through the Overview.
+export function renderLab(overrides = {}) {
+  const state = { board: { exceptions: [], snapshot: null, rules: {} }, research: null, ...overrides };
+  return new Function('S','esc','sinceWords','zonedMs',
+    `${functions}; return labCard();`)(state, escape, n => `${n} seconds ago`, zoned);
+}
 const board = (extra = {}) => ({ exceptions: [], snapshot: null, rules: { max_positions: 2, slots_left: 2 }, ...extra });
 const research = (extra = {}) => ({ read_at: Date.now(), swing: { strategies: [{ name: 'Synthetic strategy', cagr: 2, worst_drawdown: -8, since: '2019-01-01' }], ...extra } });
 test('historical-only records have a native disclosure, including escaped source caveats', () => {
@@ -40,35 +48,35 @@ test('pending questions and approvals never receive the all-clear headline', () 
   }
 });
 test('partial lab failures remain visible alongside results', () => {
-  assert.match(render({research:research({problem:'Signal fetch failed'})}), /Signal fetch failed/);
+  assert.match(renderLab({research:research({problem:'Signal fetch failed'})}), /Signal fetch failed/);
 });
 test('old and unknown signals retain observation dates without claiming today or cash', () => {
-  const html = render({research:research({signals:{sleeves:[{symbol:'ABC',signal:'HOLD',as_of:'2026-01-01'},{symbol:'DEF',signal:null,as_of:null}]}})});
+  const html = renderLab({research:research({signals:{sleeves:[{symbol:'ABC',signal:'HOLD',as_of:'2026-01-01'},{symbol:'DEF',signal:null,as_of:null}]}})});
   assert.match(html, /ABC reads hold; as of 2026-01-01/); assert.match(html, /DEF reads unknown; as of unknown date/);
   assert.doesNotMatch(html, /stands today|DEF reads cash/); assert.match(html, /swing_lab.json/);
 });
 test('unavailable, empty and unread labs give an explicit state', () => {
-  assert.match(render(), /Lab results have not been read yet/);
-  assert.match(render({research:research({strategies:[]})}), /No readable strategy results/);
-  assert.match(render({research:{unavailable:'Cannot fetch lab'}}), /Cannot fetch lab/);
+  assert.match(renderLab(), /Lab results have not been read yet/);
+  assert.match(renderLab({research:research({strategies:[]})}), /No readable strategy results/);
+  assert.match(renderLab({research:{unavailable:'Cannot fetch lab'}}), /Cannot fetch lab/);
 });
 test('one strategy is shown once and non-finite results never become chart coordinates', () => {
-  const html = render({research:research()}); assert.equal((html.match(/<b>Synthetic strategy<\/b>/g)||[]).length,1);
-  assert.doesNotMatch(render({research:research({strategies:[{name:'broken',cagr:Infinity}]})}), /NaN|Infinity/);
+  const html = renderLab({research:research()}); assert.equal((html.match(/<b>Synthetic strategy<\/b>/g)||[]).length,1);
+  assert.doesNotMatch(renderLab({research:research({strategies:[{name:'broken',cagr:Infinity}]})}), /NaN|Infinity/);
 });
 test('daily trigger retains the non-continuous monitoring caveat', () => {
   assert.match(render(), /not watched continuously/); assert.match(render(), /does not cap a day/);
 });
 test('missing drawdown is explicit in both the visible row and accessible chart label', () => {
   for (const value of [null, undefined, NaN, Infinity]) {
-    const html = render({research:research({strategies:[{name:'Missing drawdown',cagr:5,worst_drawdown:value,since:'2019-01-01'}]})});
+    const html = renderLab({research:research({strategies:[{name:'Missing drawdown',cagr:5,worst_drawdown:value,since:'2019-01-01'}]})});
     assert.match(html, /class="ft">worst fall not reported along the way/);
     assert.match(html, /aria-label="Missing drawdown: 5% a year, worst fall not reported"/);
     assert.doesNotMatch(html, /null%|undefined%|NaN%|Infinity%/);
   }
 });
 test('zero drawdown remains a reported zero in both visible and accessible output', () => {
-  const html = render({research:research({strategies:[{name:'Zero drawdown',cagr:5,worst_drawdown:0,since:'2019-01-01'}]})});
+  const html = renderLab({research:research({strategies:[{name:'Zero drawdown',cagr:5,worst_drawdown:0,since:'2019-01-01'}]})});
   assert.match(html, /class="ft">worst fall 0% along the way/);
   assert.match(html, /aria-label="Zero drawdown: 5% a year, worst fall 0%"/);
 });
@@ -137,18 +145,6 @@ test('workspace radar distinguishes missing, closed, stale and timestamped zero-
   const future = render({server_time:now,radar:{...radar,generated_at:'2026-11-24T15:58:00Z'}});
   assert.match(future, /Scan time unavailable/);
   assert.match(future, /data-scan-state="late"/);
-});
-
-test('activity preview uses actual API message fields, escapes content and excludes system notices', () => {
-  const html = render({server_time:1000000,chat:{messages:[
-    {author_kind:'system',author_name:'Hub',body:'internal wake notice',created_at:999999},
-    {author_kind:'agent',author_name:'Claude',body:'<img src=x onerror=alert(1)>',created_at:940000},
-  ]}});
-  assert.doesNotMatch(html, /internal wake notice|<img/);
-  assert.match(html, /&#60;img/);
-  assert.match(html, /Claude/);
-  assert.match(html, /1 min ago/);
-  assert.match(html, /Read full message/);
 });
 
 test('news distinguishes unavailable, stale, empty and fresh states without sentiment labels', () => {
@@ -237,10 +233,22 @@ test('the live clock never claims the prices are live', () => {
 });
 
 test('the account total sits above the workspace deck, not below it', () => {
+  // activityDeck is gone: it duplicated the Chat and Team tabs in full and took
+  // 1262px of a 3649px page. What remains is the order that matters.
   const body = appJsSource.slice(appJsSource.indexOf('<div class="v2 command-view">'));
-  const order = ['${hero}', '${workspaceDeck()}', '${activityDeck()}'].map((s) => body.indexOf(s));
+  const order = ['${hero}', '${workspaceDeck()}'].map((s) => body.indexOf(s));
   assert.ok(order[0] > -1 && order[0] < order[1], 'Casey should not scroll past a headline to reach his balance');
-  assert.ok(order[1] < order[2]);
+});
+
+test('the Overview does not grow back into a page of signposts', () => {
+  // It reached fourteen sections, 4.3 phone screens, with 62% of the height spent
+  // on two panels that only pointed at tabs holding the same thing in full.
+  // Casey could not find anything in it. This is a ceiling, not a target.
+  const body = appJsSource.slice(
+    appJsSource.indexOf('<div class="v2 command-view">'),
+    appJsSource.indexOf('</div>`;', appJsSource.indexOf('<div class="v2 command-view">')));
+  const sections = [...body.matchAll(/\$\{[a-zA-Z]/g)].length;
+  assert.ok(sections <= 12, `the Overview renders ${sections} sections; it was unusable at 14`);
 });
 
 test('the radar card shows one age, and it is the live one', () => {
@@ -350,16 +358,6 @@ test('the deck headline never grows as the screen gets smaller', () => {
   const wide = sizeAt(760), narrow = sizeAt(430);
   assert.ok(wide && narrow, 'expected a headline size at both breakpoints');
   assert.ok(narrow <= wide, `headline is ${narrow}px on phones but ${wide}px on tablets`);
-});
-
-test('hiding the subtitle break does not run two sentences together', () => {
-  const css = readFileSync(new URL('../public/app.css', import.meta.url), 'utf8');
-  const src = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  if (!/\.deck-intro p br \{\s*display:\s*none/.test(css)) return; // break is shown; nothing to guard
-  const m = src.match(/<p>Research[^<]*<br>/);
-  assert.ok(m, 'expected the deck subtitle to carry a break');
-  assert.ok(/\s<br>$/.test(m[0]),
-    'the break is hidden on narrow screens, so the text needs a space before it or the sentences collide');
 });
 
 test('a scan that stopped days ago says so instead of reporting a stale count', () => {

@@ -999,3 +999,16 @@ label { font-size:12px; color:#b0c4d5; }
 .filing-list p { margin:6px 0 8px; font-size:13.5px; line-height:1.5; color:var(--t2); }
 .filing-list a { font-size:13px; color:var(--tide); }
 @media(max-width:430px) { .filings .filing-clocks { grid-template-columns:1fr; } }
+
+/* The workspace strip. This panel used to open with a landing-page headline and
+   an orbit emblem and ran to 994px on a phone, all of it pointing at the Jobs
+   tab. It is a signpost, so it is now the size of a signpost. */
+.command-deck .deck-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.command-deck .deck-row h2 { margin:0; font-size:17px; font-weight:680; color:var(--t1); }
+.deck-lanes.tight { display:flex; flex-wrap:wrap; gap:8px; }
+.deck-lanes.tight .deck-lane {
+  flex:0 1 auto; display:flex; align-items:baseline; gap:7px; min-height:0;
+  padding:7px 12px; border-radius:999px; background:#ffffff08; border:1px solid #ffffff12;
+}
+.deck-lanes.tight .lane-count { font-size:16px; font-weight:700; }
+.deck-lanes.tight .lane-label { font-size:13px; color:var(--t2); }

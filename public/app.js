@@ -607,10 +607,8 @@
       ${newsPanel}
       ${filingsPanel()}
       ${workspaceDeck()}
-      ${activityDeck()}
       ${held}
       ${labFindings()}
-      ${labCard()}
       ${rules}
       ${driftline()}
     </div>`;
@@ -748,12 +746,21 @@
       ["review", "Independent review", "Evidence awaiting another pair of eyes", "amber"],
       ["blocked", "Blocked", "A dependency needs attention", "coral"],
     ];
+    // Measured at 390px, this panel was 994px and the team panel below it 1262px:
+    // together 62% of the whole Overview, sitting between Casey's account value
+    // and his research. Both were signposts to tabs that already hold the same
+    // thing in full, so he scrolled two screens of signposts to reach anything.
+    // Casey: "I can't find anything in it." Gone from here: the landing-page
+    // headline he had already asked twice to shrink, the orbit emblem, the synced
+    // stamp, and the per-lane descriptions. What stays is the part that is not a
+    // signpost: the radar, which says whether the scanner is running at all.
     return `<section class="command-deck" aria-labelledby="deck-title">
-      <div class="deck-heading"><span class="deck-eyebrow">THE DRIFTLINE WORKSPACE</span><span class="deck-stamp">State synced ${esc(new Date(now).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</span></div>
-      <div class="deck-intro"><div><h1 id="deck-title">See the work.<br><em>Find the next move.</em></h1><p>Research, decisions and your AI team. <br>One place to see what is moving forward.</p></div>
-        <div class="deck-emblem" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="orbit orbit-three"></span><span class="orbit-core">D<span>DRIFTLINE</span></span></div></div>
-      <div class="deck-lanes" aria-label="Reported project work">${lanes.map(([key,label,note,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span><small>${note}</small><span class="lane-link">View jobs</span></button>`).join("")}</div>
-      <p class="deck-footnote">${esc(counts.done || 0)} jobs completed at this sync. Agents work during their sessions; a job status does not mean someone is online.</p>
+      <div class="deck-row">
+        <h2 id="deck-title">The workspace</h2>
+        <button type="button" class="deck-text-link" data-tab-link="jobs">All jobs</button>
+      </div>
+      <div class="deck-lanes tight" aria-label="Reported project work">${lanes.filter(([key]) => Number(counts[key] || 0) > 0).map(([key,label,,color]) => `<button type="button" class="deck-lane ${color}" data-deck-job-status="${key}"><span class="lane-count">${esc(counts[key] || 0)}</span><span class="lane-label">${label}</span></button>`).join("") || `<p class="sub">No jobs are open.</p>`}</div>
+      <p class="deck-footnote">${esc(counts.done || 0)} done. A job status says what was reported, not that anyone is working now.</p>
       <button type="button" class="deck-radar" data-tab-link="research" data-scan-state="${status}">
         <span class="radar-symbol" data-scan-ring="${esc(clock.state)}" aria-hidden="true"><i></i></span><span class="radar-copy"><span class="deck-eyebrow">MARKET RADAR</span><strong>${esc(title)}</strong><span>${esc(detail)}</span></span>
         <span class="radar-state">${esc(phase)}<small>View research</small></span>
@@ -767,43 +774,6 @@
     </section>`;
   }
 
-  function activityDeck() {
-    const age = at => {
-      if (!Number.isFinite(at) || at > S.server_time) return "time unavailable";
-      const minutes = Math.floor((S.server_time - at) / 60000);
-      return minutes < 1 ? "just now" : minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} hr ago`;
-    };
-    const peopleHere = (S.connections || []).filter(c => c.agent_name).slice(0, 6);
-    const tasks = (S.jobs?.tasks || []).filter(t => ["in_progress", "review", "blocked"].includes(t.status))
-      .sort((a,b) => (b.updated_at || 0) - (a.updated_at || 0)).slice(0, 3);
-    const messages = (S.chat?.messages || []).filter(m => m.author_kind !== "system").slice(-3).reverse();
-    return `<div class="activity-grid">
-      <section class="activity-card"><div class="activity-heading"><div><p class="deck-eyebrow">PEOPLE & PROGRESS</p><h2>Your team’s desk</h2></div><button class="deck-text-link" type="button" data-tab-link="ais">Team</button></div>
-        <div class="desk-people">${peopleHere.length ? peopleHere.map(c => `<button type="button" data-tab-link="ais" class="desk-person"><span class="desk-avatar">${esc(c.agent_name.slice(0, 2))}</span><strong>${esc(c.agent_name)}</strong><small>Seen ${esc(age(c.last_seen))}</small></button>`).join("") : `<p class="sub">No team check-ins reported yet.</p>`}</div>
-        <div class="desk-work">${tasks.length ? tasks.map(t => `<button type="button" class="desk-task" data-deck-job-status="${esc(t.status)}"><span class="status-pill ${esc(t.status)}">${esc(({in_progress:"In progress",review:"Review",blocked:"Blocked"})[t.status])}</span><strong>${esc(t.title)}</strong><small>${esc(t.owner_id || "Unassigned")} · updated ${esc(age(t.updated_at))}</small></button>`).join("") : `<p class="sub">No work is currently reported as in progress, blocked or awaiting review.</p>`}</div>
-      </section>
-      <section class="activity-card"><div class="activity-heading"><div><p class="deck-eyebrow">THE CONVERSATION</p><h2>Latest at the Hub</h2></div><button class="deck-text-link" type="button" data-tab-link="chat">Open chat</button></div>
-        <div class="desk-messages">${messages.length ? messages.map(m => `<button class="desk-message" type="button" data-tab-link="chat"><span><strong>${esc(m.from || m.author_name || "Team")}</strong><small>${esc(age(m.at || m.created_at))}</small></span><p>${esc(String(m.body || "").replace(/\*\*|#{1,6}\s/g, "").slice(0, 190))}${String(m.body || "").length > 190 ? "…" : ""}</p><small>Read full message</small></button>`).join("") : `<p class="sub">The conversation will appear here after the next workspace sync.</p>`}</div>
-      </section>
-    </div>`;
-  }
-
-  // The lab, as a picture on the front page rather than a paragraph three taps away.
-  // What the lab found, as pictures rather than a table three taps away. Casey
-  // asked to understand what he is looking at, so each figure answers one
-  // question and says what it rests on. Palette checked with the dataviz
-  // validator against this surface rather than chosen by eye: #27a07d, #c86448
-  // and #4487c9 pass the lightness band, chroma floor, normal-vision separation
-  // and contrast. Colour-blind separation lands at 7.4, inside the band that is
-  // only legal with secondary encoding, so every segment carries its own label.
-  const LAB_GOOD = "#27a07d", LAB_BAD = "#c86448", LAB_FLAT = "#4487c9";
-
-  // The EDGAR watcher. Casey asked how to catch a news move; the honest finding is
-  // that by the time a headline reaches a person, most of the move has happened.
-  // So this card leads with the measurement rather than the filings: three clocks
-  // say how late he actually is, and after a couple of weeks that number decides
-  // whether chasing speed is worth any more work. The filings are the evidence
-  // underneath it, not the product.
   function filingsPanel() {
     const f = S.filings;
     if (!f) return "";
@@ -868,6 +838,8 @@
     if (!parts.length) return "No item codes were listed.";
     return parts.map((c) => FILING_ITEMS[c] ? `${c}, ${FILING_ITEMS[c]}` : `${c}, a code we do not recognise`).join(". ") + ".";
   }
+
+  const LAB_GOOD = "#27a07d", LAB_BAD = "#c86448", LAB_FLAT = "#4487c9";
 
   function labFindings() {
     const r = S.research;
@@ -1458,7 +1430,7 @@
     const r = S.research;
     const desk = globalThis.HubResearchDesk?.render({...S, policy: researchPolicy}, researchSymbol, researchCategory) || "";
     if (!r || r.unavailable) {
-      return desk + radarPanel() + `<section class="section"><h2>Your breakout lab</h2>
+      return desk + radarPanel() + labCard() + `<section class="section"><h2>Your breakout lab</h2>
         <p class="sub">The hub reads the results your watcher publishes, so every trade idea here can be checked against your own history.</p>
         <p class="banner">${esc(r?.unavailable || "Not read yet.")}</p>
         <div class="actions"><button type="button" class="btn" id="lab-refresh">Try again</button></div></section>`;
