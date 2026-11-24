@@ -605,6 +605,7 @@
       ${hero}
       ${ticker()}
       ${newsPanel}
+      ${filingsPanel()}
       ${workspaceDeck()}
       ${activityDeck()}
       ${held}
@@ -796,6 +797,77 @@
   // and contrast. Colour-blind separation lands at 7.4, inside the band that is
   // only legal with secondary encoding, so every segment carries its own label.
   const LAB_GOOD = "#27a07d", LAB_BAD = "#c86448", LAB_FLAT = "#4487c9";
+
+  // The EDGAR watcher. Casey asked how to catch a news move; the honest finding is
+  // that by the time a headline reaches a person, most of the move has happened.
+  // So this card leads with the measurement rather than the filings: three clocks
+  // say how late he actually is, and after a couple of weeks that number decides
+  // whether chasing speed is worth any more work. The filings are the evidence
+  // underneath it, not the product.
+  function filingsPanel() {
+    const f = S.filings;
+    if (!f) return "";
+    const when = (ms) => sinceWords(Math.max(0, Math.round(((S.server_time || Date.now()) - ms) / 1000)));
+
+    const secs = (n) => n === null ? null
+      : n < 90 ? `${n} seconds`
+      : n < 5400 ? `${Math.round(n / 60)} minutes`
+      : `${(n / 3600).toFixed(1)} hours`;
+
+    const pickup = secs(f.median_pickup_seconds);
+    const mine = secs(f.median_to_casey_seconds);
+
+    const measure = f.measured_on === 0
+      ? `<p class="sub">Nothing measured yet. Each filing records when the SEC accepted it, when this hub saw it, and when you first opened it.</p>`
+      : `<div class="filing-clocks">
+          <div><span>SEC to this hub</span><strong>${esc(pickup ?? "not measured")}</strong><small>median over ${esc(String(f.measured_on))} filing${f.measured_on === 1 ? "" : "s"}</small></div>
+          <div><span>SEC to you seeing it</span><strong>${esc(mine ?? "not yet")}</strong><small>${mine ? "median, your actual delay" : "measured once you open some"}</small></div>
+        </div>
+        ${mine ? `<p class="sub">That second number is the one that matters. On 17 November, Nvidia moved from $150.45 to $153.07 in the six minutes before CNBC published the statement behind it. Compare it against your own delay before putting more work into speed.</p>` : ""}`;
+
+    let state = "", rows = "";
+    if (!f.checked_at) {
+      state = `<p class="sub">The watcher has not run yet. It is scheduled every five minutes on weekdays while US markets are open.</p>`;
+    } else if (!f.ok) {
+      state = `<p class="filing-problem"><b>The last check failed.</b> ${esc(f.error || "No reason was recorded.")}</p>`;
+    } else if (!f.items.length) {
+      state = `<p class="sub">Checked ${esc(when(f.checked_at))} and nothing has been filed that carries an item code worth showing. That is the usual answer.</p>`;
+    } else {
+      rows = `<ul class="filing-list">${f.items.map((x) => `<li>
+        <div class="filing-top"><b>${esc(x.company)}</b><span>${esc(when(x.accepted_at))}</span></div>
+        <p>${esc(describeFilingItems(x.items))}</p>
+        <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Read the filing at the SEC</a>
+      </li>`).join("")}</ul>`;
+      state = `<p class="sub">Checked ${esc(when(f.checked_at))}. These are filings, not advice, and a filing often follows a move rather than causing one.</p>`;
+    }
+
+    return `<section class="card filings" data-filings-state="${esc(!f.checked_at ? "never" : !f.ok ? "failed" : f.items.length ? "filings" : "quiet")}">
+      <h2>Company filings, and how late you are</h2>
+      ${measure}
+      ${state}
+      ${rows}
+    </section>`;
+  }
+
+  // Item codes in plain words. Mirrors src/edgar.ts; an unknown code is shown
+  // rather than dropped, because a code we do not recognise is still a fact.
+  const FILING_ITEMS = {
+    "1.01": "entered a material agreement",
+    "1.03": "bankruptcy or receivership",
+    "2.01": "completed an acquisition or disposal",
+    "2.02": "reported results",
+    "4.01": "changed accountants",
+    "4.02": "said earlier financials cannot be relied on",
+    "5.02": "an officer or director left or was appointed",
+    "7.01": "regulation FD disclosure",
+    "8.01": "other events the company chose to report",
+  };
+
+  function describeFilingItems(items) {
+    const parts = String(items || "").split(",").map((c) => c.trim()).filter(Boolean);
+    if (!parts.length) return "No item codes were listed.";
+    return parts.map((c) => FILING_ITEMS[c] ? `${c}, ${FILING_ITEMS[c]}` : `${c}, a code we do not recognise`).join(". ") + ".";
+  }
 
   function labFindings() {
     const r = S.research;

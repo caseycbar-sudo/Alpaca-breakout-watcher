@@ -11,6 +11,14 @@
   "keep_vars": true,
   "preview_urls": false,
   "observability": { "enabled": true },
+
+  // Every five minutes during US market hours and the hour either side, weekdays.
+  // Cloudflare's scheduler is used rather than GitHub Actions because the watcher's
+  // own */5 cron on GitHub delivered about two runs a day before stopping entirely,
+  // and a dropped scheduled run there does not fail, it simply never happens.
+  // Previews never get this: checks/preview-isolation.mjs fails the build if a
+  // schedule appears inside the previews block.
+  "triggers": { "crons": ["*/5 13-21 * * 1-5"] },
   "ai": { "binding": "AI" },
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
   "d1_databases": [

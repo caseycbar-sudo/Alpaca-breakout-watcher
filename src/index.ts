@@ -11,6 +11,7 @@ import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/w
 import * as assistant from "./assistant";
 import * as auth from "./auth";
 import * as db from "./db";
+import * as edgar from "./edgar";
 import * as news from "./news";
 import * as radar from "./radar";
 import * as research from "./research";
@@ -299,7 +300,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   }
 
   if (path === "/api/state" && method === "GET") {
-    const [board, chat, open, answered, plans, rules, links, seen, lab, scan, headlines] = await Promise.all([
+    const [board, chat, open, answered, plans, rules, links, seen, lab, scan, headlines, filings] = await Promise.all([
       db.buildBoard(env),
       db.readChat(env, owner, { limit: 40, mark_read: false }),
       db.listDecisions(env, owner, { status: "open" }),
@@ -311,6 +312,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       research.getResearch(env).catch(() => null),
       radar.current(env).catch(() => null),
       news.current(env).catch(() => null),
+      edgar.view(env).catch(() => null),
     ]);
     return json({
       server_time: Date.now(),
@@ -326,6 +328,7 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
       helpers: await assistant.status(env),
       radar: scan,
       news: headlines,
+      filings,
       research: lab && lab.summary ? { ...lab.summary, read_at: lab.fetched_at, problem: lab.problem ?? null } : { unavailable: lab?.problem ?? "The lab's results have not been read yet." },
       jobs: await tasks.listTasks(env, owner, { status: "all", limit: 100 }),
     });
@@ -386,6 +389,15 @@ async function apiRoute(request: Request, env: HubEnv, url: URL, ctx: ExecutionC
   // Changing what kind of record something is belongs to Casey alone, so this is
   // the only door to it. Without it the rule would be unenforceable in practice
   // rather than strict: the AIs cannot do it and he would have had no way either.
+  if (path === "/api/filings/opened" && method === "POST") {
+    // Only this route stamps opened_at, and only the owner reaches it. An AI
+    // reading the hub is not Casey looking at his phone; counting it as such
+    // would quietly corrupt the one number the watcher exists to produce.
+    const body = await readJson(request);
+    const list = Array.isArray(body.accessions) ? body.accessions.map(String) : [];
+    return json({ marked: await edgar.markOpened(env, list, Date.now()) });
+  }
+
   m = path.match(/^\/api\/plans\/([^/]+)\/record-kind$/);
   if (m && method === "POST") {
     const body = await readJson(request);
@@ -475,5 +487,14 @@ export default {
     // Narrow first, so the Preview's own origin is what everything downstream sees.
     const scoped = previewEnv(env);
     return providerFor(originFor(request, scoped)).fetch(request, scoped, ctx);
+  },
+
+  // Polls EDGAR. A scheduled run that dies quietly is the failure we spent today
+  // fixing, so edgar.poll records every outcome, success or not, and the page
+  // reads that record rather than inferring from silence.
+  async scheduled(_event: ScheduledController, env: HubEnv, ctx: ExecutionContext): Promise<void> {
+    const scoped = previewEnv(env);
+    if (scoped.HUB_ENV === "preview") return; // a preview must never reach the network on a timer
+    ctx.waitUntil(edgar.poll(scoped, Date.now()).then(() => undefined, () => undefined));
   },
 } satisfies ExportedHandler<HubEnv>;

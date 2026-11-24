@@ -8,6 +8,12 @@ export interface Env {
   HUB_URL?: string;
   /** "preview" only in a pull request's Preview, from previews.vars. Production never sets it. */
   HUB_ENV?: string;
+  /**
+   * Contact string EDGAR requires of automated callers. Configuration, never
+   * hard-coded: whose address the SEC sees is Casey's to decide, and this
+   * repository is public. Unset means the watcher does not call EDGAR at all.
+   */
+  SEC_CONTACT?: string;
 }
 
 export const SCOPES = ["hub:read", "hub:chat", "hub:log", "hub:snapshot"] as const;

@@ -461,3 +461,68 @@ test('the research symbol pattern survives being written into HTML', () => {
   assert.doesNotThrow(() => new RegExp(emitted, 'v'),
     `the emitted pattern ${emitted} is not a valid regular expression under the v flag`);
 });
+
+test('the filings panel leads with how late Casey is, not with the filings', () => {
+  // The measurement is the reason this exists. If it ever becomes a headline
+  // feed with the latency tucked underneath, it has turned into the thing it
+  // was built to test rather than the test.
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now, filings: {
+    checked_at: now - 120_000, ok: true, error: null, measured_on: 40,
+    median_pickup_seconds: 55, median_to_casey_seconds: 430,
+    items: [{ accession: '1'.repeat(18), company: 'Test Co', items: '5.02',
+      url: 'https://www.sec.gov/x', accepted_at: now - 600_000, received_at: now - 560_000, opened_at: null }] } });
+  assert.match(html, /data-filings-state="filings"/);
+  const clocks = html.indexOf('SEC to you seeing it');
+  const list = html.indexOf('Read the filing at the SEC');
+  assert.ok(clocks > -1 && list > -1 && clocks < list, 'the latency must come before the filings');
+});
+
+test('an item code is explained in words, and an unknown one is not dropped', () => {
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now, filings: {
+    checked_at: now, ok: true, error: null, measured_on: 1,
+    median_pickup_seconds: 10, median_to_casey_seconds: null,
+    items: [{ accession: '2'.repeat(18), company: 'Test Co', items: '5.02,9.99',
+      url: 'https://www.sec.gov/x', accepted_at: now, received_at: now, opened_at: null }] } });
+  assert.match(html, /an officer or director left/);
+  assert.match(html, /9\.99/);
+  assert.doesNotMatch(html, /bullish|bearish|buy|sell now/i);
+});
+
+test('each state of the watcher says something different and true', () => {
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const at = (over) => render({ server_time: now, filings: {
+    checked_at: now, ok: true, error: null, items: [], measured_on: 0,
+    median_pickup_seconds: null, median_to_casey_seconds: null, ...over } });
+
+  assert.match(at({ checked_at: null }), /data-filings-state="never"/);
+  assert.match(at({ checked_at: null }), /has not run yet/);
+
+  const failed = at({ ok: false, error: 'EDGAR answered 429' });
+  assert.match(failed, /data-filings-state="failed"/);
+  assert.match(failed, /EDGAR answered 429/);
+
+  const quiet = at({});
+  assert.match(quiet, /data-filings-state="quiet"/);
+  assert.match(quiet, /the usual answer/);
+});
+
+test('Casey\'s own delay is absent until it has actually been measured', () => {
+  // Showing a zero or a dash here would read as "no delay", which is the exact
+  // wrong conclusion. It says "not yet" until he has opened something.
+  const now = Date.parse('2026-11-23T18:00:00Z');
+  const html = render({ server_time: now, filings: {
+    checked_at: now, ok: true, error: null, items: [], measured_on: 12,
+    median_pickup_seconds: 48, median_to_casey_seconds: null } });
+  // Assert on the value in Casey's own clock, not on the page as a whole: the
+  // first version of this matched /0 seconds/ anywhere, which caught the
+  // harness's own stub for sinceWords rather than anything the card does.
+  const mine = html.slice(html.indexOf('SEC to you seeing it'));
+  assert.match(mine.slice(0, 200), /not yet/);
+  assert.doesNotMatch(mine.slice(0, 200), /<strong>\s*0\b/);
+});
+
+test('no filings data at all renders nothing rather than an empty frame', () => {
+  assert.doesNotMatch(render({}), /data-filings-state/);
+});
