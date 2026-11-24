@@ -172,7 +172,11 @@ export interface FilingsView {
   median_pickup_seconds: number | null;
   /** Median seconds from acceptance to Casey opening it. Null until he has opened some. */
   median_to_casey_seconds: number | null;
+  /** How many filings each median actually used. Not the row count: rows with a
+   *  negative interval or no opened_at are excluded, and saying "median over 40"
+   *  when it rested on 3 would overstate it. */
   measured_on: number;
+  opened_on: number;
 }
 
 /** Everything the page needs, including the measurement this exists for. */
@@ -214,7 +218,8 @@ export async function view(env: Env, limit = 12): Promise<FilingsView> {
     items: (rows.results ?? []) as unknown as FilingsView["items"],
     median_pickup_seconds: median(pickup),
     median_to_casey_seconds: median(toCasey),
-    measured_on: sample.length,
+    measured_on: pickup.length,
+    opened_on: toCasey.length,
   };
 }
 

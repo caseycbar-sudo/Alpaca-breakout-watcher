@@ -136,6 +136,7 @@ describe("the three clocks", () => {
     const v = await view(env);
     expect(v.median_pickup_seconds).toBe(60);
     expect(v.measured_on).toBe(3);
+    expect(v.opened_on).toBe(0);
   });
 
   it("reports nothing for Casey's leg until he has actually opened something", async () => {
@@ -182,5 +183,19 @@ describe("the three clocks", () => {
     expect(v.ok).toBe(false);
     expect(v.items).toHaveLength(0);
     expect(v.median_pickup_seconds).toBeNull();
+  });
+});
+
+describe("what each median says it rests on", () => {
+  it("counts the filings the median actually used, not every stored row", async () => {
+    // measured_on counted all rows, so a page could say "median over 40 filings"
+    // when the figure rested on three. ChatGPT's second finding on #30.
+    await env.DB.prepare("DELETE FROM filings").run();
+    await store("600000000000000001", T, T + 30_000, T + 90_000);
+    await store("600000000000000002", T, T + 50_000);
+    await store("600000000000000003", T, T - 9_000);   // negative skew, excluded
+    const v = await view(env);
+    expect(v.measured_on).toBe(2);
+    expect(v.opened_on).toBe(1);
   });
 });

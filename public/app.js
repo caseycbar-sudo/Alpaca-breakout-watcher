@@ -774,6 +774,25 @@
     </section>`;
   }
 
+  // Stamps the filings now on Casey's screen as seen, once each. Fire-and-forget:
+  // a failed stamp costs one data point and must never interrupt the page.
+  let stamping = false;
+  async function stampFilingsSeen() {
+    if (stamping || tab !== "today") return;
+    const unseen = (S?.filings?.items || []).filter((f) => f.opened_at === null).map((f) => f.accession);
+    if (!unseen.length) return;
+    // Only what is actually rendered: a filing held in state but not on the page
+    // has not been seen, and counting it would flatter the one number that matters.
+    const onScreen = unseen.filter((a) => document.querySelector(`[data-filing="${a}"]`));
+    if (!onScreen.length) return;
+    stamping = true;
+    try {
+      await api("/api/filings/opened", { accessions: onScreen });
+      for (const f of S.filings.items) if (onScreen.includes(f.accession)) f.opened_at = Date.now();
+    } catch { /* one lost measurement, not a broken page */ }
+    finally { stamping = false; }
+  }
+
   function filingsPanel() {
     const f = S.filings;
     if (!f) return "";
@@ -803,7 +822,7 @@
     } else if (!f.items.length) {
       state = `<p class="sub">Checked ${esc(when(f.checked_at))} and nothing has been filed that carries an item code worth showing. That is the usual answer.</p>`;
     } else {
-      rows = `<ul class="filing-list">${f.items.map((x) => `<li>
+      rows = `<ul class="filing-list">${f.items.map((x) => `<li data-filing="${esc(x.accession)}">
         <div class="filing-top"><b>${esc(x.company)}</b><span>${esc(when(x.accepted_at))}</span></div>
         <p>${esc(describeFilingItems(x.items))}</p>
         <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Read the filing at the SEC</a>
@@ -1692,6 +1711,12 @@
       // The ring fill cannot ship in markup: the CSP drops style attributes.
       // Fill it here so it is never briefly empty waiting for the next tick.
       tickScanClock();
+      // ChatGPT found this in review of #30: the route and markOpened existed and
+      // were unit-tested, but nothing in the browser ever called them, so opened_at
+      // would have stayed NULL forever and "SEC to you seeing it" could never have
+      // been measured. The whole feature exists to produce that number. The tests
+      // called markOpened directly, so they exercised the function and not the path.
+      stampFilingsSeen();
     } catch (e) {
       $("#top-note").textContent = "Update failed · showing last loaded data";
       if (!S) view.innerHTML = `<p class="pad">The hub could not load. Check your connection and <button type="button" class="linkish" id="retry">try again</button>.</p>`;

@@ -540,3 +540,16 @@ test('every panel class the Overview renders exists in the stylesheet', () => {
   const missing = [...used].filter((c) => !defined.has(c));
   assert.deepStrictEqual(missing, [], `classes with no rule anywhere: ${missing.join(', ')}`);
 });
+
+test('something in the page actually calls the filings stamp', () => {
+  // The route and markOpened existed, were unit-tested, and nothing in the browser
+  // ever called them, so the third clock could never have been measured at all.
+  // ChatGPT found it by searching the repo. A function defined and never invoked
+  // passes every test that exercises the function directly.
+  const src = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(src, /function stampFilingsSeen/, 'the stamp should exist');
+  const calls = [...src.matchAll(/(?<!function )\bstampFilingsSeen\(\)/g)];
+  assert.ok(calls.length >= 1, 'stampFilingsSeen is defined but never called');
+  assert.match(src, /api\(\s*["']\/api\/filings\/opened["']/, 'it should post to the owner-only route');
+  assert.match(src, /data-filing="/, 'it should only stamp filings the page actually rendered');
+});
