@@ -950,3 +950,22 @@ label { font-size:12px; color:#b0c4d5; }
    the same quiet teal whether the watcher was running or had been dead for days. */
 .radar-symbol[data-scan-ring="late"]::before { background:conic-gradient(#ffc24d 360deg, #ffc24d 0); }
 .radar-symbol[data-scan-ring="late"] i { background:#ffc24d; }
+
+/* An out-of-date plan stays on the page, because nothing here deletes a record,
+   but it should not read like something to act on. Receded, not hidden. */
+.plan.lapsed { opacity:.72; border-color:#ffffff14; }
+/* The head is symbol, badge and a long plan id on one baseline row. Adding the
+   badge pushed the id to three wrapped lines on a phone, so the row wraps and the
+   id takes the full width underneath rather than fighting for the remainder. */
+.plan:has(.plan-tag) .plan-head { flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.plan:has(.plan-tag) .plan-head .id { flex:1 0 100%; }
+.plan.lapsed .plan-head h3 { color:var(--t2); }
+.plan-tag {
+  flex:0 0 auto; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:#1a1206; background:#e0a33c; border-radius:999px; padding:3px 9px; align-self:center;
+}
+.plan-lapsed {
+  margin:10px 0 2px; padding:10px 12px; font-size:13px; line-height:1.5;
+  color:var(--t2); background:#e0a33c12; border-left:3px solid #e0a33c; border-radius:0 8px 8px 0;
+}
+.plan-lapsed b { color:var(--t1); }

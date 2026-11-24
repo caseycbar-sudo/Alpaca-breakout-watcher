@@ -981,15 +981,19 @@
     }
   }
 
-  function planHtml(p) {
+  function planHtml(p, ctx) {
+    const at = ctx?.now ?? Date.now();
+    const snap = ctx?.snapshot ?? null;
     const reviewed = ["reviewed", "authorized"].includes(p.review_state);
     const objected = p.review_state === "objected";
     const approved = p.review_state === "authorized";
     const declined = p.review_state === "declined";
     const history = openHistories.has(p.id) ? historyCache[p.id] : null;
     const canDecline = !declined && p.order_state === "none";
-    return `<article class="plan" id="plan-${esc(p.id)}">
-      <div class="plan-head"><h3>${esc(p.symbol)}</h3><span class="id">Plan ${esc(p.id)} by ${esc(p.author_name)}, ${esc(ago(p.created_at))}</span></div>
+    const lapsed = planLapsed(p, at, snap);
+    return `<article class="plan${lapsed ? " lapsed" : ""}" id="plan-${esc(p.id)}"${lapsed ? ' data-plan-lapsed="true"' : ""}>
+      <div class="plan-head"><h3>${esc(p.symbol)}</h3>${lapsed ? `<span class="plan-tag">Out of date</span>` : ""}<span class="id">Plan ${esc(p.id)} by ${esc(p.author_name)}, ${esc(ago(p.created_at))}</span></div>
+      ${lapsedNote(lapsed, p.symbol)}
       <p class="see">${esc(p.what_we_see)}</p>
       ${p.why ? `<p class="see quiet">${esc(p.why)}</p>` : ""}
       <dl>
@@ -1023,10 +1027,50 @@
     </article>`;
   }
 
+  // A plan carries its own expiry date and nothing ever read it, so Grok's two
+  // stop proposals still looked live days after their good_until and after the
+  // positions they protected had been sold. Both facts are already known here;
+  // neither needs a background job rewriting records to surface them. Display
+  // only: nothing below writes anything.
+  function planLapsed(p, now, snapshot) {
+    if (p.order_state === "closed" || p.review_state === "declined") return null;
+
+    // good_until is a plain YYYY-MM-DD day, and a plan is good through the end of
+    // that day, so compare against the day after it rather than its midnight.
+    let expired = null;
+    const d = typeof p.good_until === "string" ? p.good_until.trim() : "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const end = Date.parse(`${d}T23:59:59Z`);
+      if (Number.isFinite(end) && now > end) expired = d;
+    }
+
+    // A plan that protects or exits a position is moot once the position is gone.
+    // Only say so from a snapshot that actually listed positions: a snapshot with
+    // no positions array has not reported, which is not the same as reporting none.
+    let orphaned = false;
+    const held = Array.isArray(snapshot?.positions) ? snapshot.positions : null;
+    // != null, not !== null: these arrive undefined as often as null, and a strict
+    // check called every plan with no stop an orphan.
+    if (held && p.symbol && (p.stop_price != null || p.target_price != null)) {
+      orphaned = !held.some((h) => String(h?.symbol || "").toUpperCase() === String(p.symbol).toUpperCase());
+    }
+    if (!expired && !orphaned) return null;
+    return { expired, orphaned, snapshot_age: snapshot?.observed_at ?? null };
+  }
+
+  function lapsedNote(l, symbol) {
+    if (!l) return "";
+    const bits = [];
+    if (l.expired) bits.push(`its own good-until date passed on ${esc(shortDate(l.expired))}`);
+    if (l.orphaned) bits.push(`the last account snapshot shows no ${esc(symbol)} position for it to act on`);
+    return `<p class="plan-lapsed"><b>Out of date.</b> This plan is still here because nothing deletes a record,
+      but ${bits.join(", and ")}. Read it as history, not as something to act on.</p>`;
+  }
+
   function renderTrades() {
     return `<section class="section"><h2>Trade plans</h2>
       <p class="sub">Every idea is written down here before anything is bought. A second AI ${term("review", "reviews")} it, then you ${term("approve", "approve")} or decline. Declined and unfilled plans stay, because they are part of the learning.</p>
-      ${S.plans.length ? S.plans.map(planHtml).join("") : `<div class="empty">No trade plans yet. When one of your AIs has an idea, it shows up here first, with the price to buy at, where to take profit, and where to get out.</div>`}
+      ${S.plans.length ? S.plans.map((p) => planHtml(p, { now: S.server_time || Date.now(), snapshot: S.board?.snapshot })).join("") : `<div class="empty">No trade plans yet. When one of your AIs has an idea, it shows up here first, with the price to buy at, where to take profit, and where to get out.</div>`}
     </section>`;
   }
 
