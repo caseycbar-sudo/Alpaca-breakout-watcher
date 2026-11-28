@@ -735,5 +735,21 @@
   "promising": [],
   "avoid": [],
   "run": "study list"
+ },
+ {
+  "generated_at": "2026-11-28T03:19:48.571823+00:00",
+  "tickers": 20,
+  "learning_trades": 1039,
+  "learning_avg_r": -0.3741,
+  "portfolio_trades": 2,
+  "portfolio_win_rate": 50.0,
+  "portfolio_avg_r": 0.5,
+  "model_test_auc": 0.582,
+  "promising": [
+   "Relative volume: 6x+",
+   "Setup: A \u2014 catalyst ORB second-bar hold + Time of day (ET): 9:30\u201310:30"
+  ],
+  "avoid": [],
+  "run": "study list"
  }
 ]
